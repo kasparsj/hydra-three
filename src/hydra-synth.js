@@ -147,11 +147,22 @@ class HydraRenderer {
     this.sandbox.set('update', (dt) => {})
   }
 
-  loadScript(url = "") {
+  loadScript(url = "", once = true) {
+   const self = this || window;
    const p = new Promise((res, rej) => {
+     if (once) {
+       self.loadedScripts || (self.loadedScripts = {});
+       if (self.loadedScripts[url]) {
+         res();
+         return;
+       }
+     }
      var script = document.createElement("script");
      script.onload = function () {
        console.log(`loaded script ${url}`);
+       if (once) {
+         self.loadedScripts[url] = true;
+       }
        res();
      };
      script.onerror = (err) => {
