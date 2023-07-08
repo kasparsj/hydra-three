@@ -18,7 +18,8 @@
   "scripts": {
     "dev-ssl": "budo ./dev/index.js --ssl --open --live --port 8000 --",
     "dev": "budo ./dev/index.js --open --live --port 8000 -- -p esmify",
-    "build": "browserify ./src/index.js -p esmify --standalone Hydra > dist/hydra-synth.js"
+    "build": "browserify ./src/index.js -p esmify --standalone Hydra > dist/hydra-synth.js",
+    "build:debug": "browserify ./src/index.js --debug -p esmify --standalone Hydra > dist/hydra-synth.js"
   },
   "repository": {
     "type": "git",
