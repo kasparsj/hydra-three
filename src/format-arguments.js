@@ -154,15 +154,23 @@ function getArrayValue(value, input, vecLen = 0) {
   // typedArg.value = (context, props, batchId) => arrayUtils.getValue(filteredArray)(props)
   if (vecLen) {
     return (context, props, batchId) => {
-      return value.map((v, i) => {
+      const values = Array(vecLen);
+      for (let i=0; i<vecLen; i++) {
+        const v = value[i];
+        const defaultValue = input.default.constructor === Array ? input.default[i] : input.default;
         if (typeof v === 'function') {
-          const defaultValue = input.default.constructor === Array ? input.default[i] : input.default;
-          return getFunctionValue(v, {default: defaultValue})(context, props, batchId);
-        } else if (v.constructor === Array) {
-          return arrayUtils.getValue(v)(props)
+          values[i] = getFunctionValue(v, {default: defaultValue})(context, props, batchId);
+        } else if (Array.isArray(v)) {
+          values[i] = arrayUtils.getValue(v)(props)
         }
-        return v;
-      })
+        else if (typeof v !== 'undefined') {
+          values[i] = v;
+        }
+        else {
+          values[i] = defaultValue;
+        }
+      }
+      return values;
     }
   }
   else {
