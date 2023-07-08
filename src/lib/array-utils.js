@@ -68,7 +68,6 @@ export default {
       return ease(t) * (nextValue - currValue) + currValue
     }
     else {
-      const val = arr[Math.floor(index % (arr.length))]
       return arr[Math.floor(index % (arr.length))]
     }
   }
