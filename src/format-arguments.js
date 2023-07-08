@@ -86,12 +86,12 @@ export default function formatArguments(transform, startIndex, synthContext) {
         typedArg.isUniform = false
       } else if (typedArg.type === 'float' && typeof typedArg.value === 'number') {
         typedArg.value = ensure_decimal_dot(typedArg.value)
-      } else if (typedArg.type.startsWith('vec') && typeof typedArg.value !== 'function') {
+      } else if (typedArg.type.startsWith('vec') && typeof typedArg.value !== 'function' && !typedArg.value.getTexture) {
         typedArg.isUniform = false
         if (Array.isArray(typedArg.value)) {
           typedArg.value = `${typedArg.type}(${typedArg.value.map(ensure_decimal_dot).join(', ')})`
         }
-        else {
+        else if (typeof typedArg.value === 'number') {
           const length = parseInt(typedArg.type.substr(-1));
           const arr = Array(length).fill(typedArg.value);
           typedArg.value = `${typedArg.type}(${arr.map(ensure_decimal_dot).join(', ')})`
