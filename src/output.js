@@ -98,6 +98,7 @@ Output.prototype.render = function (passes) {
              //var index = this.pingPongIndex ? 0 : 1
           //   var index = self.pingPong[(passIndex+1)%2]
           //  console.log('ping pong', self.pingPongIndex)
+          self.pingPongIndex = self.pingPongIndex ? 0 : 1
             return self.fbos[self.pingPongIndex]
           }
         })
@@ -109,7 +110,7 @@ Output.prototype.render = function (passes) {
     uniforms: uniforms,
     count: 3,
     framebuffer: () => {
-      self.pingPongIndex = self.pingPongIndex ? 0 : 1
+      // self.pingPongIndex = self.pingPongIndex ? 0 : 1
       return self.fbos[self.pingPongIndex]
     }
   })
