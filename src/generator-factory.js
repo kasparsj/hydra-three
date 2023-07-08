@@ -141,9 +141,10 @@ function processGlsl(obj) {
   let args = `${baseArgs}${customArgs.length > 0 ? ', '+ customArgs: ''}`
 //  console.log('args are ', args)
 
-    let glslFunction =
+    const func = `${t.returnType} ${obj.name}(${args})`;
+    const glslFunction = obj.glsl.indexOf(func) > -1 ? obj.glsl :
 `
-  ${t.returnType} ${obj.name}(${args}) {
+  ${func} {
       ${obj.glsl}
   }
 `
