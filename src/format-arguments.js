@@ -56,43 +56,15 @@ export default function formatArguments(transform, startIndex, synthContext) {
 
     // if user has input something for this argument
     if (userArgs.length > index) {
-      typedArg.value = userArgs[index]
-      // do something if a composite or transform
-
-      if (typeof userArgs[index] === 'function') {
-        // if (typedArg.vecLen > 0) { // expected input is a vector, not a scalar
-        //    typedArg.value = (context, props, batchId) => (fillArrayWithDefaults(userArgs[index](props), typedArg.vecLen))
-        // } else {
-        typedArg.value = (context, props, batchId) => {
-          try {
-            const val = userArgs[index](props)
-            if(typeof val === 'number') {
-              return val
-            } else {
-              console.warn('function does not return a number', userArgs[index])
-            }
-            return input.default
-          } catch (e) {
-            console.warn('ERROR', e)
-            return input.default
-          }
-        }
-        //  }
-
+      typedArg.value = userArgs[index];
+      if (typeof typedArg.value === 'function') {
+        typedArg.value = getFunctionValue(typedArg.value, input);
         typedArg.isUniform = true
-      } else if (userArgs[index].constructor === Array) {
-        //   if (typedArg.vecLen > 0) { // expected input is a vector, not a scalar
-        //     typedArg.isUniform = true
-        //     typedArg.value = fillArrayWithDefaults(typedArg.value, typedArg.vecLen)
-        //  } else {
-        //  console.log("is Array")
-        // filter out values that are not a number
-       // const filteredArray = userArgs[index].filter((val) => typeof val === 'number')
-       // typedArg.value = (context, props, batchId) => arrayUtils.getValue(filteredArray)(props)
-       typedArg.value = (context, props, batchId) => arrayUtils.getValue(userArgs[index])(props)
-       typedArg.isUniform = true
+      } else if (typedArg.value.constructor === Array) {
+        typedArg.value = getArrayValue(typedArg.value, input, typedArg.vecLen)
+        typedArg.isUniform = true
         // }
-      } 
+      }
     }
 
     if (startIndex < 0) {
@@ -114,9 +86,16 @@ export default function formatArguments(transform, startIndex, synthContext) {
         typedArg.isUniform = false
       } else if (typedArg.type === 'float' && typeof typedArg.value === 'number') {
         typedArg.value = ensure_decimal_dot(typedArg.value)
-      } else if (typedArg.type.startsWith('vec') && typeof typedArg.value === 'object' && Array.isArray(typedArg.value)) {
+      } else if (typedArg.type.startsWith('vec') && typeof typedArg.value !== 'function') {
         typedArg.isUniform = false
-        typedArg.value = `${typedArg.type}(${typedArg.value.map(ensure_decimal_dot).join(', ')})`
+        if (Array.isArray(typedArg.value)) {
+          typedArg.value = `${typedArg.type}(${typedArg.value.map(ensure_decimal_dot).join(', ')})`
+        }
+        else {
+          const length = parseInt(typedArg.type.substr(-1));
+          const arr = Array(length).fill(typedArg.value);
+          typedArg.value = `${typedArg.type}(${arr.map(ensure_decimal_dot).join(', ')})`
+        }
       } else if (input.type === 'sampler2D') {
         // typedArg.tex = typedArg.value
         var x = typedArg.value
@@ -143,3 +122,50 @@ export default function formatArguments(transform, startIndex, synthContext) {
   })
 }
 
+function getFunctionValue(value, input) {
+  // if (typedArg.vecLen > 0) { // expected input is a vector, not a scalar
+  //    typedArg.value = (context, props, batchId) => (fillArrayWithDefaults(userArgs[index](props), typedArg.vecLen))
+  // } else {
+  return (context, props, batchId) => {
+    try {
+      const val = value(props)
+      if(typeof val === 'number') {
+        return val
+      } else {
+        console.warn('function does not return a number', value)
+      }
+      return input.default
+    } catch (e) {
+      console.warn('ERROR', e)
+      return input.default
+    }
+  }
+  //  }
+}
+
+function getArrayValue(value, input, vecLen = 0) {
+  //   if (typedArg.vecLen > 0) { // expected input is a vector, not a scalar
+  //     typedArg.isUniform = true
+  //     typedArg.value = fillArrayWithDefaults(typedArg.value, typedArg.vecLen)
+  //  } else {
+  //  console.log("is Array")
+  // filter out values that are not a number
+  // const filteredArray = userArgs[index].filter((val) => typeof val === 'number')
+  // typedArg.value = (context, props, batchId) => arrayUtils.getValue(filteredArray)(props)
+  if (vecLen) {
+    return (context, props, batchId) => {
+      return value.map((v, i) => {
+        if (typeof v === 'function') {
+          const defaultValue = input.default.constructor === Array ? input.default[i] : input.default;
+          return getFunctionValue(v, {default: defaultValue})(context, props, batchId);
+        } else if (v.constructor === Array) {
+          return arrayUtils.getValue(v)(props)
+        }
+        return v;
+      })
+    }
+  }
+  else {
+    return (context, props, batchId) => arrayUtils.getValue(value)(props)
+  }
+}
