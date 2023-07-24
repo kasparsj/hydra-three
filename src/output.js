@@ -98,9 +98,8 @@ Output.prototype.render = function (passes) {
              //var index = this.pingPongIndex ? 0 : 1
           //   var index = self.pingPong[(passIndex+1)%2]
           //  console.log('ping pong', self.pingPongIndex)
-          // self.pingPongIndex = self.pingPongIndex ? 0 : 1
-            return self.fbos[self.pingPongIndex ? 0 : 1]
-          }
+            return self.fbos[self.pingPongIndex]
+        }
         })
 
   self.draw = self.regl({
