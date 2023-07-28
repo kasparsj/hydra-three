@@ -62,6 +62,31 @@ GlslSource.prototype.glsl = function () {
   return passes
 }
 
+GlslSource.prototype.getInfo = function () {
+  var transforms = []
+  this.transforms.forEach((transform) => {
+    if(transform.transform.type === 'renderpass'){
+      console.warn('no support for renderpass')
+    } else {
+      transforms.push(transform)
+    }
+  })
+  if (transforms.length > 0) {
+    var shaderInfo = generateGlsl(transforms, this.synth)
+    var uniforms = {}
+    shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
+    return {
+      shaderInfo,
+      utilityGlsl,
+      vert: transforms[0].transform.vert,
+      attributes: transforms[0].transform.attributes,
+      attributesCount: transforms[0].transform.attributesCount,
+      primitive: transforms[0].transform.primitive,
+      uniforms: Object.assign({}, this.defaultUniforms, uniforms)
+    };
+  }
+}
+
 GlslSource.prototype.compile = function (transforms) {
   var shaderInfo = generateGlsl(transforms, this.synth)
   var uniforms = {}
