@@ -11,6 +11,7 @@ var GlslSource = function (obj) {
   this.synth = obj.synth
   this.type = 'GlslSource'
   this.defaultUniforms = obj.defaultUniforms
+  this.utils = Object.assign({}, utilityGlsl, obj.utils);
   return this
 }
 
@@ -77,7 +78,7 @@ GlslSource.prototype.getInfo = function () {
     shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
     return {
       shaderInfo,
-      utilityGlsl,
+      utilityGlsl: this.utils,
       vert: transforms[0].transform.vert,
       attributes: transforms[0].transform.attributes,
       attributesCount: transforms[0].transform.attributesCount,
@@ -109,7 +110,7 @@ GlslSource.prototype.compile = function (transforms) {
   varying vec2 uv;
   uniform sampler2D prevBuffer;
 
-  ${Object.values(utilityGlsl).map((transform) => {
+  ${Object.values(this.utils).map((transform) => {
   //  console.log(transform.glsl)
     return `
             ${transform.glsl}

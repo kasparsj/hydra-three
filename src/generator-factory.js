@@ -14,6 +14,7 @@ class GeneratorFactory {
     this.changeListener = changeListener
     this.extendTransforms = extendTransforms
     this.generators = {}
+    this.utils = {}
     this.init()
   }
   init () {
@@ -51,7 +52,8 @@ class GeneratorFactory {
         userArgs: args,
         defaultOutput: this.defaultOutput,
         defaultUniforms: this.defaultUniforms,
-        synth: self
+        synth: self,
+        utils: this.utils,
       })
       this.generators[method] = func
       this.changeListener({type: 'add', synth: this, method})
@@ -66,8 +68,11 @@ class GeneratorFactory {
   }
 
   setFunction(obj) {
-    var processedGlsl = processGlsl(obj)
-    if(processedGlsl) this._addMethod(obj.name, processedGlsl)
+    if (obj.type === 'util') this.utils[obj.name] = obj;
+    else {
+      var processedGlsl = processGlsl(obj)
+      if(processedGlsl) this._addMethod(obj.name, processedGlsl)
+    }
   }
 }
 
