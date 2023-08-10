@@ -99,7 +99,7 @@ export default function formatArguments(transform, startIndex, synthContext) {
       } else if (input.type === 'sampler2D') {
         // typedArg.tex = typedArg.value
         var x = typedArg.value
-        typedArg.value = () => (x.getTexture())
+        typedArg.value = x.getTexture ? () => (x.getTexture()) : x
         typedArg.isUniform = true
       } else {
         // if passing in a texture reference, when function asks for vec4, convert to vec4
