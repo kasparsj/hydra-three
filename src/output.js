@@ -102,12 +102,18 @@ Output.prototype.render = function (passes) {
         }
         })
 
+  const attributes = pass.attributes ? pass.attributes.apply(self, pass.userArgs) : self.attributes;
+  uniforms = Object.keys(uniforms).reduce((acc, key) => {
+    acc[key] = typeof(uniforms[key]) === 'string' ? parseFloat(uniforms[key]) : uniforms[key];
+    return acc;
+  }, {});
   self.draw = self.regl({
     frag: pass.frag,
-    vert: self.vert,
-    attributes: self.attributes,
-    uniforms: uniforms,
-    count: 3,
+    vert: pass.vert ? `precision ${this.precision} float;\n\n` + pass.vert : self.vert,
+    attributes,
+    primitive: pass.primitive || 'triangles',
+    uniforms,
+    count: attributes.position.count || 3,
     framebuffer: () => {
       self.pingPongIndex = self.pingPongIndex ? 0 : 1
       return self.fbos[self.pingPongIndex]

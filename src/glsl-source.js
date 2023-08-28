@@ -131,6 +131,10 @@ GlslSource.prototype.compile = function (transforms) {
   `
 
   return {
+    vert: transforms[0].transform.vert,
+    attributes: transforms[0].transform.attributes,
+    primitive: transforms[0].transform.primitive,
+    userArgs: transforms[0].userArgs,
     frag: frag,
     uniforms: Object.assign({}, this.defaultUniforms, uniforms)
   }

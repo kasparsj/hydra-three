@@ -57,7 +57,7 @@ export default function formatArguments(transform, startIndex, synthContext) {
     // if user has input something for this argument
     if (userArgs.length > index) {
       typedArg.value = userArgs[index];
-      if (typeof typedArg.value === 'function') {
+      if (typeof typedArg.value === 'function' && typedArg.value.name !== 'reglTexture2D') {
         typedArg.value = getFunctionValue(typedArg.value, input);
         typedArg.isUniform = true
       } else if (typedArg.value.constructor === Array) {
@@ -113,6 +113,7 @@ export default function formatArguments(transform, startIndex, synthContext) {
       // add tp uniform array if is a function that will pass in a different value on each render frame,
       // or a texture/ external source
 
+      if (input.isUniform) typedArg.isUniform = input.isUniform;
       if (typedArg.isUniform) {
         typedArg.name += startIndex
         //  shaderParams.uniforms.push(typedArg)
