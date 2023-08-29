@@ -10,7 +10,7 @@ var Output = function ({ regl, precision, label = "", width, height}) {
     [2, 2]
   ])
 
-  this.draw = () => {}
+  this.draw = []
   this.init()
   this.pingPongIndex = 0
 
@@ -91,40 +91,44 @@ Output.prototype.init = function () {
 
 
 Output.prototype.render = function (passes) {
-  let pass = passes[0]
-  // console.log('pass', pass, this.pingPongIndex)
-  var self = this
-      var uniforms = Object.assign(pass.uniforms, { prevBuffer:  () =>  {
-             //var index = this.pingPongIndex ? 0 : 1
-          //   var index = self.pingPong[(passIndex+1)%2]
-          //  console.log('ping pong', self.pingPongIndex)
-            return self.fbos[self.pingPongIndex]
-        }
-        })
+  const self = this
+  self.draw = [];
+  for (let i=0; i<passes.length; i++) {
+    let pass = passes[i]
+    // console.log('pass', pass, this.pingPongIndex)
+    var uniforms = Object.assign(pass.uniforms, { prevBuffer:  () =>  {
+        //var index = this.pingPongIndex ? 0 : 1
+        //   var index = self.pingPong[(passIndex+1)%2]
+        //  console.log('ping pong', self.pingPongIndex)
+        return self.fbos[self.pingPongIndex]
+      }
+    })
 
-  const attributes = pass.attributes ? pass.attributes.apply(self, pass.userArgs) : self.attributes;
-  uniforms = Object.keys(uniforms).reduce((acc, key) => {
-    acc[key] = typeof(uniforms[key]) === 'string' ? parseFloat(uniforms[key]) : uniforms[key];
-    return acc;
-  }, {});
-  self.draw = self.regl({
-    frag: pass.frag,
-    vert: pass.vert ? `precision ${this.precision} float;\n\n` + pass.vert : self.vert,
-    attributes,
-    primitive: pass.primitive || 'triangles',
-    uniforms,
-    count: attributes.position.count || 3,
-    framebuffer: () => {
-      self.pingPongIndex = self.pingPongIndex ? 0 : 1
-      return self.fbos[self.pingPongIndex]
-    }
-  })
+    const attributes = pass.attributes ? pass.attributes.apply(self, pass.userArgs) : self.attributes;
+    uniforms = Object.keys(uniforms).reduce((acc, key) => {
+      acc[key] = typeof(uniforms[key]) === 'string' ? parseFloat(uniforms[key]) : uniforms[key];
+      return acc;
+    }, {});
+    const draw = self.regl({
+      frag: pass.frag,
+      vert: pass.vert ? `precision ${this.precision} float;\n\n` + pass.vert : self.vert,
+      attributes,
+      primitive: pass.primitive || 'triangles',
+      uniforms,
+      count: attributes.position.count || 3,
+      framebuffer: () => {
+        self.pingPongIndex = self.pingPongIndex ? 0 : 1
+        return self.fbos[self.pingPongIndex]
+      }
+    })
+    self.draw.push(draw)
+  }
 }
 
 
 Output.prototype.tick = function (props) {
 //  console.log(props)
-  this.draw(props)
+  this.draw.map((fn) => fn(props))
 }
 
 export default Output

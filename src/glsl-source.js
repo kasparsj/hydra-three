@@ -1,5 +1,5 @@
 import generateGlsl from './generate-glsl.js'
-// const formatArguments = require('./glsl-utils.js').formatArguments
+import formatArguments from './format-arguments.js'
 
 // const glslTransforms = require('./glsl/composable-glsl-functions.js')
 import utilityGlsl from './glsl/utility-functions.js'
@@ -31,7 +31,7 @@ GlslSource.prototype.out = function (_output) {
   }
 }
 
-GlslSource.prototype.glsl = function () {
+GlslSource.prototype.glsl = function (output) {
   //var output = _output || this.defaultOutput
   var self = this
   // uniforms included in all shaders
@@ -40,7 +40,7 @@ GlslSource.prototype.glsl = function () {
   var transforms = []
 //  console.log('output', output)
   this.transforms.forEach((transform) => {
-    if(transform.transform.type === 'renderpass'){
+    if(transform.transform.type === 'renderpass') {
       // if (transforms.length > 0) passes.push(this.compile(transforms, output))
       // transforms = []
       // var uniforms = {}
@@ -55,6 +55,11 @@ GlslSource.prototype.glsl = function () {
       console.warn('no support for renderpass')
     } else {
       transforms.push(transform)
+      const inputs = formatArguments(transform, -1);
+      if (transform.transform.type === 'combine' && inputs[0].value.transforms && inputs[0].value.transforms[0].transform.vert) {
+        passes = passes.concat(transform.userArgs[0].glsl());
+        transform.userArgs[0] = output;
+      }
     }
   })
 
