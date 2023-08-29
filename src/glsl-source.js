@@ -98,7 +98,7 @@ GlslSource.prototype.compile = function (transforms) {
   var uniforms = {}
   shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
 
-  var frag = `
+  var fragHeader = `
   precision ${this.defaultOutput.precision} float;
   ${Object.values(shaderInfo.uniforms).map((uniform) => {
     let type = uniform.type
@@ -114,14 +114,17 @@ GlslSource.prototype.compile = function (transforms) {
   uniform vec2 resolution;
   varying vec2 uv;
   uniform sampler2D prevBuffer;
-
+  
   ${Object.values(this.utils).map((transform) => {
-  //  console.log(transform.glsl)
+    //  console.log(transform.glsl)
     return `
             ${transform.glsl}
           `
   }).join('')}
+  `
 
+  var frag = fragHeader + `
+  
   ${shaderInfo.glslFunctions.map((transform) => {
     return `
             ${transform.transform.glsl}
@@ -135,11 +138,51 @@ GlslSource.prototype.compile = function (transforms) {
   }
   `
 
+  var vertHeader = `
+  precision ${this.defaultOutput.precision} float;
+  attribute vec2 position;
+  varying vec2 uv;
+  `
+  var vertFn = `
+  void ${transforms[0].transform.name}() {
+    gl_Position = vec4(2.0 * position - 1.0, 0, 1);
+  } 
+  `
+  var vertCall = `${transforms[0].transform.name}();`;
+  if (transforms[0].transform.vert) {
+    vertHeader = fragHeader + `
+    attribute vec2 position;
+    
+    ${shaderInfo.glslFunctions.map((transform) => {
+      if (transform.transform.name !== transforms[0].transform.name) {
+        return `
+            ${transform.transform.glsl}
+          `
+      }
+    }).join('')}
+    `
+    vertFn = transforms[0].transform.vert;
+    vertCall = `
+    vec2 st = uv;
+    ${shaderInfo.fragColor};
+    `;
+  }
+
+  var vert = vertHeader + `
+    
+  ${vertFn}
+
+  void main () {
+    uv = position;
+    ${vertCall}
+  }`
+
   return {
-    vert: transforms[0].transform.vert,
+    vert: vert,
     attributes: transforms[0].transform.attributes,
     primitive: transforms[0].transform.primitive,
     userArgs: transforms[0].userArgs,
+    clear: transforms[0].transform.clear,
     frag: frag,
     uniforms: Object.assign({}, this.defaultUniforms, uniforms)
   }

@@ -58,16 +58,6 @@ Output.prototype.init = function () {
 
   this.fragBody = ``
 
-  this.vert = `
-  precision ${this.precision} float;
-  attribute vec2 position;
-  varying vec2 uv;
-
-  void main () {
-    uv = position;
-    gl_Position = vec4(2.0 * position - 1.0, 0, 1);
-  }`
-
   this.attributes = {
     position: this.positionBuffer
   }
@@ -111,7 +101,7 @@ Output.prototype.render = function (passes) {
     }, {});
     const draw = self.regl({
       frag: pass.frag,
-      vert: pass.vert ? `precision ${this.precision} float;\n\n` + pass.vert : self.vert,
+      vert: pass.vert,
       attributes,
       primitive: pass.primitive || 'triangles',
       uniforms,
@@ -121,6 +111,14 @@ Output.prototype.render = function (passes) {
         return self.fbos[self.pingPongIndex]
       }
     })
+    if (pass.clear) {
+      const clear = () => self.regl.clear({
+        color: [0, 0, 0, 0],
+        // clear next framebuffer
+        framebuffer: self.fbos[self.pingPongIndex ? 0 : 1]
+      });
+      self.draw.push(clear);
+    }
     self.draw.push(draw)
   }
 }

@@ -103,10 +103,10 @@ export default function formatArguments(transform, startIndex, synthContext) {
         typedArg.isUniform = true
       } else {
         // if passing in a texture reference, when function asks for vec4, convert to vec4
-        if (typedArg.value.getTexture && input.type === 'vec4') {
+        if (input.type === 'vec4' && (typedArg.value.getTexture || typedArg.value.name === 'reglTexture2D')) {
           var x1 = typedArg.value
           typedArg.value = src(x1)
-          typedArg.isUniform = false
+          typedArg.isUniform = typedArg.value.name === 'reglTexture2D'
         }
       }
 
