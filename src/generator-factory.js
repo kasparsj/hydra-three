@@ -1,4 +1,5 @@
 import GlslSource from './glsl-source.js'
+import GlslTransform from './glsl-transform.js'
 import glslFunctions from './glsl/glsl-functions.js'
 
 class GeneratorFactory {
@@ -27,6 +28,10 @@ class GeneratorFactory {
 
     this.sourceClass = (() => {
       return class extends GlslSource {
+      }
+    })()
+    this.transformClass = (() => {
+      return class extends GlslTransform {
       }
     })()
 
@@ -62,6 +67,17 @@ class GeneratorFactory {
       this.sourceClass.prototype[method] = function (...args) {
         this.transforms.push({name: method, transform: transform, userArgs: args, synth: self})
         return this
+      }
+      if (transform.type === 'coord') {
+        const func = (...args) => new this.transformClass({
+          name: method,
+          transform: transform,
+          userArgs: args,
+          synth: self,
+        });
+        this.generators[method] = func
+        this.changeListener({type: 'add', synth: this, method})
+        return func
       }
     }
     return undefined

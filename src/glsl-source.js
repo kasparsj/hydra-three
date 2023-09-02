@@ -3,6 +3,7 @@ import formatArguments from './format-arguments.js'
 
 // const glslTransforms = require('./glsl/composable-glsl-functions.js')
 import utilityGlsl from './glsl/utility-functions.js'
+import GlslTransform from "./glsl-transform.js";
 
 var GlslSource = function (obj) {
   this.transforms = []
@@ -15,9 +16,7 @@ var GlslSource = function (obj) {
   return this
 }
 
-GlslSource.prototype.addTransform = function (obj)  {
-    this.transforms.push(obj)
-}
+GlslSource.prototype = Object.create(GlslTransform.prototype);
 
 GlslSource.prototype.out = function (_output) {
   var output = _output || this.defaultOutput
@@ -56,6 +55,7 @@ GlslSource.prototype.glsl = function (output) {
     } else {
       transforms.push(transform)
       const inputs = formatArguments(transform, -1);
+      // todo: another condition for a new pass could be clear option
       if (transform.transform.type === 'combine' && inputs[0].value.transforms && inputs[0].value.transforms[0].transform.vert) {
         passes = passes.concat(transform.userArgs[0].glsl());
         transform.userArgs[0] = output;
@@ -84,8 +84,11 @@ GlslSource.prototype.getInfo = function () {
     return {
       shaderInfo,
       utilityGlsl: this.utils,
+      // todo: differs from compile
       vert: transforms[0].transform.vert,
+      // todo: differs from compile
       attributes: transforms[0].transform.attributes,
+      // todo: differs from compile
       attributesCount: transforms[0].transform.attributesCount,
       primitive: transforms[0].transform.primitive,
       uniforms: Object.assign({}, this.defaultUniforms, uniforms)

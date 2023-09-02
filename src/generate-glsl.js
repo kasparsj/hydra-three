@@ -43,9 +43,11 @@ function generateGlsl (transforms, shaderParams) {
     // current function for generating frag color shader code
     var f0 = fragColor
     if (transform.transform.type === 'src') {
-      fragColor = (uv) => `${shaderString(uv, transform.name, inputs, shaderParams)}`
+      fragColor = (uv) => `${shaderString(uv, transform.name, inputs, shaderParams, transform.getter)}`
     } else if (transform.transform.type === 'coord') {
-      fragColor = (uv) => `${f0(`${shaderString(uv, transform.name, inputs, shaderParams)}`)}`
+      fragColor = (uv) => f0() ?
+        `${f0(`${shaderString(uv, transform.name, inputs, shaderParams)}`)}` :
+        `${shaderString(uv, transform.name, inputs, shaderParams, transform.getter)}`
     } else if (transform.transform.type === 'color') {
       fragColor = (uv) =>  `${shaderString(`${f0(uv)}`, transform.name, inputs, shaderParams)}`
     } else if (transform.transform.type === 'combine') {
@@ -70,13 +72,13 @@ function generateGlsl (transforms, shaderParams) {
 }
 
 // assembles a shader string containing the arguments and the function name, i.e. 'osc(uv, frequency)'
-function shaderString (uv, method, inputs, shaderParams) {
+function shaderString (uv, method, inputs, shaderParams, getter) {
   const str = inputs.map((input) => {
     if (input.isUniform) {
       return input.name
     } else if (input.value && input.value.transforms) {
       // this by definition needs to be a generator, hence we start with 'st' as the initial value for generating the glsl fragment
-      return `${generateGlsl(input.value.transforms, shaderParams)('st')}`
+      return `${generateGlsl(input.value.transforms, shaderParams)('st')}` + (input.value.getter ? '.' + input.value.getter : '')
     }
     return input.value
   }).reduce((p, c) => `${p}, ${c}`, '')
