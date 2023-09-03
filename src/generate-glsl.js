@@ -45,14 +45,14 @@ function generateGlsl (transforms, shaderParams, returnType) {
       fragColor = (uv) => `${shaderString(uv, transform, inputs, shaderParams, expectedReturn)}`
     } else if (transform.transform.type === 'coord') {
       fragColor = (uv) => f0() ?
-        `${f0(`${shaderString(uv, transform, inputs, shaderParams, expectedReturn)}`)}` :
+        `${f0(`${shaderString(uv, transform, inputs, shaderParams, 'vec2')}`)}` :
         `${shaderString(uv, transform, inputs, shaderParams, expectedReturn)}`
     } else if (transform.transform.type === 'color') {
       fragColor = (uv) =>  `${shaderString(`${f0(uv)}`, transform, inputs, shaderParams, expectedReturn)}`
     } else if (transform.transform.type === 'combine') {
       // combining two generated shader strings (i.e. for blend, mult, add funtions)
       var f1 = inputs[0].value && inputs[0].value.transforms ?
-      (uv) => `${generateGlsl(inputs[0].value.transforms, shaderParams)(uv)}` :
+      (uv) => `${generateGlsl(inputs[0].value.transforms, shaderParams, returnType)(uv)}` :
       (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
       fragColor = (uv) => `${shaderString(`${f0(uv)}, ${f1(uv)}`, transform, inputs.slice(1), shaderParams, expectedReturn)}`
     } else if (transform.transform.type === 'combineCoord') {
@@ -82,13 +82,13 @@ function shaderString (uv, transform, inputs, shaderParams, returnType) {
         const defaultGets = {float: 'x', vec2: 'xy', vec3: 'xyz', vec4: 'xyzw'};
         getter = defaultGets[input.type];
       }
-      return `${generateGlsl(input.value.transforms, shaderParams, returnType)('st')}` + (getter ? '.' + getter : '')
+      return `${generateGlsl(input.value.transforms, shaderParams, input.type)('st')}` + (getter ? '.' + getter : '')
     }
     return input.value
   }).reduce((p, c) => `${p}, ${c}`, '')
 
   var func = `${transform.transform.glslName}(${uv}${str})`
-  if (typeLookup[transform.transform.type].returnType.substring(3) < returnType.substring(3)) {
+  if (typeLookup[transform.transform.type].returnType.substring(3) < (returnType === 'float' ? 1 : returnType.substring(3))) {
     var diff = returnType.substring(3) - typeLookup[transform.transform.type].returnType.substring(3);
     func = `vec${returnType.substring(3)}(${func}${', 0.0'.repeat(diff)})`;
   }
