@@ -1,9 +1,5 @@
 import formatArguments from './format-arguments.js'
-
-// Add extra functionality to Array.prototype for generating sequences in time
-import arrayUtils from './lib/array-utils.js'
-
-
+import typeLookup from "./types.js";
 
 // converts a tree of javascript functions to a shader
 export default function (transforms) {
@@ -78,8 +74,12 @@ function shaderString (uv, method, inputs, shaderParams) {
       return input.name
     } else if (input.value && input.value.transforms) {
       // this by definition needs to be a generator, hence we start with 'st' as the initial value for generating the glsl fragment
-      // todo: automatic getter possible?
-      return `${generateGlsl(input.value.transforms, shaderParams)('st')}` + (input.value.getter ? '.' + input.value.getter : '')
+      let getter = input.value.getter;
+      if (!getter && typeLookup[input.value.transforms[0].transform.type] !== input.type) {
+        const defaultGets = {float: 'x', vec2: 'xy', vec3: 'xyz', vec4: 'xyzw'};
+        getter = defaultGets[input.type];
+      }
+      return `${generateGlsl(input.value.transforms, shaderParams)('st')}` + (getter ? '.' + getter : '')
     }
     return input.value
   }).reduce((p, c) => `${p}, ${c}`, '')
