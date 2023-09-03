@@ -1,5 +1,4 @@
 import GlslSource from './glsl-source.js'
-import GlslTransform from './glsl-transform.js'
 import glslFunctions from './glsl/glsl-functions.js'
 import typeLookup from "./types.js";
 
@@ -31,12 +30,6 @@ class GeneratorFactory {
       return class extends GlslSource {
       }
     })()
-    this.transformClass = (() => {
-      return class extends GlslTransform {
-      }
-    })()
-
-    
 
     // add user definied transforms
     if (Array.isArray(this.extendTransforms)) {
@@ -51,7 +44,7 @@ class GeneratorFactory {
  _addMethod (method, transform) {
     const self = this
     this.glslTransforms[method] = transform
-    if (transform.type === 'src') {
+    if (transform.type === 'src' || transform.type === 'coord') {
       const func = (...args) => new this.sourceClass({
         name: method,
         transform: transform,
@@ -65,23 +58,10 @@ class GeneratorFactory {
       this.changeListener({type: 'add', synth: this, method})
       return func
     } else  {
-      const func = function (...args) {
-        this.transforms.push({name: method, transform: transform, userArgs: args, synth: self})
-        return this
+      this.sourceClass.prototype[method] = function (...args) {
+          this.transforms.push({name: method, transform: transform, userArgs: args, synth: self})
+          return this
       };
-      this.sourceClass.prototype[method] = func
-      this.transformClass.prototype[method] = func
-      if (transform.type === 'coord') {
-        const func = (...args) => new this.transformClass({
-          name: method,
-          transform: transform,
-          userArgs: args,
-          synth: self,
-        });
-        this.generators[method] = func
-        this.changeListener({type: 'add', synth: this, method})
-        return func
-      }
     }
     return undefined
   }

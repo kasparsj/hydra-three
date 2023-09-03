@@ -3,7 +3,6 @@ import formatArguments from './format-arguments.js'
 
 // const glslTransforms = require('./glsl/composable-glsl-functions.js')
 import utilityGlsl from './glsl/utility-functions.js'
-import GlslTransform from "./glsl-transform.js";
 
 var GlslSource = function (obj) {
   this.transforms = []
@@ -16,7 +15,9 @@ var GlslSource = function (obj) {
   return this
 }
 
-GlslSource.prototype = Object.create(GlslTransform.prototype);
+GlslSource.prototype.addTransform = function (obj)  {
+  this.transforms.push(obj)
+}
 
 GlslSource.prototype.out = function (_output) {
   var output = _output || this.defaultOutput
@@ -101,9 +102,28 @@ GlslSource.prototype.compile = function (transforms) {
   var uniforms = {}
   shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
 
-  var fragHeader = `
-  precision ${this.defaultOutput.precision} float;
-  ${Object.values(shaderInfo.uniforms).map((uniform) => {
+  var fragHeader = GlslSource.compileFragHead(this.defaultOutput.precision, shaderInfo.uniforms, this.utils);
+  return {
+    vert: GlslSource.compileVert({
+      precision: this.defaultOutput.precision,
+      transform: transforms[0].transform,
+      fragHeader,
+      shaderInfo,
+    }),
+    attributes: transforms[0].transform.attributes,
+    primitive: transforms[0].transform.primitive,
+    userArgs: transforms[0].userArgs,
+    clear: typeof(this.clear) !== 'undefined' ? this.clear : transforms[0].transform.clear,
+    frag: GlslSource.compileFrag(fragHeader, shaderInfo),
+    uniforms: Object.assign({}, this.defaultUniforms, uniforms)
+  }
+
+}
+
+GlslSource.compileFragHead = function(precision, uniforms = {}, utils = {}) {
+  return `
+  precision ${precision} float;
+  ${Object.values(uniforms).map((uniform) => {
     let type = uniform.type
     switch (uniform.type) {
       case 'texture':
@@ -118,15 +138,17 @@ GlslSource.prototype.compile = function (transforms) {
   varying vec2 uv;
   uniform sampler2D prevBuffer;
   
-  ${Object.values(this.utils).map((transform) => {
+  ${Object.values(utils).map((transform) => {
     //  console.log(transform.glsl)
     return `
             ${transform.glsl}
           `
   }).join('')}
   `
+}
 
-  var frag = fragHeader + `
+GlslSource.compileFrag = function(header, shaderInfo) {
+  return header + `
   
   ${shaderInfo.glslFunctions.map((transform) => {
     return `
@@ -140,22 +162,6 @@ GlslSource.prototype.compile = function (transforms) {
     gl_FragColor = ${shaderInfo.fragColor};
   }
   `
-
-  return {
-    vert: GlslSource.compileVert({
-      precision: this.defaultOutput.precision,
-      transform: transforms[0].transform,
-      fragHeader,
-      shaderInfo,
-    }),
-    attributes: transforms[0].transform.attributes,
-    primitive: transforms[0].transform.primitive,
-    userArgs: transforms[0].userArgs,
-    clear: typeof(this.clear) !== 'undefined' ? this.clear : transforms[0].transform.clear,
-    frag: frag,
-    uniforms: Object.assign({}, this.defaultUniforms, uniforms)
-  }
-
 }
 
 GlslSource.compileVert = function(options = {}) {
@@ -167,11 +173,11 @@ GlslSource.compileVert = function(options = {}) {
   varying vec2 uv;
   `
   var vertFn = `
-  void ${transform.name}() {
+  void ${transform.glslName}() {
     gl_Position = vec4(2.0 * position - 1.0, 0, 1);
   } 
   `
-  var vertCall = `${transform.name}();`;
+  var vertCall = `${transform.glslName}();`;
   if (transform.vert) {
     const {fragHeader, shaderInfo} = options;
 
@@ -207,5 +213,15 @@ GlslSource.prototype.setClear = function (amount = 1) {
   this.clear = amount;
   return this;
 }
+
+const glslProps = ['x', 'y', 'z', 'xy', 'xz', 'yx', 'yz', 'zx', 'zy', 'xyz', 'xyzw'];
+glslProps.map((prop) => {
+  Object.defineProperty(GlslSource.prototype, prop, {
+    get() {
+      this.getter = prop;
+      return this;
+    }
+  });
+});
 
 export default GlslSource

@@ -9,7 +9,7 @@ export default function (transforms) {
       fragColor: ''
     }
 
-    var gen = generateGlsl(transforms, shaderParams)('st')
+    var gen = generateGlsl(transforms, shaderParams, typeLookup['src'].returnType)('st')
     shaderParams.fragColor = gen
     // remove uniforms with duplicate names
     let uniforms = {}
@@ -22,12 +22,15 @@ export default function (transforms) {
 
 // recursive function for generating shader string from object containing functions and user arguments. Order of functions in string depends on type of function
 // to do: improve variable names
-function generateGlsl (transforms, shaderParams) {
+function generateGlsl (transforms, shaderParams, returnType) {
   // transform function that outputs a shader string corresponding to gl_FragColor
   var fragColor = () => ''
   // var uniforms = []
   // var glslFunctions = []
-  transforms.forEach((transform) => {
+  transforms.map((transform, i) => {
+    var nextTransform = transforms[i+1];
+    var expectedReturn = nextTransform ? typeLookup[nextTransform.transform.type].returnType : returnType
+
     var inputs = formatArguments(transform, shaderParams.uniforms.length)
     inputs.forEach((input) => {
       if(input.isUniform) shaderParams.uniforms.push(input)
@@ -39,25 +42,25 @@ function generateGlsl (transforms, shaderParams) {
     // current function for generating frag color shader code
     var f0 = fragColor
     if (transform.transform.type === 'src') {
-      fragColor = (uv) => `${shaderString(uv, transform.transform.glslName, inputs, shaderParams)}`
+      fragColor = (uv) => `${shaderString(uv, transform, inputs, shaderParams, expectedReturn)}`
     } else if (transform.transform.type === 'coord') {
       fragColor = (uv) => f0() ?
-        `${f0(`${shaderString(uv, transform.transform.glslName, inputs, shaderParams)}`)}` :
-        `${shaderString(uv, transform.transform.glslName, inputs, shaderParams)}`
+        `${f0(`${shaderString(uv, transform, inputs, shaderParams, expectedReturn)}`)}` :
+        `${shaderString(uv, transform, inputs, shaderParams, expectedReturn)}`
     } else if (transform.transform.type === 'color') {
-      fragColor = (uv) =>  `${shaderString(`${f0(uv)}`, transform.transform.glslName, inputs, shaderParams)}`
+      fragColor = (uv) =>  `${shaderString(`${f0(uv)}`, transform, inputs, shaderParams, expectedReturn)}`
     } else if (transform.transform.type === 'combine') {
       // combining two generated shader strings (i.e. for blend, mult, add funtions)
       var f1 = inputs[0].value && inputs[0].value.transforms ?
       (uv) => `${generateGlsl(inputs[0].value.transforms, shaderParams)(uv)}` :
       (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
-      fragColor = (uv) => `${shaderString(`${f0(uv)}, ${f1(uv)}`, transform.transform.glslName, inputs.slice(1), shaderParams)}`
+      fragColor = (uv) => `${shaderString(`${f0(uv)}, ${f1(uv)}`, transform, inputs.slice(1), shaderParams, expectedReturn)}`
     } else if (transform.transform.type === 'combineCoord') {
       // combining two generated shader strings (i.e. for modulate functions)
       var f1 = inputs[0].value && inputs[0].value.transforms ?
       (uv) => `${generateGlsl(inputs[0].value.transforms, shaderParams)(uv)}` :
       (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
-      fragColor = (uv) => `${f0(`${shaderString(`${uv}, ${f1(uv)}`, transform.transform.glslName, inputs.slice(1), shaderParams)}`)}`
+      fragColor = (uv) => `${f0(`${shaderString(`${uv}, ${f1(uv)}`, transform, inputs.slice(1), shaderParams, expectedReturn)}`)}`
 
 
     }
@@ -68,7 +71,7 @@ function generateGlsl (transforms, shaderParams) {
 }
 
 // assembles a shader string containing the arguments and the function name, i.e. 'osc(uv, frequency)'
-function shaderString (uv, method, inputs, shaderParams) {
+function shaderString (uv, transform, inputs, shaderParams, returnType) {
   const str = inputs.map((input) => {
     if (input.isUniform) {
       return input.name
@@ -79,12 +82,17 @@ function shaderString (uv, method, inputs, shaderParams) {
         const defaultGets = {float: 'x', vec2: 'xy', vec3: 'xyz', vec4: 'xyzw'};
         getter = defaultGets[input.type];
       }
-      return `${generateGlsl(input.value.transforms, shaderParams)('st')}` + (getter ? '.' + getter : '')
+      return `${generateGlsl(input.value.transforms, shaderParams, returnType)('st')}` + (getter ? '.' + getter : '')
     }
     return input.value
   }).reduce((p, c) => `${p}, ${c}`, '')
 
-  return `${method}(${uv}${str})`
+  var func = `${transform.transform.glslName}(${uv}${str})`
+  if (typeLookup[transform.transform.type].returnType.substring(3) < returnType.substring(3)) {
+    var diff = returnType.substring(3) - typeLookup[transform.transform.type].returnType.substring(3);
+    func = `vec${returnType.substring(3)}(${func}${', 0.0'.repeat(diff)})`;
+  }
+  return func;
 }
 
 // merge two arrays and remove duplicates
