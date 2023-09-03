@@ -1,5 +1,7 @@
 //const transforms = require('./glsl-transforms.js')
 
+import GlslSource from "./glsl-source.js";
+
 var Output = function ({ regl, precision, label = "", width, height}) {
   this.regl = regl
   this.precision = precision
@@ -85,7 +87,10 @@ Output.prototype.render = function (passes) {
   self.draw = [];
   for (let i=0; i<passes.length; i++) {
     let pass = passes[i]
-    // console.log('pass', pass, this.pingPongIndex)
+    if (pass.clear) {
+      this.pushClear(pass.clear);
+    }
+
     var uniforms = Object.assign(pass.uniforms, { prevBuffer:  () =>  {
         //var index = this.pingPongIndex ? 0 : 1
         //   var index = self.pingPong[(passIndex+1)%2]
@@ -93,7 +98,6 @@ Output.prototype.render = function (passes) {
         return self.fbos[self.pingPongIndex]
       }
     })
-
     let count = 3;
     let attributes = self.attributes;
     const primitive = pass.primitive || 'triangles';
@@ -145,6 +149,7 @@ Output.prototype.render = function (passes) {
         };
         break;
       }
+      // todo: triangles
     }
     uniforms = Object.keys(uniforms).reduce((acc, key) => {
       acc[key] = typeof(uniforms[key]) === 'string' ? parseFloat(uniforms[key]) : uniforms[key];
@@ -162,18 +167,49 @@ Output.prototype.render = function (passes) {
         return self.fbos[self.pingPongIndex]
       }
     })
-    if (pass.clear) {
-      const clear = () => self.regl.clear({
-        color: [0, 0, 0, 0],
-        // clear next framebuffer
-        framebuffer: self.fbos[self.pingPongIndex ? 0 : 1]
-      });
-      self.draw.push(clear);
-    }
     self.draw.push(draw)
   }
 }
 
+Output.prototype.pushClear = function(clearAmount) {
+  const self = this;
+  if (clearAmount >= 1) {
+    const clear = () => self.regl.clear({
+      color: [0, 0, 0, 0],
+      // next framebuffer
+      framebuffer: self.fbos[self.pingPongIndex ? 0 : 1]
+    });
+    self.draw.push(clear);
+  }
+  else {
+    const fade = self.regl({
+      frag: `
+          precision ${self.precision} float;
+          varying vec2 uv;
+          uniform sampler2D prevBuffer;
+          void main() {
+            vec4 color = mix(texture2D(prevBuffer, uv), vec4(0), ${clearAmount});
+            gl_FragColor = color;
+          }
+        `,
+      vert: GlslSource.compileVert({
+        precision: this.precision,
+        transform: { name: 'clear' },
+      }),
+      attributes: self.attributes,
+      primitive: 'triangles',
+      uniforms: {
+        prevBuffer: () =>  { return self.fbos[self.pingPongIndex] },
+      },
+      count: 3,
+      // next framebuffer
+      framebuffer: () => {
+        return self.fbos[self.pingPongIndex ? 0 : 1]
+      }
+    });
+    self.draw.push(fade);
+  }
+}
 
 Output.prototype.tick = function (props) {
 //  console.log(props)

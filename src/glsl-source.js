@@ -141,37 +141,59 @@ GlslSource.prototype.compile = function (transforms) {
   }
   `
 
+  return {
+    vert: GlslSource.compileVert({
+      precision: this.defaultOutput.precision,
+      transform: transforms[0].transform,
+      fragHeader,
+      shaderInfo,
+    }),
+    attributes: transforms[0].transform.attributes,
+    primitive: transforms[0].transform.primitive,
+    userArgs: transforms[0].userArgs,
+    clear: typeof(this.clear) !== 'undefined' ? this.clear : transforms[0].transform.clear,
+    frag: frag,
+    uniforms: Object.assign({}, this.defaultUniforms, uniforms)
+  }
+
+}
+
+GlslSource.compileVert = function(options = {}) {
+  const {precision, transform} = options;
+
   var vertHeader = `
-  precision ${this.defaultOutput.precision} float;
+  precision ${precision} float;
   attribute vec2 position;
   varying vec2 uv;
   `
   var vertFn = `
-  void ${transforms[0].transform.name}() {
+  void ${transform.name}() {
     gl_Position = vec4(2.0 * position - 1.0, 0, 1);
   } 
   `
-  var vertCall = `${transforms[0].transform.name}();`;
-  if (transforms[0].transform.vert) {
+  var vertCall = `${transform.name}();`;
+  if (transform.vert) {
+    const {fragHeader, shaderInfo} = options;
+
     vertHeader = fragHeader + `
     attribute vec2 position;
     
-    ${shaderInfo.glslFunctions.map((transform) => {
-      if (transform.transform.name !== transforms[0].transform.name) {
+    ${shaderInfo.glslFunctions.map((trans) => {
+      if (trans.transform.name !== transform.name) {
         return `
-            ${transform.transform.glsl}
+            ${trans.transform.glsl}
           `
       }
     }).join('')}
     `
-    vertFn = transforms[0].transform.vert;
+    vertFn = transform.vert;
     vertCall = `
     vec2 st = uv;
     ${shaderInfo.fragColor};
     `;
   }
 
-  var vert = vertHeader + `
+  return vertHeader + `
     
   ${vertFn}
 
@@ -179,17 +201,11 @@ GlslSource.prototype.compile = function (transforms) {
     uv = position;
     ${vertCall}
   }`
+}
 
-  return {
-    vert: vert,
-    attributes: transforms[0].transform.attributes,
-    primitive: transforms[0].transform.primitive,
-    userArgs: transforms[0].userArgs,
-    clear: transforms[0].transform.clear,
-    frag: frag,
-    uniforms: Object.assign({}, this.defaultUniforms, uniforms)
-  }
-
+GlslSource.prototype.setClear = function (amount = 1) {
+  this.clear = amount;
+  return this;
 }
 
 export default GlslSource
