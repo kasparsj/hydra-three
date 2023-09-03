@@ -43,25 +43,25 @@ function generateGlsl (transforms, shaderParams) {
     // current function for generating frag color shader code
     var f0 = fragColor
     if (transform.transform.type === 'src') {
-      fragColor = (uv) => `${shaderString(uv, transform.name, inputs, shaderParams, transform.getter)}`
+      fragColor = (uv) => `${shaderString(uv, transform.transform.glslName, inputs, shaderParams)}`
     } else if (transform.transform.type === 'coord') {
       fragColor = (uv) => f0() ?
-        `${f0(`${shaderString(uv, transform.name, inputs, shaderParams)}`)}` :
-        `${shaderString(uv, transform.name, inputs, shaderParams, transform.getter)}`
+        `${f0(`${shaderString(uv, transform.transform.glslName, inputs, shaderParams)}`)}` :
+        `${shaderString(uv, transform.transform.glslName, inputs, shaderParams)}`
     } else if (transform.transform.type === 'color') {
-      fragColor = (uv) =>  `${shaderString(`${f0(uv)}`, transform.name, inputs, shaderParams)}`
+      fragColor = (uv) =>  `${shaderString(`${f0(uv)}`, transform.transform.glslName, inputs, shaderParams)}`
     } else if (transform.transform.type === 'combine') {
       // combining two generated shader strings (i.e. for blend, mult, add funtions)
       var f1 = inputs[0].value && inputs[0].value.transforms ?
       (uv) => `${generateGlsl(inputs[0].value.transforms, shaderParams)(uv)}` :
       (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
-      fragColor = (uv) => `${shaderString(`${f0(uv)}, ${f1(uv)}`, transform.name, inputs.slice(1), shaderParams)}`
+      fragColor = (uv) => `${shaderString(`${f0(uv)}, ${f1(uv)}`, transform.transform.glslName, inputs.slice(1), shaderParams)}`
     } else if (transform.transform.type === 'combineCoord') {
       // combining two generated shader strings (i.e. for modulate functions)
       var f1 = inputs[0].value && inputs[0].value.transforms ?
       (uv) => `${generateGlsl(inputs[0].value.transforms, shaderParams)(uv)}` :
       (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
-      fragColor = (uv) => `${f0(`${shaderString(`${uv}, ${f1(uv)}`, transform.name, inputs.slice(1), shaderParams)}`)}`
+      fragColor = (uv) => `${f0(`${shaderString(`${uv}, ${f1(uv)}`, transform.transform.glslName, inputs.slice(1), shaderParams)}`)}`
 
 
     }
@@ -72,12 +72,13 @@ function generateGlsl (transforms, shaderParams) {
 }
 
 // assembles a shader string containing the arguments and the function name, i.e. 'osc(uv, frequency)'
-function shaderString (uv, method, inputs, shaderParams, getter) {
+function shaderString (uv, method, inputs, shaderParams) {
   const str = inputs.map((input) => {
     if (input.isUniform) {
       return input.name
     } else if (input.value && input.value.transforms) {
       // this by definition needs to be a generator, hence we start with 'st' as the initial value for generating the glsl fragment
+      // todo: automatic getter possible?
       return `${generateGlsl(input.value.transforms, shaderParams)('st')}` + (input.value.getter ? '.' + input.value.getter : '')
     }
     return input.value

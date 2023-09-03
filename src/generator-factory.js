@@ -64,10 +64,12 @@ class GeneratorFactory {
       this.changeListener({type: 'add', synth: this, method})
       return func
     } else  {
-      this.sourceClass.prototype[method] = function (...args) {
+      const func = function (...args) {
         this.transforms.push({name: method, transform: transform, userArgs: args, synth: self})
         return this
-      }
+      };
+      this.sourceClass.prototype[method] = func
+      this.transformClass.prototype[method] = func
       if (transform.type === 'coord') {
         const func = (...args) => new this.transformClass({
           name: method,
@@ -162,7 +164,8 @@ function processGlsl(obj) {
   let args = `${baseArgs}${customArgs.length > 0 ? ', '+ customArgs: ''}`
 //  console.log('args are ', args)
 
-    const func = `${t.returnType} ${obj.name}(${args})`;
+    obj.glslName || (obj.glslName = obj.name);
+    const func = `${t.returnType} ${obj.glslName}(${args})`;
     const glslFunction = obj.glsl.indexOf(func) > -1 ? obj.glsl :
 `
   ${func} {
