@@ -184,10 +184,14 @@ GlslSource.compileVert = function(precision, transform, shaderInfo, utils) {
     }).join('')}
     `
     vertFn = transform.vert;
-    if (transform.primitive) {
-      // todo: quick fix
-      let primitiveFn = transform.primitive.split(" ").join("");
-      vertFn = vertFn.replace(`vec4 ${primitiveFn}(`, `vec4 ${transform.glslName}(`);
+    if (vertFn.indexOf(`vec4 ${transform.glslName}(`) === -1) {
+      if (vertFn.indexOf(`vec4 main(`) > -1) {
+        vertFn = vertFn.replace(`vec4 main(`, `vec4 ${transform.glslName}(`);
+      }
+      else if (transform.primitive) {
+        let primitiveFn = transform.primitive.split(" ").join("");
+        vertFn = vertFn.replace(`vec4 ${primitiveFn}(`, `vec4 ${transform.glslName}(`);
+      }
     }
     vertCall = `
     vec2 st = uv;
