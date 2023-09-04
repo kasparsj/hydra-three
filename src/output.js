@@ -94,6 +94,7 @@ Output.prototype.render = function (passes) {
     const primitive = pass.primitive || 'triangles';
     const {attributes, count} = this.getAttributes(primitive, pass.userArgs[0]);
     const uniforms = this.getUniforms(pass.uniforms);
+    const blend = this.getBlend(pass.blendMode);
     const draw = self.regl({
       frag: pass.frag,
       vert: pass.vert,
@@ -101,6 +102,7 @@ Output.prototype.render = function (passes) {
       primitive,
       uniforms,
       count,
+      blend,
       framebuffer: () => {
         self.pingPongIndex = self.pingPongIndex ? 0 : 1
         return self.fbos[self.pingPongIndex]
@@ -242,6 +244,19 @@ Output.prototype.getUniforms = function(uniforms) {
     acc[key] = typeof(uniforms[key]) === 'string' ? parseFloat(uniforms[key]) : uniforms[key];
     return acc;
   }, {});
+}
+
+Output.prototype.getBlend = function(blendMode) {
+  // todo: implement other blendModes
+  return {
+    enable: typeof(blendMode) === 'boolean' ? blendMode : blendMode !== 'disabled',
+    func: {
+      srcRGB: 'src alpha',
+      srcAlpha: 1,
+      dstRGB: 'one minus src alpha',
+      dstAlpha: 1
+    },
+  };
 }
 
 Output.prototype.tick = function (props) {
