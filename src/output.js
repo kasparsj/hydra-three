@@ -114,6 +114,18 @@ Output.prototype.render = function (passes) {
         };
         break;
       }
+      case 'line strip': {
+        // todo: userArgs need to be merged with defaults
+        let points = pass.userArgs[0];
+        if (!Array.isArray(points)) points = [points, 1];
+        count = points[0] * points[1];
+        attributes = {
+          position: Float32Array.from({length: count * 2}, (v, k) => {
+            return k % 2 ? Math.floor((k-1) / 2 / points[0]) : (k / 2 % points[0] / (points[0]-1));
+          }),
+        };
+        break;
+      }
       case 'lines': {
         // todo: userArgs need to be merged with defaults
         let lines = pass.userArgs[0];

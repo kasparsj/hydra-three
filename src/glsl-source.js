@@ -193,6 +193,11 @@ GlslSource.compileVert = function(options = {}) {
     }).join('')}
     `
     vertFn = transform.vert;
+    if (transform.primitive) {
+      let primitiveFn = transform.primitive.split(" ");
+      primitiveFn = primitiveFn[0] + primitiveFn.slice(1).map((v) => v[0].toUpperCase() + v.substring(1)).join("");
+      vertFn = vertFn.replace(`void ${primitiveFn}(`, `void ${transform.glslName}(`); // todo: quick fix
+    }
     vertCall = `
     vec2 st = uv;
     ${shaderInfo.fragColor};
