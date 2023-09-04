@@ -1,5 +1,4 @@
-//const transforms = require('./glsl-transforms.js')
-
+import * as mat4 from "gl-mat4";
 import GlslSource from "./glsl-source.js";
 
 var Output = function ({ regl, precision, label = "", width, height}) {
@@ -78,9 +77,56 @@ Output.prototype.init = function () {
         gl_FragColor = c;
       }
   `
+
+  this.initCamera();
+
   return this
 }
 
+Output.prototype.initCamera = function() {
+  this.camera = this.regl({
+    context: {
+      projection: mat4.identity([]),
+      view: mat4.identity([]),
+    },
+    uniforms: {
+      view: this.regl.context('view'),
+      projection: this.regl.context('projection')
+    }
+  });
+}
+
+Output.prototype.setupCamera = function(eye, target, options = {}) {
+  this.eye = eye;
+  this.target = target;
+  if (eye && target) {
+    this.camera = this.regl({
+      context: {
+        projection: function (context) {
+          return mat4.perspective([],
+              Math.PI / 4,
+              context.viewportWidth / context.viewportHeight,
+              0.01,
+              1000.0)
+        },
+        view: function (context, props) {
+          return mat4.lookAt([],
+              props.eye,
+              props.target,
+              [0, 1, 0])
+        },
+        eye: this.regl.prop('eye')
+      },
+      uniforms: {
+        view: this.regl.context('view'),
+        projection: this.regl.context('projection')
+      }
+    });
+  }
+  else {
+    this.initCamera();
+  }
+}
 
 Output.prototype.render = function (passes) {
   const self = this
@@ -113,9 +159,12 @@ Output.prototype.render = function (passes) {
   }
 }
 
-Output.prototype.pushClear = function(clearAmount) {
+Output.prototype.pushClear = function(options) {
+  let clear = options;
+  let useCamera = false;
+  if (typeof(options) === 'object') ({clear, useCamera} = options);
   const self = this;
-  if (clearAmount >= 1) {
+  if (clear >= 1) {
     const clear = () => self.regl.clear({
       color: [0, 0, 0, 0],
       // next framebuffer
@@ -130,11 +179,11 @@ Output.prototype.pushClear = function(clearAmount) {
           varying vec2 uv;
           uniform sampler2D prevBuffer;
           void main() {
-            vec4 color = mix(texture2D(prevBuffer, uv), vec4(0), ${clearAmount});
+            vec4 color = mix(texture2D(prevBuffer, uv), vec4(0), ${clear});
             gl_FragColor = color;
           }
         `,
-      vert: GlslSource.compileVert(this.precision, { name: 'clear' }),
+      vert: GlslSource.compileVert(this.precision, useCamera, { name: 'clear' }),
       attributes: self.attributes,
       primitive: 'triangles',
       uniforms: {
@@ -248,21 +297,72 @@ Output.prototype.getUniforms = function(uniforms) {
 }
 
 Output.prototype.getBlend = function(blendMode) {
-  // todo: implement other blendModes
+  let func;
+  switch (blendMode) {
+    case 'custom':
+      func = {
+        srcRGB: 'custom',  // Define your custom blending function here
+        dstRGB: 'custom',
+        srcAlpha: 'custom',
+        dstAlpha: 'custom',
+      };
+      break;
+    case 'overlay':
+      func = {
+        srcRGB: 'dst color',
+        dstRGB: 'one minus src color',
+        srcAlpha: 'dst alpha',
+        dstAlpha: 'one minus src alpha',
+      };
+      break;
+    case 'screen':
+      func = {
+        srcRGB: 'one minus dst color',
+        dstRGB: 'one',
+        srcAlpha: 'one minus dst alpha',
+        dstAlpha: 'one',
+      };
+      break;
+    case 'multiply':
+      func = {
+        srcRGB: 'dst color',
+        dstRGB: 'zero',
+        srcAlpha: 'dst alpha',
+        dstAlpha: 'zero',
+      };
+      break;
+    case 'add':
+      func = {
+        srcRGB: 'one',
+        dstRGB: 'one',
+        srcAlpha: 'one',
+        dstAlpha: 'one',
+      };
+      break;
+    case 'alpha':
+    default:
+      func = {
+        srcRGB: 'src alpha',
+        srcAlpha: 1,
+        dstRGB: 'one minus src alpha',
+        dstAlpha: 1
+      };
+      break;
+  }
   return {
     enable: typeof(blendMode) === 'boolean' ? blendMode : blendMode !== 'disabled',
-    func: {
-      srcRGB: 'src alpha',
-      srcAlpha: 1,
-      dstRGB: 'one minus src alpha',
-      dstAlpha: 1
-    },
+    func,
   };
 }
 
 Output.prototype.tick = function (props) {
-//  console.log(props)
-  this.draw.map((fn) => fn(props))
+  const doDraw = () => this.draw.map((fn) => fn(props));
+  this.camera({
+    eye: this.eye,
+    target: this.target,
+  }, function() {
+    doDraw();
+  });
 }
 
 export default Output

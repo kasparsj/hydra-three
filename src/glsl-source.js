@@ -105,7 +105,7 @@ GlslSource.prototype.compile = function (transforms) {
   shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
 
   return {
-    vert: GlslSource.compileVert(this.defaultOutput.precision, transforms[0].transform, shaderInfo, this.utils),
+    vert: GlslSource.compileVert(this.defaultOutput.precision, true, transforms[0].transform, shaderInfo, this.utils),
     attributes: transforms[0].transform.attributes,
     primitive: transforms[0].transform.primitive,
     userArgs: transforms[0].userArgs,
@@ -163,20 +163,22 @@ GlslSource.compileFrag = function(precision, shaderInfo, utils) {
   `
 }
 
-GlslSource.compileVert = function(precision, transform, shaderInfo, utils) {
+GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, utils) {
   var vertHeader = `
   precision ${precision} float;
+  uniform mat4 projection, view;
   attribute vec2 position;
   varying vec2 uv;
   `
   var vertFn = `
   void ${transform.glslName}() {
-    gl_Position = vec4(2.0 * position - 1.0, 0, 1);
+    gl_Position = ${useCamera ? 'projection * view * ' : ''}vec4(2.0 * position - 1.0, 0, 1);
   } 
   `
   var vertCall = `${transform.glslName}();`;
   if (transform.vert) {
     vertHeader = this.compileHeader(precision, shaderInfo.uniforms, utils) + `
+    uniform mat4 projection, view;
     attribute vec2 position;
     
     ${shaderInfo.glslFunctions.map((trans) => {
@@ -199,8 +201,9 @@ GlslSource.compileVert = function(precision, transform, shaderInfo, utils) {
     }
     vertCall = `
     vec2 st = uv;
-    gl_Position = ${shaderInfo.position};
-    gl_Position.w = 1.0;
+    vec4 pos = ${shaderInfo.position};
+    pos.w = 1.0;
+    gl_Position = projection * view * pos;
     `;
   }
 
@@ -214,8 +217,13 @@ GlslSource.compileVert = function(precision, transform, shaderInfo, utils) {
   }`
 }
 
-GlslSource.prototype.setClear = function (amount = 1) {
-  this.clear = amount;
+GlslSource.prototype.setClear = function (clear = 1, options) {
+  if (options) {
+    this.clear = Object.assign(options, {clear});
+  }
+  else {
+    this.clear = clear;
+  }
   return this;
 }
 
