@@ -13,6 +13,7 @@ var GlslSource = function (obj) {
   this.defaultUniforms = obj.defaultUniforms
   this.utils = Object.assign({}, utilityGlsl, obj.utils);
   this.blendMode = typeof(obj.transform.blendMode) !== 'undefined' ? obj.transform.blendMode : false;
+  this.lineWidth = obj.transform.lineWidth || 1;
   return this
 }
 
@@ -110,6 +111,7 @@ GlslSource.prototype.compile = function (transforms) {
     userArgs: transforms[0].userArgs,
     clear: typeof(this.clear) !== 'undefined' ? this.clear : transforms[0].transform.clear,
     blendMode: this.blendMode,
+    lineWidth: this.lineWidth,
     frag: GlslSource.compileFrag(this.defaultOutput.precision, shaderInfo, this.utils),
     uniforms: Object.assign({}, this.defaultUniforms, uniforms)
   }
@@ -219,6 +221,11 @@ GlslSource.prototype.setClear = function (amount = 1) {
 
 GlslSource.prototype.setBlend = function(blendMode = true) {
   this.blendMode = blendMode;
+  return this;
+}
+
+GlslSource.prototype.setLineWidth = function(lineWidth) {
+  this.lineWidth = lineWidth;
   return this;
 }
 

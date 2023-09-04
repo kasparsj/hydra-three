@@ -103,6 +103,7 @@ Output.prototype.render = function (passes) {
       uniforms,
       count,
       blend,
+      lineWidth: pass.lineWidth,
       framebuffer: () => {
         self.pingPongIndex = self.pingPongIndex ? 0 : 1
         return self.fbos[self.pingPongIndex]
