@@ -60,9 +60,9 @@ function generateGlsl (transforms, shaderParams, returnType) {
     } else if (transform.transform.type === 'combineCoord') {
       // combining two generated shader strings (i.e. for modulate functions)
       var f1 = inputs[0].value && inputs[0].value.transforms ?
-      (uv) => `${generateGlsl(inputs[0].value.transforms, shaderParams)(uv)}` :
+      (uv) => `${generateGlsl(inputs[0].value.transforms, shaderParams, expectedReturn)(uv)}` :
       (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
-      fragColor = (uv) => `${f0(`${shaderString(`${uv}, ${f1(uv)}`, transform, inputs.slice(1), shaderParams, expectedReturn)}`)}`
+      fragColor = (uv) => `${f0(`${shaderString(`${uv}, ${f1(uv)}`, transform, inputs.slice(1), shaderParams, 'vec2')}`)}`
 
 
     }
