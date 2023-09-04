@@ -187,7 +187,7 @@ GlslSource.compileVert = function(precision, transform, shaderInfo, utils) {
     if (transform.primitive) {
       // todo: quick fix
       let primitiveFn = transform.primitive.split(" ").join("");
-      vertFn = vertFn.replace(`void ${primitiveFn}(`, `void ${transform.glslName}(`);
+      vertFn = vertFn.replace(`vec4 ${primitiveFn}(`, `vec4 ${transform.glslName}(`);
     }
     vertCall = `
     vec2 st = uv;
