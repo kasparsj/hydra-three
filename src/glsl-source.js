@@ -194,9 +194,9 @@ GlslSource.compileVert = function(options = {}) {
     `
     vertFn = transform.vert;
     if (transform.primitive) {
-      let primitiveFn = transform.primitive.split(" ");
-      primitiveFn = primitiveFn[0] + primitiveFn.slice(1).map((v) => v[0].toUpperCase() + v.substring(1)).join("");
-      vertFn = vertFn.replace(`void ${primitiveFn}(`, `void ${transform.glslName}(`); // todo: quick fix
+      // todo: quick fix
+      let primitiveFn = transform.primitive.split(" ").join("");
+      vertFn = vertFn.replace(`void ${primitiveFn}(`, `void ${transform.glslName}(`);
     }
     vertCall = `
     vec2 st = uv;
