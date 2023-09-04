@@ -91,96 +91,9 @@ Output.prototype.render = function (passes) {
       this.pushClear(pass.clear);
     }
 
-    var uniforms = Object.assign(pass.uniforms, { prevBuffer:  () =>  {
-        //var index = this.pingPongIndex ? 0 : 1
-        //   var index = self.pingPong[(passIndex+1)%2]
-        //  console.log('ping pong', self.pingPongIndex)
-        return self.fbos[self.pingPongIndex]
-      }
-    })
-    let count = 3;
-    let attributes = self.attributes;
     const primitive = pass.primitive || 'triangles';
-    switch (primitive) {
-      case 'points': {
-        // todo: userArgs need to be merged with defaults
-        let points = pass.userArgs[0];
-        if (!Array.isArray(points)) points = [points, points];
-        count = 2 * points[0] * points[1];
-        attributes = {
-          position: Float32Array.from({length: count * 2}, (v, k) => {
-            return k % 2 ? ((Math.floor((k-1) / 2 / points[0])+0.5) / points[1]) : ((k+1) / 2 % points[0] / points[0]);
-          }),
-        };
-        break;
-      }
-      case 'line strip': {
-        // todo: userArgs need to be merged with defaults
-        let points = pass.userArgs[0];
-        if (!Array.isArray(points)) points = [points, 1];
-        count = points[0] * points[1];
-        attributes = {
-          position: Float32Array.from({length: count * 2}, (v, k) => {
-            // todo: make this an argument
-            let closed = true;
-            return k % 2 ? Math.floor((k-1) / 2 / points[0]) : (k / 2 % points[0] / (points[0]-closed));
-          }),
-        };
-        break;
-      }
-      case 'line loop': {
-        // todo: userArgs need to be merged with defaults
-        let points = pass.userArgs[0];
-        if (!Array.isArray(points)) points = [points, 1];
-        count = points[0] * points[1];
-        attributes = {
-          position: Float32Array.from({length: count * 2}, (v, k) => {
-            return k % 2 ? Math.floor((k-1) / 2 / points[0]) : (k / 2 % points[0] / (points[0]));
-          }),
-        };
-        break;
-      }
-      case 'lines': {
-        // todo: userArgs need to be merged with defaults
-        let lines = pass.userArgs[0];
-        if (!Array.isArray(lines)) lines = [lines, 0];
-        count = 4 * (lines[0] + lines[1]);
-        attributes = {
-          position: Float32Array.from({length: count * 2}, (v, k) => {
-            if (k < (lines[0] * 4)) {
-              switch (k%4) {
-                case 0:
-                  return ((k+2) / 4 % lines[0] / lines[0]);
-                case 2:
-                  return ((k) / 4 % lines[0] / lines[0]);
-                case 1:
-                  return 0;
-                case 3:
-                  return 1;
-              }
-            }
-            else {
-              switch (k%4) {
-                case 0:
-                  return 0;
-                case 2:
-                  return 1;
-                case 1:
-                  return ((k+1) / 4 % lines[1] / lines[1]);
-                case 3:
-                  return ((k-1) / 4 % lines[1] / lines[1]);
-              }
-            }
-          }),
-        };
-        break;
-      }
-      // todo: triangles
-    }
-    uniforms = Object.keys(uniforms).reduce((acc, key) => {
-      acc[key] = typeof(uniforms[key]) === 'string' ? parseFloat(uniforms[key]) : uniforms[key];
-      return acc;
-    }, {});
+    const {attributes, count} = this.getAttributes(primitive, pass.userArgs[0]);
+    const uniforms = this.getUniforms(pass.uniforms);
     const draw = self.regl({
       frag: pass.frag,
       vert: pass.vert,
@@ -232,6 +145,103 @@ Output.prototype.pushClear = function(clearAmount) {
     });
     self.draw.push(fade);
   }
+}
+
+Output.prototype.getAttributes = function(primitive, num) {
+  let count = 3;
+  let attributes = this.attributes;
+  switch (primitive) {
+    case 'points': {
+      // todo: userArgs need to be merged with defaults
+      let points = num;
+      if (!Array.isArray(points)) points = [points, points];
+      count = 2 * points[0] * points[1];
+      attributes = {
+        position: Float32Array.from({length: count * 2}, (v, k) => {
+          return k % 2 ? ((Math.floor((k-1) / 2 / points[0])+0.5) / points[1]) : ((k+1) / 2 % points[0] / points[0]);
+        }),
+      };
+      break;
+    }
+    case 'line strip': {
+      // todo: userArgs need to be merged with defaults
+      let points = num;
+      if (!Array.isArray(points)) points = [points, 1];
+      count = points[0] * points[1];
+      attributes = {
+        position: Float32Array.from({length: count * 2}, (v, k) => {
+          // todo: make this an argument
+          let closed = true;
+          return k % 2 ? Math.floor((k-1) / 2 / points[0]) : (k / 2 % points[0] / (points[0]-closed));
+        }),
+      };
+      break;
+    }
+    case 'line loop': {
+      // todo: userArgs need to be merged with defaults
+      let points = num;
+      if (!Array.isArray(points)) points = [points, 1];
+      count = points[0] * points[1];
+      attributes = {
+        position: Float32Array.from({length: count * 2}, (v, k) => {
+          return k % 2 ? Math.floor((k-1) / 2 / points[0]) : (k / 2 % points[0] / (points[0]));
+        }),
+      };
+      break;
+    }
+    case 'lines': {
+      // todo: userArgs need to be merged with defaults
+      let lines = num;
+      if (!Array.isArray(lines)) lines = [lines, 0];
+      count = 4 * (lines[0] + lines[1]);
+      attributes = {
+        position: Float32Array.from({length: count * 2}, (v, k) => {
+          if (k < (lines[0] * 4)) {
+            switch (k%4) {
+              case 0:
+                return ((k+2) / 4 % lines[0] / lines[0]);
+              case 2:
+                return ((k) / 4 % lines[0] / lines[0]);
+              case 1:
+                return 0;
+              case 3:
+                return 1;
+            }
+          }
+          else {
+            switch (k%4) {
+              case 0:
+                return 0;
+              case 2:
+                return 1;
+              case 1:
+                return ((k+1) / 4 % lines[1] / lines[1]);
+              case 3:
+                return ((k-1) / 4 % lines[1] / lines[1]);
+            }
+          }
+        }),
+      };
+      break;
+    }
+      // todo: triangles
+  }
+  return {attributes, count};
+}
+
+Output.prototype.getUniforms = function(uniforms) {
+  const self = this;
+  uniforms = Object.assign(uniforms, { prevBuffer:  () =>  {
+      //var index = this.pingPongIndex ? 0 : 1
+      //   var index = self.pingPong[(passIndex+1)%2]
+      //  console.log('ping pong', self.pingPongIndex)
+      return self.fbos[self.pingPongIndex]
+    }
+  })
+  return Object.keys(uniforms).reduce((acc, key) => {
+    acc[key] = typeof(uniforms[key]) === 'string' ? parseFloat(uniforms[key]) : uniforms[key];
+    return acc;
+  }, {});
 }
 
 Output.prototype.tick = function (props) {
