@@ -52,7 +52,7 @@ function generateGlsl (transforms, shaderParams, returnType) {
     } else if (transform.transform.type === 'combine') {
       // combining two generated shader strings (i.e. for blend, mult, add funtions)
       var f1 = inputs[0].value && inputs[0].value.transforms ?
-      (uv) => `${generateGlsl(inputs[0].value.transforms, shaderParams, returnType)(uv)}` :
+      (uv) => `${generateGlsl(inputs[0].value.transforms, shaderParams, 'vec4')(uv)}` :
       (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
       fragColor = (uv) => `${shaderString(`${f0(uv)}, ${f1(uv)}`, transform, inputs.slice(1), shaderParams, expectedReturn)}`
     } else if (transform.transform.type === 'combineCoord') {
