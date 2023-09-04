@@ -2,23 +2,23 @@ import formatArguments from './format-arguments.js'
 import {typeLookup, getLookup} from "./types.js";
 
 // converts a tree of javascript functions to a shader
-export default function (transforms) {
+export default function(transforms) {
     var shaderParams = {
       uniforms: [], // list of uniforms used in shader
       glslFunctions: [], // list of functions used in shader
-      fragColor: ''
+      fragColor: '',
+      position: '',
     }
 
     var gen = generateGlsl(transforms, shaderParams, typeLookup['src'].returnType)('st')
     shaderParams.fragColor = gen
+    shaderParams.position = gen
     // remove uniforms with duplicate names
     let uniforms = {}
     shaderParams.uniforms.forEach((uniform) => uniforms[uniform.name] = uniform)
     shaderParams.uniforms = Object.values(uniforms)
     return shaderParams
-
 }
-
 
 // recursive function for generating shader string from object containing functions and user arguments. Order of functions in string depends on type of function
 // to do: improve variable names

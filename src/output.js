@@ -204,10 +204,7 @@ Output.prototype.pushClear = function(clearAmount) {
             gl_FragColor = color;
           }
         `,
-      vert: GlslSource.compileVert({
-        precision: this.precision,
-        transform: { name: 'clear' },
-      }),
+      vert: GlslSource.compileVert(this.precision, { name: 'clear' }),
       attributes: self.attributes,
       primitive: 'triangles',
       uniforms: {

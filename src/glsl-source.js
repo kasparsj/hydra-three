@@ -79,7 +79,7 @@ GlslSource.prototype.getInfo = function () {
     }
   })
   if (transforms.length > 0) {
-    var shaderInfo = generateGlsl(transforms, this.synth)
+    var shaderInfo = generateFrag(transforms, this.synth)
     var uniforms = {}
     shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
     return {
@@ -102,25 +102,19 @@ GlslSource.prototype.compile = function (transforms) {
   var uniforms = {}
   shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
 
-  var fragHeader = GlslSource.compileFragHead(this.defaultOutput.precision, shaderInfo.uniforms, this.utils);
   return {
-    vert: GlslSource.compileVert({
-      precision: this.defaultOutput.precision,
-      transform: transforms[0].transform,
-      fragHeader,
-      shaderInfo,
-    }),
+    vert: GlslSource.compileVert(this.defaultOutput.precision, transforms[0].transform, shaderInfo, this.utils),
     attributes: transforms[0].transform.attributes,
     primitive: transforms[0].transform.primitive,
     userArgs: transforms[0].userArgs,
     clear: typeof(this.clear) !== 'undefined' ? this.clear : transforms[0].transform.clear,
-    frag: GlslSource.compileFrag(fragHeader, shaderInfo),
+    frag: GlslSource.compileFrag(this.defaultOutput.precision, shaderInfo, this.utils),
     uniforms: Object.assign({}, this.defaultUniforms, uniforms)
   }
 
 }
 
-GlslSource.compileFragHead = function(precision, uniforms = {}, utils = {}) {
+GlslSource.compileHeader = function(precision, uniforms = {}, utils = {}) {
   return `
   precision ${precision} float;
   ${Object.values(uniforms).map((uniform) => {
@@ -147,7 +141,8 @@ GlslSource.compileFragHead = function(precision, uniforms = {}, utils = {}) {
   `
 }
 
-GlslSource.compileFrag = function(header, shaderInfo) {
+GlslSource.compileFrag = function(precision, shaderInfo, utils) {
+  const header = this.compileHeader(precision, shaderInfo.uniforms, utils);
   return header + `
   
   ${shaderInfo.glslFunctions.map((transform) => {
@@ -164,9 +159,7 @@ GlslSource.compileFrag = function(header, shaderInfo) {
   `
 }
 
-GlslSource.compileVert = function(options = {}) {
-  const {precision, transform} = options;
-
+GlslSource.compileVert = function(precision, transform, shaderInfo, utils) {
   var vertHeader = `
   precision ${precision} float;
   attribute vec2 position;
@@ -179,9 +172,7 @@ GlslSource.compileVert = function(options = {}) {
   `
   var vertCall = `${transform.glslName}();`;
   if (transform.vert) {
-    const {fragHeader, shaderInfo} = options;
-
-    vertHeader = fragHeader + `
+    vertHeader = this.compileHeader(precision, shaderInfo.uniforms, utils) + `
     attribute vec2 position;
     
     ${shaderInfo.glslFunctions.map((trans) => {
@@ -200,7 +191,8 @@ GlslSource.compileVert = function(options = {}) {
     }
     vertCall = `
     vec2 st = uv;
-    ${shaderInfo.fragColor};
+    gl_Position = ${shaderInfo.position};
+    gl_Position.w = 1.0;
     `;
   }
 
