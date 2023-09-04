@@ -217,7 +217,7 @@ GlslSource.prototype.setClear = function (amount = 1) {
   return this;
 }
 
-GlslSource.prototype.setBlendMode = function(blendMode = true) {
+GlslSource.prototype.setBlend = function(blendMode = true) {
   this.blendMode = blendMode;
   return this;
 }
