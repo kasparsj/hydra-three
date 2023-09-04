@@ -108,7 +108,7 @@ export default function formatArguments(transform, startIndex, synthContext) {
           var x1 = typedArg.value
           let getter = getLookup[input.type];
           typedArg.value = src(x1)[getter];
-          typedArg.isUniform = typedArg.value.name === 'reglTexture2D'
+          typedArg.isUniform = false
         }
       }
 
