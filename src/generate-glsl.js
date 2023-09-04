@@ -12,7 +12,9 @@ export default function(transforms) {
 
     var gen = generateGlsl(transforms, shaderParams, typeLookup['src'].returnType)('st')
     shaderParams.fragColor = gen
-    shaderParams.position = gen
+    shaderParams.position = generateGlsl(transforms.filter((tr) => {
+      return tr.transform.type !== 'combine';
+    }), shaderParams, typeLookup['src'].returnType)('st')
     // remove uniforms with duplicate names
     let uniforms = {}
     shaderParams.uniforms.forEach((uniform) => uniforms[uniform.name] = uniform)
