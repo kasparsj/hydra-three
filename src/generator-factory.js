@@ -1,6 +1,6 @@
 import GlslSource from './glsl-source.js'
 import glslFunctions from './glsl/glsl-functions.js'
-import typeLookup from "./types.js";
+import {typeLookup} from "./types.js";
 
 class GeneratorFactory {
   constructor ({

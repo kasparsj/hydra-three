@@ -21,4 +21,6 @@ const typeLookup = {
     }
 }
 
-export default typeLookup;
+const getLookup = {float: 'x', vec2: 'xy', vec3: 'xyz', vec4: 'xyzw'};
+
+export { typeLookup, getLookup };

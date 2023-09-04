@@ -1,4 +1,5 @@
 import arrayUtils from './lib/array-utils.js'
+import {getLookup} from "./types.js";
 
 // [WIP] how to treat different dimensions (?)
 const DEFAULT_CONVERSIONS = {
@@ -103,9 +104,10 @@ export default function formatArguments(transform, startIndex, synthContext) {
         typedArg.isUniform = true
       } else {
         // if passing in a texture reference, when function asks for vec4, convert to vec4
-        if (input.type === 'vec4' && (typedArg.value.getTexture || typedArg.value.name === 'reglTexture2D')) {
+        if (typedArg.value.getTexture || typedArg.value.name === 'reglTexture2D') {
           var x1 = typedArg.value
-          typedArg.value = src(x1)
+          let getter = getLookup[input.type];
+          typedArg.value = src(x1)[getter];
           typedArg.isUniform = typedArg.value.name === 'reglTexture2D'
         }
       }

@@ -1,5 +1,5 @@
 import formatArguments from './format-arguments.js'
-import typeLookup from "./types.js";
+import {typeLookup, getLookup} from "./types.js";
 
 // converts a tree of javascript functions to a shader
 export default function (transforms) {
@@ -79,8 +79,7 @@ function shaderString (uv, transform, inputs, shaderParams, returnType) {
       // this by definition needs to be a generator, hence we start with 'st' as the initial value for generating the glsl fragment
       let getter = input.value.getter;
       if (!getter && typeLookup[input.value.transforms[0].transform.type] !== input.type) {
-        const defaultGets = {float: 'x', vec2: 'xy', vec3: 'xyz', vec4: 'xyzw'};
-        getter = defaultGets[input.type];
+        getter = getLookup[input.type];
       }
       return `${generateGlsl(input.value.transforms, shaderParams, input.type)('st')}` + (getter ? '.' + getter : '')
     }
