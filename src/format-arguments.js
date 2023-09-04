@@ -160,7 +160,7 @@ function getArrayValue(value, input, vecLen = 0) {
       const values = Array(vecLen);
       for (let i=0; i<vecLen; i++) {
         const v = value[i];
-        const defaultValue = input.default.constructor === Array ? input.default[i] : input.default;
+        const defaultValue = input.default ? input.default.constructor === Array ? input.default[i] : input.default : 0;
         if (typeof v === 'function') {
           values[i] = getFunctionValue(v, {default: defaultValue})(context, props, batchId);
         } else if (Array.isArray(v)) {
