@@ -203,7 +203,6 @@ GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, u
     vertCall = `
     vec2 st = uv;
     vec4 pos = ${shaderInfo.position};
-    pos.w = 1.0;
     gl_Position = projection * view * pos;
     `;
   }

@@ -64,7 +64,7 @@ Output.prototype.init = function () {
   }
   this.uniforms = {
     time: this.regl.prop('time'),
-    resolution: this.regl.prop('resolution')
+    resolution: this.regl.prop('resolution'),
   }
 
   this.frag = `
@@ -103,11 +103,16 @@ Output.prototype.setupCamera = function(eye, target, options = {}) {
     this.camera = this.regl({
       context: {
         projection: function (context) {
-          return mat4.perspective([],
-              Math.PI / 4,
-              context.viewportWidth / context.viewportHeight,
-              0.01,
-              1000.0)
+          if (options.type === 'perspective') {
+            return mat4.perspective([],
+                Math.PI / 4,
+                context.viewportWidth / context.viewportHeight,
+                0.01,
+                1000.0)
+          }
+          else {
+            return mat4.ortho([], -1.0, 1.0, -1.0, 1.0, 0.1, 10.0);
+          }
         },
         view: function (context, props) {
           return mat4.lookAt([],
@@ -115,11 +120,11 @@ Output.prototype.setupCamera = function(eye, target, options = {}) {
               props.target,
               [0, 1, 0])
         },
-        eye: this.regl.prop('eye')
+        eye: this.regl.prop('eye'),
       },
       uniforms: {
         view: this.regl.context('view'),
-        projection: this.regl.context('projection')
+        projection: this.regl.context('projection'),
       }
     });
   }
@@ -186,9 +191,9 @@ Output.prototype.pushClear = function(options) {
       vert: GlslSource.compileVert(this.precision, useCamera, { name: 'clear' }),
       attributes: self.attributes,
       primitive: 'triangles',
-      uniforms: {
+      uniforms: Object.assign({}, {
         prevBuffer: () =>  { return self.fbos[self.pingPongIndex] },
-      },
+      }, this.uniforms),
       count: 3,
       // next framebuffer
       framebuffer: () => {
@@ -255,17 +260,17 @@ Output.prototype.getAttributes = function(primitive, num) {
               case 2:
                 return ((k) / 4 % lines[0] / lines[0]);
               case 1:
-                return 0;
+                return 0.0001;
               case 3:
-                return 0.999999;
+                return 0.9999;
             }
           }
           else {
             switch (k%4) {
               case 0:
-                return 0;
+                return 0.0001;
               case 2:
-                return 0.999999;
+                return 0.9999;
               case 1:
                 return ((k+1) / 4 % lines[1] / lines[1]);
               case 3:

@@ -90,6 +90,7 @@ export default function formatArguments(transform, startIndex, synthContext) {
       } else if (typedArg.type.startsWith('vec') && typeof typedArg.value !== 'function' && !typedArg.value.getTexture) {
         typedArg.isUniform = false
         if (Array.isArray(typedArg.value) || typedArg.value instanceof Float32Array || typedArg.value instanceof Uint8Array) {
+          // todo: accept smaller arrays?
           typedArg.value = `${typedArg.type}(${typedArg.value.map(ensure_decimal_dot).join(', ')})`
         }
         else if (typeof typedArg.value === 'number') {
