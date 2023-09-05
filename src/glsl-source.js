@@ -3,6 +3,7 @@ import formatArguments from './format-arguments.js'
 
 // const glslTransforms = require('./glsl/composable-glsl-functions.js')
 import utilityGlsl from './glsl/utility-functions.js'
+import {castType, getterType} from "./types.js";
 
 var GlslSource = function (obj) {
   this.transforms = []
@@ -82,7 +83,7 @@ GlslSource.prototype.getInfo = function () {
     }
   })
   if (transforms.length > 0) {
-    var shaderInfo = generateFrag(transforms, this.synth)
+    var shaderInfo = generateGlsl(transforms, this.synth)
     var uniforms = {}
     shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
     return {
@@ -104,6 +105,11 @@ GlslSource.prototype.compile = function (transforms) {
   var shaderInfo = generateGlsl(transforms, this.synth)
   var uniforms = {}
   shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
+
+  // todo: quickfix
+  if (this.getter) {
+    shaderInfo.fragColor = castType(shaderInfo.fragColor + `.${this.getter}`, getterType(this.getter), 'vec4', 1.0)
+  }
 
   return {
     vert: GlslSource.compileVert(this.defaultOutput.precision, true, transforms[0].transform, shaderInfo, this.utils),

@@ -1,5 +1,5 @@
 import formatArguments from './format-arguments.js'
-import {typeLookup, getLookup} from "./types.js";
+import {typeLookup, getLookup, castType} from "./types.js";
 
 // converts a tree of javascript functions to a shader
 export default function(transforms) {
@@ -89,18 +89,7 @@ function shaderString (uv, transform, inputs, shaderParams, returnType) {
   }).reduce((p, c) => `${p}, ${c}`, '')
 
   var func = `${transform.transform.glslName}(${uv}${str})`
-  if (typeLookup[transform.transform.type].returnType.substring(3) < (returnType === 'float' ? 1 : returnType.substring(3))) {
-    var diff = returnType.substring(3) - typeLookup[transform.transform.type].returnType.substring(3);
-    func = `vec${returnType.substring(3)}(${func}${', 0.0'.repeat(diff)})`;
-  }
-  return func;
-}
-
-// merge two arrays and remove duplicates
-function mergeArrays (a, b) {
-  return a.concat(b.filter(function (item) {
-    return a.indexOf(item) < 0;
-  }))
+  return castType(func, typeLookup[transform.transform.type].returnType, returnType);
 }
 
 // check whether array
