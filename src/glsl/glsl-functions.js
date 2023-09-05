@@ -261,8 +261,10 @@ export default () => [
     }
   ],
   glsl:
-`   vec2 xy = _st - vec2(0.5);
-   float ang = angle + speed *time;
+`  vec2 xy = _st - vec2(0.5);
+   // Convert degrees to radians
+   float ang = angle * (3.141592653589793 / 180.0);
+   ang = ang + speed *time;
    xy = mat2(cos(ang),-sin(ang), sin(ang),cos(ang))*xy;
    xy += 0.5;
    return xy;`

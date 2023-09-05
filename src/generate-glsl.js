@@ -1,8 +1,8 @@
 import formatArguments from './format-arguments.js'
-import {typeLookup, getLookup, castType} from "./types.js";
+import {typeLookup, getLookup, getTypeLookup, castType} from "./types.js";
 
 // converts a tree of javascript functions to a shader
-export default function(transforms) {
+export default function(source, transforms) {
     var shaderParams = {
       uniforms: [], // list of uniforms used in shader
       glslFunctions: [], // list of functions used in shader
@@ -10,9 +10,9 @@ export default function(transforms) {
       position: '',
     }
 
-    var gen = generateGlsl(transforms, shaderParams, typeLookup['src'].returnType)('st')
+    var gen = generateGlsl(source, transforms, shaderParams, typeLookup['src'].returnType)('st')
     shaderParams.fragColor = gen
-    shaderParams.position = generateGlsl(transforms.filter((tr) => {
+    shaderParams.position = generateGlsl(source, transforms.filter((tr) => {
       return tr.transform.type !== 'combine';
     }), shaderParams, typeLookup['src'].returnType)('st')
     // remove uniforms with duplicate names
@@ -24,7 +24,7 @@ export default function(transforms) {
 
 // recursive function for generating shader string from object containing functions and user arguments. Order of functions in string depends on type of function
 // to do: improve variable names
-function generateGlsl (transforms, shaderParams, returnType) {
+function generateGlsl (source, transforms, shaderParams, returnType) {
   // transform function that outputs a shader string corresponding to gl_FragColor
   var fragColor = () => ''
   // var uniforms = []
@@ -54,21 +54,23 @@ function generateGlsl (transforms, shaderParams, returnType) {
     } else if (transform.transform.type === 'combine') {
       // combining two generated shader strings (i.e. for blend, mult, add funtions)
       var f1 = inputs[0].value && inputs[0].value.transforms ?
-      (uv) => `${generateGlsl(inputs[0].value.transforms, shaderParams, 'vec4')(uv)}` :
+      (uv) => `${generateGlsl(inputs[0].value, inputs[0].value.transforms, shaderParams, 'vec4')(uv)}` :
       (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
       fragColor = (uv) => `${shaderString(`${f0(uv)}, ${f1(uv)}`, transform, inputs.slice(1), shaderParams, expectedReturn)}`
     } else if (transform.transform.type === 'combineCoord') {
       // combining two generated shader strings (i.e. for modulate functions)
       var f1 = inputs[0].value && inputs[0].value.transforms ?
-      (uv) => `${generateGlsl(inputs[0].value.transforms, shaderParams, expectedReturn)(uv)}` :
+      (uv) => `${generateGlsl(inputs[0].value, inputs[0].value.transforms, shaderParams, expectedReturn)(uv)}` :
       (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
       fragColor = (uv) => `${f0(`${shaderString(`${uv}, ${f1(uv)}`, transform, inputs.slice(1), shaderParams, 'vec2')}`)}`
 
 
     }
   })
-//  console.log(fragColor)
-  //  break;
+  if (source.getter) {
+    var f2 = fragColor
+    fragColor = (uv) => castType(f2(uv) + `.${source.getter}`, getTypeLookup[source.getter], returnType, 1.0)
+  }
   return fragColor
 }
 
@@ -79,11 +81,10 @@ function shaderString (uv, transform, inputs, shaderParams, returnType) {
       return input.name
     } else if (input.value && input.value.transforms) {
       // this by definition needs to be a generator, hence we start with 'st' as the initial value for generating the glsl fragment
-      let getter = input.value.getter;
-      if (!getter && typeLookup[input.value.transforms[0].transform.type] !== input.type) {
-        getter = getLookup[input.type];
+      if (!input.value.getter && typeLookup[input.value.transforms[0].transform.type] !== input.type) {
+        input.value.getter = getLookup[input.type];
       }
-      return `${generateGlsl(input.value.transforms, shaderParams, input.type)('st')}` + (getter ? '.' + getter : '')
+      return `${generateGlsl(input.value, input.value.transforms, shaderParams, input.type)('st')}`
     }
     return input.value
   }).reduce((p, c) => `${p}, ${c}`, '')

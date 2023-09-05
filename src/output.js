@@ -257,7 +257,7 @@ Output.prototype.getAttributes = function(primitive, num) {
               case 1:
                 return 0;
               case 3:
-                return 1;
+                return 0.999999;
             }
           }
           else {
@@ -265,7 +265,7 @@ Output.prototype.getAttributes = function(primitive, num) {
               case 0:
                 return 0;
               case 2:
-                return 1;
+                return 0.999999;
               case 1:
                 return ((k+1) / 4 % lines[1] / lines[1]);
               case 3:

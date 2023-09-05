@@ -23,10 +23,12 @@ const typeLookup = {
 
 const getLookup = {float: 'x', vec2: 'xy', vec3: 'xyz', vec4: 'xyzw'};
 
-const getterType = (getter) => {
-    const types = Object.fromEntries(Object.entries(getLookup).map(([key, value]) => [value, key]));
-    return types[getter];
-}
+const getTypeLookup = {
+    x: 'float', y: 'float', z: 'float',
+    xy: 'vec2', yx: 'vec2',
+    xyz: 'vec3', xzy: 'vec3', yzx: 'vec3', yxz: 'vec3', zxy: 'vec3', zyx: 'vec3',
+    xyzw: 'vec4',
+};
 
 const castType = (func, fromType, toType, alpha = 0.0) => {
     const fromLen = fromType === 'float' ? 1 : fromType.substring(3);
@@ -43,4 +45,4 @@ const castType = (func, fromType, toType, alpha = 0.0) => {
     return func;
 }
 
-export { typeLookup, getLookup, getterType, castType };
+export { typeLookup, getLookup, getTypeLookup, castType };
