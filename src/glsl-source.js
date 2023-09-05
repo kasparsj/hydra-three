@@ -31,6 +31,7 @@ GlslSource.prototype.out = function (_output) {
   } catch (error) {
     console.log('shader could not compile', error)
   }
+  return this;
 }
 
 GlslSource.prototype.glsl = function (output) {
