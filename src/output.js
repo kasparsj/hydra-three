@@ -289,10 +289,9 @@ Output.prototype.getAttributes = function(primitive, num) {
 Output.prototype.getUniforms = function(uniforms) {
   const self = this;
   uniforms = Object.assign(uniforms, { prevBuffer:  () =>  {
-      //var index = this.pingPongIndex ? 0 : 1
-      //   var index = self.pingPong[(passIndex+1)%2]
-      //  console.log('ping pong', self.pingPongIndex)
-      return self.fbos[self.pingPongIndex]
+    // todo: changed, originally:
+    // return self.fbos[self.pingPongIndex]
+    return self.fbos[self.pingPongIndex ? 0 : 1]
     }
   })
   return Object.keys(uniforms).reduce((acc, key) => {

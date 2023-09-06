@@ -2,7 +2,7 @@ import formatArguments from './format-arguments.js'
 import {typeLookup, getLookup, getTypeLookup, castType} from "./types.js";
 
 // converts a tree of javascript functions to a shader
-export default function(source, transforms) {
+export default function(source) {
     var shaderParams = {
       uniforms: [], // list of uniforms used in shader
       glslFunctions: [], // list of functions used in shader
@@ -10,8 +10,8 @@ export default function(source, transforms) {
       position: '',
     }
 
-    shaderParams.fragColor = generateGlsl(source, transforms, shaderParams, typeLookup['src'].returnType)('st', 'vec4', 1.0)
-    shaderParams.position = generateGlsl(source, transforms.filter((tr) => {
+    shaderParams.fragColor = generateGlsl(source, source.transforms, shaderParams, typeLookup['src'].returnType)('st', 'vec4', 1.0)
+    shaderParams.position = generateGlsl(source, source.transforms.filter((tr) => {
       return tr.transform.type !== 'combine';
     }), shaderParams, typeLookup['src'].returnType)('st', 'vec4', 1.0)
     // remove uniforms with duplicate names
@@ -25,7 +25,8 @@ export default function(source, transforms) {
 // to do: improve variable names
 function generateGlsl (source, transforms, shaderParams) {
   // transform function that outputs a shader string corresponding to gl_FragColor
-  var fragColor = () => ''
+  const empty = () => '';
+  var fragColor = empty
   // var uniforms = []
   // var glslFunctions = []
   transforms.map((transform, i) => {
@@ -42,25 +43,37 @@ function generateGlsl (source, transforms, shaderParams) {
     if (transform.transform.type === 'src') {
       fragColor = (uv, returnType, alpha) => `${shaderString(uv, transform, inputs, shaderParams, returnType, alpha)}`
     } else if (transform.transform.type === 'coord') {
-      fragColor = f0('', 'vec2')
-          ? (uv, returnType, alpha) => `${f0(`${shaderString(uv, transform, inputs, shaderParams, 'vec2')}`, returnType, alpha)}`
-          : (uv, returnType, alpha) => `${shaderString(uv, transform, inputs, shaderParams, returnType, alpha)}`
+      fragColor = f0 === empty
+        ? (uv, returnType, alpha) => `${shaderString(uv, transform, inputs, shaderParams, returnType, alpha)}`
+        : (uv, returnType, alpha) => `${f0(`${shaderString(uv, transform, inputs, shaderParams, 'vec2')}`, returnType, alpha)}`
     } else if (transform.transform.type === 'color') {
       fragColor = (uv, returnType, alpha) =>  `${shaderString(`${f0(uv, 'vec4')}`, transform, inputs, shaderParams, returnType, alpha)}`
     } else if (transform.transform.type === 'combine') {
       // combining two generated shader strings (i.e. for blend, mult, add funtions)
-      var f1 = inputs[0].value && inputs[0].value.transforms ?
-      (uv, returnType, alpha) => `${generateGlsl(inputs[0].value, inputs[0].value.transforms, shaderParams)(uv, returnType, alpha)}` :
-      (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
+      var f1;
+      if (inputs[0].value && inputs[0].value.transforms) {
+        if (inputs[0].value.transforms[0].transform.vert || source.transforms[0].transform.vert) {
+          source.passes.unshift(...inputs[0].value.glsl());
+          const src = prev();
+          f1 = (uv, returnType, alpha) => `${generateGlsl(src, src.transforms, shaderParams)(uv, returnType, alpha)}`
+        }
+        else {
+          f1 = (uv, returnType, alpha) => `${generateGlsl(inputs[0].value, inputs[0].value.transforms, shaderParams)(uv, returnType, alpha)}`
+        }
+      }
+      else {
+        f1 = (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
+      }
       fragColor = (uv, returnType, alpha) => `${shaderString(`${f0(uv, 'vec4')}, ${f1(uv, 'vec4')}`, transform, inputs.slice(1), shaderParams, returnType, alpha)}`
     } else if (transform.transform.type === 'combineCoord') {
       // combining two generated shader strings (i.e. for modulate functions)
-      var f1 = inputs[0].value && inputs[0].value.transforms ?
-      (uv, returnType, alpha) => `${generateGlsl(inputs[0].value, inputs[0].value.transforms, shaderParams)(uv, returnType, alpha)}` :
-      (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
+      var f1 = inputs[0].value && inputs[0].value.transforms
+          ? (uv, returnType, alpha) => `${generateGlsl(inputs[0].value, inputs[0].value.transforms, shaderParams)(uv, returnType, alpha)}`
+          : (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
       fragColor = (uv, returnType, alpha) => `${f0(`${shaderString(`${uv}, ${f1(uv, 'vec4')}`, transform, inputs.slice(1), shaderParams, 'vec2')}`, returnType, alpha)}`
-
-
+    }
+    else {
+      console.warn('no support for type: ' + transform.transform.type)
     }
   })
   if (source.getter) {
@@ -78,6 +91,7 @@ function shaderString (uv, transform, inputs, shaderParams, returnType, alpha = 
     } else if (input.value && input.value.transforms) {
       // this by definition needs to be a generator, hence we start with 'st' as the initial value for generating the glsl fragment
       if (!input.value.getter && typeLookup[input.value.transforms[0].transform.type] !== input.type) {
+        // todo: add getter only if input.type is larger
         input.value.getter = getLookup[input.type];
       }
       return `${generateGlsl(input.value, input.value.transforms, shaderParams)('st', input.type)}`

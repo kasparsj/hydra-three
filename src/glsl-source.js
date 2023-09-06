@@ -35,82 +35,42 @@ GlslSource.prototype.out = function (_output) {
 }
 
 GlslSource.prototype.glsl = function (output) {
-  //var output = _output || this.defaultOutput
-  var self = this
-  // uniforms included in all shaders
-//  this.defaultUniforms = output.uniforms
-  var passes = []
-  var transforms = []
-//  console.log('output', output)
-  this.transforms.forEach((transform) => {
-    if(transform.transform.type === 'renderpass') {
-      // if (transforms.length > 0) passes.push(this.compile(transforms, output))
-      // transforms = []
-      // var uniforms = {}
-      // const inputs = formatArguments(transform, -1)
-      // inputs.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
-      //
-      // passes.push({
-      //   frag: transform.transform.frag,
-      //   uniforms: Object.assign({}, self.defaultUniforms, uniforms)
-      // })
-      // transforms.push({name: 'prev', transform:  glslTransforms['prev'], synth: this.synth})
-      console.warn('no support for renderpass')
-    } else {
-      transforms.push(transform)
-      const inputs = formatArguments(transform, -1);
-      // todo: another condition for a new pass could be clear option
-      if (transform.transform.type === 'combine' && inputs[0].value.transforms && inputs[0].value.transforms[0].transform.vert) {
-        passes = passes.concat(transform.userArgs[0].glsl());
-        transform.userArgs[0] = output;
-      }
-    }
-  })
-
-  if (transforms.length > 0) passes.push(this.compile(transforms))
-
-  return passes
+  this.passes = []
+  this.passes.push(this.compile())
+  return this.passes
 }
 
 GlslSource.prototype.getInfo = function () {
-  var transforms = []
-  this.transforms.forEach((transform) => {
-    if(transform.transform.type === 'renderpass'){
-      console.warn('no support for renderpass')
-    } else {
-      transforms.push(transform)
-    }
-  })
-  if (transforms.length > 0) {
-    var shaderInfo = generateGlsl(this, transforms)
+  if (this.transforms.length > 0) {
+    var shaderInfo = generateGlsl(this)
     var uniforms = {}
     shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
     return {
       shaderInfo,
       utilityGlsl: this.utils,
       // todo: differs from compile
-      vert: transforms[0].transform.vert,
+      vert: this.transforms[0].transform.vert,
       // todo: differs from compile
-      attributes: transforms[0].transform.attributes,
+      attributes: this.transforms[0].transform.attributes,
       // todo: differs from compile
-      attributesCount: transforms[0].transform.attributesCount,
-      primitive: transforms[0].transform.primitive,
+      attributesCount: this.transforms[0].transform.attributesCount,
+      primitive: this.transforms[0].transform.primitive,
       uniforms: Object.assign({}, this.defaultUniforms, uniforms)
     };
   }
 }
 
-GlslSource.prototype.compile = function (transforms) {
-  var shaderInfo = generateGlsl(this, transforms)
+GlslSource.prototype.compile = function () {
+  var shaderInfo = generateGlsl(this)
   var uniforms = {}
   shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
 
   return {
-    vert: GlslSource.compileVert(this.defaultOutput.precision, true, transforms[0].transform, shaderInfo, this.utils),
-    attributes: transforms[0].transform.attributes,
-    primitive: transforms[0].transform.primitive,
-    userArgs: transforms[0].userArgs,
-    clear: typeof(this.clear) !== 'undefined' ? this.clear : transforms[0].transform.clear,
+    vert: GlslSource.compileVert(this.defaultOutput.precision, true, this.transforms[0].transform, shaderInfo, this.utils),
+    attributes: this.transforms[0].transform.attributes,
+    primitive: this.transforms[0].transform.primitive,
+    userArgs: this.transforms[0].userArgs,
+    clear: typeof(this.clear) !== 'undefined' ? this.clear : this.transforms[0].transform.clear,
     blendMode: this.blendMode,
     lineWidth: this.lineWidth,
     frag: GlslSource.compileFrag(this.defaultOutput.precision, shaderInfo, this.utils),
