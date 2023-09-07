@@ -183,7 +183,6 @@ class HydraRenderer {
     this.height = height // ?
     this.sandbox.set('width', width)
     this.sandbox.set('height', height)
-    console.log(this.width)
     this.o.forEach((output) => {
       output.resize(width, height)
     })

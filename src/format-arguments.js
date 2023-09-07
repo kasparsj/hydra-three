@@ -58,7 +58,7 @@ export default function formatArguments(transform, startIndex, synthContext) {
     // if user has input something for this argument
     if (userArgs.length > index) {
       typedArg.value = userArgs[index];
-      if (typeof typedArg.value === 'function' && typedArg.value.name !== 'reglTexture2D') {
+      if (typeof typedArg.value === 'function' && typedArg.value.name !== 'reglTexture2D' && typedArg.value.name !== 'reglFramebuffer') {
         typedArg.value = getFunctionValue(typedArg.value, input);
         typedArg.isUniform = true
       } else if (typedArg.value.constructor === Array) {

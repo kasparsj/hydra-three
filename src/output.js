@@ -26,15 +26,25 @@ var Output = function ({ regl, precision, label = "", width, height}) {
     depthStencil: false
   }))
 
-  // array containing render passes
-//  this.passes = []
+  // for each output, create two temp buffers
+  this.temp = (Array(2)).fill().map(() => this.regl.framebuffer({
+    color: this.regl.texture({
+      mag: 'nearest',
+      width: width,
+      height: height,
+      format: 'rgba'
+    }),
+    depthStencil: false
+  }))
 }
 
 Output.prototype.resize = function(width, height) {
   this.fbos.forEach((fbo) => {
     fbo.resize(width, height)
   })
-//  console.log(this)
+  this.temp.forEach((tmp) => {
+    tmp.resize(width, height)
+  })
 }
 
 
@@ -155,10 +165,10 @@ Output.prototype.render = function (passes) {
       count,
       blend,
       lineWidth: pass.lineWidth,
-      framebuffer: () => {
+      framebuffer: pass.framebuffer || (() => {
         self.pingPongIndex = self.pingPongIndex ? 0 : 1
         return self.fbos[self.pingPongIndex]
-      }
+      }),
     })
     self.draw.push(draw)
   }

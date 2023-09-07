@@ -3,22 +3,34 @@ import {typeLookup, getLookup, getTypeLookup, castType} from "./types.js";
 
 // converts a tree of javascript functions to a shader
 export default function(source) {
-    var shaderParams = {
-      uniforms: [], // list of uniforms used in shader
-      glslFunctions: [], // list of functions used in shader
-      fragColor: '',
-      position: '',
-    }
+  return generateParams(createParams(), source, source.transforms)
+}
 
-    shaderParams.fragColor = generateGlsl(source, source.transforms, shaderParams, typeLookup['src'].returnType)('st', 'vec4', 1.0)
-    shaderParams.position = generateGlsl(source, source.transforms.filter((tr) => {
+function createParams(options = {}) {
+  return Object.assign({
+    uniforms: [], // list of uniforms used in shader
+    glslFunctions: [], // list of functions used in shader
+    fragColor: '',
+    position: '',
+  }, options)
+}
+
+function generateParams(shaderParams, source, transforms) {
+  if (!shaderParams.fragColor) {
+    shaderParams.fragColor = generateGlsl(source, transforms, shaderParams, typeLookup['src'].returnType)('st', 'vec4', 1.0)
+  }
+  if (!shaderParams.position && !shaderParams.combine) {
+    shaderParams.position = generateGlsl(source, transforms.filter((tr) => {
       return tr.transform.type !== 'combine';
     }), shaderParams, typeLookup['src'].returnType)('st', 'vec4', 1.0)
-    // remove uniforms with duplicate names
+  }
+  // remove uniforms with duplicate names
+  if (shaderParams.uniforms) {
     let uniforms = {}
     shaderParams.uniforms.forEach((uniform) => uniforms[uniform.name] = uniform)
     shaderParams.uniforms = Object.values(uniforms)
-    return shaderParams
+  }
+  return shaderParams
 }
 
 // recursive function for generating shader string from object containing functions and user arguments. Order of functions in string depends on type of function
@@ -27,8 +39,6 @@ function generateGlsl (source, transforms, shaderParams) {
   // transform function that outputs a shader string corresponding to gl_FragColor
   const empty = () => '';
   var fragColor = empty
-  // var uniforms = []
-  // var glslFunctions = []
   transforms.map((transform, i) => {
     var inputs = formatArguments(transform, shaderParams.uniforms.length)
     inputs.forEach((input) => {
@@ -50,12 +60,26 @@ function generateGlsl (source, transforms, shaderParams) {
       fragColor = (uv, returnType, alpha) =>  `${shaderString(`${f0(uv, 'vec4')}`, transform, inputs, shaderParams, returnType, alpha)}`
     } else if (transform.transform.type === 'combine') {
       // combining two generated shader strings (i.e. for blend, mult, add funtions)
+      if (source.transforms[0].transform.vert) {
+        const params = Object.assign({}, shaderParams, {
+          fragColor: fragColor('st', 'vec4', 1.0),
+        });
+        Object.assign(shaderParams, createParams({
+          glslFunctions: [transform],
+          combine: true,
+        }));
+        const trans = source.transforms.slice(0, source.transforms.indexOf(transform));
+        source.passes.unshift(source.createPass(generateParams(params, source, trans), {framebuffer: source.output.temp[0]}));
+        const temp0 = src(source.output.temp[0]);
+        f0 = (uv, returnType, alpha) => `${generateGlsl(temp0, temp0.transforms, shaderParams)(uv, returnType, alpha)}`
+      }
       var f1;
       if (inputs[0].value && inputs[0].value.transforms) {
         if (inputs[0].value.transforms[0].transform.vert || source.transforms[0].transform.vert) {
-          source.passes.unshift(...inputs[0].value.glsl());
-          const src = prev();
-          f1 = (uv, returnType, alpha) => `${generateGlsl(src, src.transforms, shaderParams)(uv, returnType, alpha)}`
+          inputs[0].value.output = source.output;
+          source.passes.unshift(...inputs[0].value.glsl({framebuffer: source.output.temp[1]}));
+          const temp1 = src(source.output.temp[1]);
+          f1 = (uv, returnType, alpha) => `${generateGlsl(temp1, temp1.transforms, shaderParams)(uv, returnType, alpha)}`
         }
         else {
           f1 = (uv, returnType, alpha) => `${generateGlsl(inputs[0].value, inputs[0].value.transforms, shaderParams)(uv, returnType, alpha)}`

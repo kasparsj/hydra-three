@@ -1,13 +1,11 @@
 import generateGlsl from './generate-glsl.js'
-import formatArguments from './format-arguments.js'
-
-// const glslTransforms = require('./glsl/composable-glsl-functions.js')
 import utilityGlsl from './glsl/utility-functions.js'
 
 var GlslSource = function (obj) {
   this.transforms = []
   this.transforms.push(obj)
   this.defaultOutput = obj.defaultOutput
+  this.output = null
   this.synth = obj.synth
   this.type = 'GlslSource'
   this.defaultUniforms = obj.defaultUniforms
@@ -23,9 +21,9 @@ GlslSource.prototype.addTransform = function (obj)  {
 
 GlslSource.prototype.out = function (_output) {
   var output = _output || this.defaultOutput
-  var glsl = this.glsl(output)
+  this.output = output;
+  var glsl = this.glsl()
   this.synth.currentFunctions = []
- // output.renderPasses(glsl)
   if(output) try{
     output.render(glsl)
   } catch (error) {
@@ -34,9 +32,9 @@ GlslSource.prototype.out = function (_output) {
   return this;
 }
 
-GlslSource.prototype.glsl = function (output) {
+GlslSource.prototype.glsl = function (options = {}) {
   this.passes = []
-  this.passes.push(this.compile())
+  this.passes.push(this.createPass(generateGlsl(this), options))
   return this.passes
 }
 
@@ -60,12 +58,25 @@ GlslSource.prototype.getInfo = function () {
   }
 }
 
-GlslSource.prototype.compile = function () {
-  var shaderInfo = generateGlsl(this)
+GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
   var uniforms = {}
   shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
 
-  return {
+  if (shaderInfo.combine) {
+    return {
+      vert: GlslSource.compileVert(this.defaultOutput.precision, false, {
+        glslName: 'combine',
+      }, shaderInfo),
+      userArgs: this.transforms[0].userArgs,
+      // clear: typeof(this.clear) !== 'undefined' ? this.clear : this.transforms[0].transform.clear,
+      // blendMode: this.blendMode,
+      lineWidth: this.lineWidth,
+      frag: GlslSource.compileFrag(this.defaultOutput.precision, shaderInfo, this.utils),
+      uniforms: Object.assign({}, this.defaultUniforms, uniforms)
+    };
+  }
+
+  return Object.assign({
     vert: GlslSource.compileVert(this.defaultOutput.precision, true, this.transforms[0].transform, shaderInfo, this.utils),
     attributes: this.transforms[0].transform.attributes,
     primitive: this.transforms[0].transform.primitive,
@@ -75,8 +86,7 @@ GlslSource.prototype.compile = function () {
     lineWidth: this.lineWidth,
     frag: GlslSource.compileFrag(this.defaultOutput.precision, shaderInfo, this.utils),
     uniforms: Object.assign({}, this.defaultUniforms, uniforms)
-  }
-
+  }, options)
 }
 
 GlslSource.compileHeader = function(precision, uniforms = {}, utils = {}) {
