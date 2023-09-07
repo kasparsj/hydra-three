@@ -159,6 +159,15 @@ Output.prototype.render = function (passes) {
     const draw = self.regl({
       frag: pass.frag,
       vert: pass.vert,
+      viewport: typeof(pass.viewport.x) !== 'undefined' ? {
+        x: pass.viewport.x * this.fbos[0].width,
+        y: pass.viewport.y * this.fbos[0].height,
+        width: pass.viewport.w * this.fbos[0].width,
+        height: pass.viewport.h * this.fbos[0].height,
+      } : {},
+      depth: {
+        enable: false,
+      },
       attributes,
       primitive,
       uniforms,
@@ -364,7 +373,7 @@ Output.prototype.getBlend = function(blendMode) {
       break;
   }
   return {
-    enable: typeof(blendMode) === 'boolean' ? blendMode : blendMode !== 'disabled',
+    enable: blendMode ? (typeof(blendMode) === 'string' ? blendMode !== 'disabled' : blendMode) : false,
     func,
   };
 }

@@ -12,6 +12,7 @@ var GlslSource = function (obj) {
   this.utils = Object.assign({}, utilityGlsl, obj.utils);
   this.blendMode = typeof(obj.transform.blendMode) !== 'undefined' ? obj.transform.blendMode : false;
   this.lineWidth = obj.transform.lineWidth || 1;
+  this._viewport = {};
   return this
 }
 
@@ -68,11 +69,13 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
         glslName: 'combine',
       }, shaderInfo),
       userArgs: this.transforms[0].userArgs,
+      // todo: fix or delete
       // clear: typeof(this.clear) !== 'undefined' ? this.clear : this.transforms[0].transform.clear,
       // blendMode: this.blendMode,
       lineWidth: this.lineWidth,
       frag: GlslSource.compileFrag(this.defaultOutput.precision, shaderInfo, this.utils),
-      uniforms: Object.assign({}, this.defaultUniforms, uniforms)
+      uniforms: Object.assign({}, this.defaultUniforms, uniforms),
+      viewport: this._viewport,
     };
   }
 
@@ -85,7 +88,8 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
     blendMode: this.blendMode,
     lineWidth: this.lineWidth,
     frag: GlslSource.compileFrag(this.defaultOutput.precision, shaderInfo, this.utils),
-    uniforms: Object.assign({}, this.defaultUniforms, uniforms)
+    uniforms: Object.assign({}, this.defaultUniforms, uniforms),
+    viewport: this._viewport,
   }, options)
 }
 
@@ -204,6 +208,11 @@ GlslSource.prototype.setBlend = function(blendMode = true) {
 
 GlslSource.prototype.setLineWidth = function(lineWidth) {
   this.lineWidth = lineWidth;
+  return this;
+}
+
+GlslSource.prototype.viewport = function(x, y, w, h) {
+  this._viewport = {x, y, w, h};
   return this;
 }
 
