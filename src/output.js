@@ -123,16 +123,17 @@ Output.prototype.camera = function(eye, target, options = {}) {
   else {
     this.initCamera();
   }
+  return this;
 }
 
 Output.prototype.perspective = function(eye, target, options = {}) {
   options = Object.assign({type: 'perspective'}, options);
-  this.camera(eye, target, options);
+  return this.camera(eye, target, options);
 }
 
 Output.prototype.ortho = function(eye, target, options = {}) {
   options = Object.assign({type: 'ortho'}, options);
-  this.camera(eye, target, options);
+  return this.camera(eye, target, options);
 }
 
 Output.prototype.render = function (passes) {
@@ -141,7 +142,21 @@ Output.prototype.render = function (passes) {
   for (let i=0; i<passes.length; i++) {
     let pass = passes[i]
     if (pass.clear) {
-      this.pushClear(pass.clear);
+      switch (pass.clear) {
+        case 'clear':
+          self.draw.push(...this.clear(false));
+          break;
+        case 'fade': {
+          const opt = typeof(pass.userArgs[0]) === 'object' ? pass.userArgs[0] : {amount: pass.userArgs[0]};
+          opt.now = false;
+          self.draw.push(this.fade(opt));
+          break;
+        }
+        default:
+          console.warn(`unrecognized clear: ${pass.clear}(${pass.userArgs.join(", ")})`);
+          break;
+      }
+      continue;
     }
 
     const primitive = pass.primitive || 'triangles';
@@ -175,44 +190,53 @@ Output.prototype.render = function (passes) {
   }
 }
 
-Output.prototype.pushClear = function(options) {
-  let clear = options;
-  let useCamera = false;
-  if (typeof(options) === 'object') ({clear, useCamera} = options);
-  const self = this;
-  if (clear >= 1) {
-    const clear = () => self.regl.clear({
+Output.prototype.clear = function(now = true) {
+  const result = [this.fbos[this.pingPongIndex ? 0 : 1], this.temp[0], this.temp[1]].map((fbo) => {
+    const clear = () => this.regl.clear({
       color: [0, 0, 0, 0],
       // next framebuffer
-      framebuffer: self.fbos[self.pingPongIndex ? 0 : 1]
+      framebuffer: fbo,
     });
-    self.draw.push(clear);
+    if (now) clear();
+  });
+  if (now) return this;
+  return result;
+}
+
+Output.prototype.fade = function(options) {
+  let amount = options;
+  let camera = false;
+  let now = true;
+  if (typeof(options) === 'object') {
+    ({amount, camera} = options);
+    now = typeof(options.now) === 'undefined' ? true : options.now;
   }
-  else {
-    const fade = self.regl({
-      frag: `
+  const self = this;
+  // todo: do we need to fade also temp buffers?
+  const fade = self.regl({
+    frag: `
           precision ${self.precision} float;
           varying vec2 uv;
           uniform sampler2D prevBuffer;
           void main() {
-            vec4 color = mix(texture2D(prevBuffer, uv), vec4(0), ${clear});
+            vec4 color = mix(texture2D(prevBuffer, uv), vec4(0), ${amount});
             gl_FragColor = color;
           }
         `,
-      vert: GlslSource.compileVert(this.precision, useCamera, { name: 'clear' }),
-      attributes: self.attributes,
-      primitive: 'triangles',
-      uniforms: Object.assign({}, {
-        prevBuffer: () =>  { return self.fbos[self.pingPongIndex] },
-      }, this.uniforms),
-      count: 3,
-      // next framebuffer
-      framebuffer: () => {
-        return self.fbos[self.pingPongIndex ? 0 : 1]
-      }
-    });
-    self.draw.push(fade);
-  }
+    vert: GlslSource.compileVert(this.precision, camera, { name: 'clear' }),
+    attributes: self.attributes,
+    primitive: 'triangles',
+    uniforms: Object.assign({}, {
+      prevBuffer: () =>  { return self.fbos[self.pingPongIndex] },
+    }, this.uniforms),
+    count: 3,
+    // next framebuffer
+    framebuffer: () => {
+      return self.fbos[self.pingPongIndex ? 0 : 1]
+    }
+  });
+  if (now) return this;
+  return fade;
 }
 
 Output.prototype.getAttributes = function(primitive, num) {

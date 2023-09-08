@@ -45,7 +45,7 @@ class GeneratorFactory {
     const self = this
     this.glslTransforms[method] = transform
     let retval = undefined
-    if (transform.type === 'src' || transform.type === 'coord') {
+    if (transform.type === 'src' || transform.type === 'coord' || transform.type === 'clear') {
       const func = (...args) => new this.sourceClass({
         name: method,
         transform: transform,
@@ -117,17 +117,17 @@ class GeneratorFactory {
 // }`
 
 function processGlsl(obj) {
+  obj.glslName || (obj.glslName = obj.name);
+  if (obj.type === 'clear') return obj;
   let t = typeLookup[obj.type]
   if(t) {
   let baseArgs = t.args.map((arg) => arg).join(", ")
   // @todo: make sure this works for all input types, add validation
   let customArgs = obj.inputs.map((input) => `${input.type} ${input.name}`).join(', ')
   let args = `${baseArgs}${customArgs.length > 0 ? ', '+ customArgs: ''}`
-//  console.log('args are ', args)
 
-    obj.glslName || (obj.glslName = obj.name);
-    const func = `${t.returnType} ${obj.glslName}(${args})`;
-    const glslFunction = obj.glsl.indexOf(func) > -1 ? obj.glsl :
+  const func = `${t.returnType} ${obj.glslName}(${args})`;
+  const glslFunction = obj.glsl.indexOf(func) > -1 ? obj.glsl :
 `
   ${func} {
       ${obj.glsl}

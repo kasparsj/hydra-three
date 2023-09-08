@@ -70,7 +70,6 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
       }, shaderInfo),
       userArgs: this.transforms[0].userArgs,
       // todo: fix or delete
-      // clear: typeof(this.clear) !== 'undefined' ? this.clear : this.transforms[0].transform.clear,
       // blendMode: this.blendMode,
       lineWidth: this.lineWidth,
       frag: GlslSource.compileFrag(this.defaultOutput.precision, shaderInfo, this.utils),
@@ -84,7 +83,6 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
     attributes: this.transforms[0].transform.attributes,
     primitive: this.transforms[0].transform.primitive,
     userArgs: this.transforms[0].userArgs,
-    clear: typeof(this.clear) !== 'undefined' ? this.clear : this.transforms[0].transform.clear,
     blendMode: this.blendMode,
     lineWidth: this.lineWidth,
     frag: GlslSource.compileFrag(this.defaultOutput.precision, shaderInfo, this.utils),
@@ -192,18 +190,6 @@ GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, u
 }
 
 // todo: make hydra-synth function
-// e.g. clear(o0)
-// e.g. clear().lines(10)
-GlslSource.prototype.setClear = function (clear = 1, options) {
-  if (options) {
-    this.clear = Object.assign(options, {clear});
-  }
-  else {
-    this.clear = clear;
-  }
-  return this;
-}
-
 GlslSource.prototype.setBlend = function(blendMode = true) {
   this.blendMode = blendMode;
   return this;

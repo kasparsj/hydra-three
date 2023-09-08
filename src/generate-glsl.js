@@ -21,7 +21,7 @@ function generateParams(shaderParams, source, transforms) {
   }
   if (!shaderParams.position && !shaderParams.combine) {
     shaderParams.position = generateGlsl(source, transforms.filter((tr) => {
-      return tr.transform.type !== 'combine';
+      return tr.transform.type !== 'combine' && tr.transform.type !== 'clear';
     }), shaderParams, typeLookup['src'].returnType)('st', 'vec4', 1.0)
   }
   // remove uniforms with duplicate names
@@ -41,6 +41,11 @@ function generateGlsl (source, transforms, shaderParams) {
   var fragColor = empty
   transforms.map((transform, i) => {
     var inputs = formatArguments(transform, shaderParams.uniforms.length)
+    if (transform.transform.type === 'clear') {
+      source.passes.unshift({clear: transform.transform.name, userArgs: inputs.map((i) => i.value)});
+      return;
+    }
+
     inputs.forEach((input) => {
       if(input.isUniform) shaderParams.uniforms.push(input)
     })
@@ -60,9 +65,9 @@ function generateGlsl (source, transforms, shaderParams) {
       fragColor = (uv, returnType, alpha) =>  `${shaderString(`${f0(uv, 'vec4')}`, transform, inputs, shaderParams, returnType, alpha)}`
     } else if (transform.transform.type === 'combine') {
       // combining two generated shader strings (i.e. for blend, mult, add funtions)
-      if (source.transforms[0].transform.vert) {
+      if (source.transforms[0].transform.vert || (inputs[0].value && inputs[0].value.transforms && inputs[0].value.transforms[0].transform.vert)) {
         const params = Object.assign({}, shaderParams, {
-          fragColor: fragColor('st', 'vec4', 1.0),
+          fragColor: fragColor('st', 'vec4', 1.0) || 'vec4(0)',
         });
         Object.assign(shaderParams, createParams({
           glslFunctions: [transform],
