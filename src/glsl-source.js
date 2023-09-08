@@ -191,6 +191,9 @@ GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, u
   }`
 }
 
+// todo: make hydra-synth function
+// e.g. clear(o0)
+// e.g. clear().lines(10)
 GlslSource.prototype.setClear = function (clear = 1, options) {
   if (options) {
     this.clear = Object.assign(options, {clear});

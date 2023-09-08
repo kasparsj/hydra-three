@@ -58,17 +58,6 @@ Output.prototype.getTexture = function () {
 }
 
 Output.prototype.init = function () {
-//  console.log('clearing')
-  this.transformIndex = 0
-  this.fragHeader = `
-  precision ${this.precision} float;
-
-  uniform float time;
-  varying vec2 uv;
-  `
-
-  this.fragBody = ``
-
   this.attributes = {
     position: this.positionBuffer
   }
@@ -77,24 +66,13 @@ Output.prototype.init = function () {
     resolution: this.regl.prop('resolution'),
   }
 
-  this.frag = `
-       ${this.fragHeader}
-
-      void main () {
-        vec4 c = vec4(0, 0, 0, 0);
-        vec2 st = uv;
-        ${this.fragBody}
-        gl_FragColor = c;
-      }
-  `
-
   this.initCamera();
 
   return this
 }
 
 Output.prototype.initCamera = function() {
-  this.camera = this.regl({
+  this._camera = this.regl({
     context: {
       projection: mat4.identity([]),
       view: mat4.identity([]),
@@ -106,22 +84,26 @@ Output.prototype.initCamera = function() {
   });
 }
 
-Output.prototype.setupCamera = function(eye, target, options = {}) {
+Output.prototype.camera = function(eye, target, options = {}) {
+  options = Object.assign({
+    near: 0.1,
+    far: 1000.0,
+  }, options);
   this.eye = eye;
   this.target = target;
   if (eye && target) {
-    this.camera = this.regl({
+    this._camera = this.regl({
       context: {
         projection: function (context) {
           if (options.type === 'perspective') {
             return mat4.perspective([],
                 Math.PI / 4,
                 context.viewportWidth / context.viewportHeight,
-                0.01,
-                1000.0)
+                options.near,
+                options.far)
           }
           else {
-            return mat4.ortho([], -1.0, 1.0, -1.0, 1.0, 0.1, 10.0);
+            return mat4.ortho([], -1.0, 1.0, -1.0, 1.0, options.near, options.far);
           }
         },
         view: function (context, props) {
@@ -141,6 +123,16 @@ Output.prototype.setupCamera = function(eye, target, options = {}) {
   else {
     this.initCamera();
   }
+}
+
+Output.prototype.perspective = function(eye, target, options = {}) {
+  options = Object.assign({type: 'perspective'}, options);
+  this.camera(eye, target, options);
+}
+
+Output.prototype.ortho = function(eye, target, options = {}) {
+  options = Object.assign({type: 'ortho'}, options);
+  this.camera(eye, target, options);
 }
 
 Output.prototype.render = function (passes) {
@@ -165,9 +157,9 @@ Output.prototype.render = function (passes) {
         width: pass.viewport.w * this.fbos[0].width,
         height: pass.viewport.h * this.fbos[0].height,
       } : {},
-      depth: {
-        enable: false,
-      },
+      // depth: {
+      //   enable: false,
+      // },
       attributes,
       primitive,
       uniforms,
@@ -380,7 +372,7 @@ Output.prototype.getBlend = function(blendMode) {
 
 Output.prototype.tick = function (props) {
   const doDraw = () => this.draw.map((fn) => fn(props));
-  this.camera({
+  this._camera({
     eye: this.eye,
     target: this.target,
   }, function() {
