@@ -368,15 +368,7 @@ class HydraRenderer {
   _initOutputs (numOutputs) {
     const self = this
     this.o = (Array(numOutputs)).fill().map((el, index) => {
-      var o = new Output({
-        regl: this.regl,
-        width: this.width,
-        height: this.height,
-        precision: this.precision,
-        label: `o${index}`
-      })
-    //  o.render()
-      o.id = index
+      var o = new Output(index, this)
       self.synth['o'+index] = o
       return o
     })
@@ -428,6 +420,15 @@ class HydraRenderer {
     }
   }
 
+  _renderOut (i) {
+    this.o[i].tick({
+      time: this.synth.time,
+      mouse: this.synth.mouse,
+      bpm: this.synth.bpm,
+      resolution: [this.canvas.width, this.canvas.height]
+    })
+  }
+
   // dt in ms
   tick (dt, uniforms) {
     this.sandbox.tick()
@@ -447,12 +448,7 @@ class HydraRenderer {
       }
     //  console.log(this.canvas.width, this.canvas.height)
       for (let i = 0; i < this.o.length; i++) {
-        this.o[i].tick({
-          time: this.synth.time,
-          mouse: this.synth.mouse,
-          bpm: this.synth.bpm,
-          resolution: [this.canvas.width, this.canvas.height]
-        })
+        this._renderOut(i);
       }
       if (this.isRenderingAll) {
         this.renderAll({

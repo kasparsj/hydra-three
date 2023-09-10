@@ -1,10 +1,14 @@
 import * as mat4 from "gl-mat4";
 import GlslSource from "./glsl-source.js";
 
-var Output = function ({ regl, precision, label = "", width, height}) {
-  this.regl = regl
-  this.precision = precision
-  this.label = label
+var Output = function (index, synth) {
+  this.id = index;
+  this.synth = synth;
+  this.width = synth.width
+  this.height = synth.height
+  this.regl = synth.regl
+  this.precision = synth.precision
+  this.label = `o${index}`
   this.positionBuffer = this.regl.buffer([
     [-2, 0],
     [0, -2],
@@ -16,29 +20,27 @@ var Output = function ({ regl, precision, label = "", width, height}) {
   this.pingPongIndex = 0
 
   // for each output, create two fbos for pingponging
-  this.fbos = (Array(2)).fill().map(() => this.regl.framebuffer({
-    color: this.regl.texture({
-      mag: 'nearest',
-      width: width,
-      height: height,
-      format: 'rgba'
-    }),
-    depthStencil: false
-  }))
+  this.fbos = (Array(2)).fill().map(() => this._initFbo())
 
   // for each output, create two temp buffers
-  this.temp = (Array(2)).fill().map(() => this.regl.framebuffer({
+  this.temp = (Array(2)).fill().map(() => this._initFbo())
+}
+
+Output.prototype._initFbo = function() {
+  return this.regl.framebuffer({
     color: this.regl.texture({
       mag: 'nearest',
-      width: width,
-      height: height,
+      width: this.width,
+      height: this.height,
       format: 'rgba'
     }),
     depthStencil: false
-  }))
+  })
 }
 
 Output.prototype.resize = function(width, height) {
+  this.width = width;
+  this.height = height;
   this.fbos.forEach((fbo) => {
     fbo.resize(width, height)
   })
@@ -86,6 +88,7 @@ Output.prototype.initCamera = function() {
 
 Output.prototype.camera = function(eye, target, options = {}) {
   options = Object.assign({
+    fovy: Math.PI / 4,
     near: 0.1,
     far: 1000.0,
   }, options);
@@ -97,8 +100,8 @@ Output.prototype.camera = function(eye, target, options = {}) {
         projection: function (context) {
           if (options.type === 'perspective') {
             return mat4.perspective([],
-                Math.PI / 4,
-                context.viewportWidth / context.viewportHeight,
+                options.fovy,
+                options.aspect || (context.viewportWidth / context.viewportHeight),
                 options.near,
                 options.far)
           }
@@ -402,6 +405,13 @@ Output.prototype.tick = function (props) {
   }, function() {
     doDraw();
   });
+}
+
+Output.prototype.renderTexture = function() {
+  this.synth._renderOut(this.id);
+  const colorTex = this.fbos[this.pingPongIndex].color;
+  this.fbos[this.pingPongIndex] = this._initFbo();
+  return colorTex;
 }
 
 export default Output

@@ -33,6 +33,13 @@ GlslSource.prototype.out = function (_output) {
   return this;
 }
 
+GlslSource.prototype.tex = function(_output) {
+  if (!this.output) {
+    this.out(_output);
+  }
+  return this.output.renderTexture();
+}
+
 GlslSource.prototype.glsl = function (options = {}) {
   this.passes = []
   this.passes.push(this.createPass(generateGlsl(this), options))
