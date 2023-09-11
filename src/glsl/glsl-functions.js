@@ -1113,5 +1113,16 @@ export default () => [
   ],
   glsl:
 `   return vec4(_c0.a * scale + offset);`
+},
+{
+    name: 'map',
+    type: 'color',
+    inputs: [
+        {name: 'start1', type: 'float', default: NaN},
+        {name: 'stop1', type: 'float', default: NaN},
+        {name: 'start2', type: 'float', default: 0},
+        {name: 'stop2', type: 'float', default: 1},
+    ],
+    glsl: `return (_c0 - start1) / (stop1 - start1) * (stop2 - start2) + start2;`
 }
 ]

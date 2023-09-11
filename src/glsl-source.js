@@ -211,6 +211,10 @@ GlslSource.prototype.setGeometry = function(input) {
   if (!input) input = [];
   if (!(input instanceof BufferGeometry || input.isBufferGeometry)) {
     const vertTransform = this.transforms[0].transform.type === 'clear' ? this.transforms[1] : this.transforms[0];
+    if (!Array.isArray(input)) input = [input];
+    if (vertTransform.transform.geometry === GridGeometry && vertTransform.transform.primitive && typeof(input[0]) !== 'string') {
+      input.unshift(vertTransform.transform.primitive);
+    }
     input = new (vertTransform.transform.geometry)(...input);
   }
   this.geometry = input;
