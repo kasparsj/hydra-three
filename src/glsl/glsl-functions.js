@@ -1124,5 +1124,56 @@ export default () => [
         {name: 'stop2', type: 'float', default: 1},
     ],
     glsl: `return (_c0 - start1) / (stop1 - start1) * (stop2 - start2) + start2;`
-}
+},
+
+    // todo: make these type: 'util' so they are type agnostic?
+    {
+        name: 'sin',
+        glslName: '_sin',
+        type: 'coord',
+        inputs: [
+            {name: 'freq', type: 'float', default: 1},
+            {name: 'amp', type: 'float', default: 0.5},
+        ],
+        glsl: `return sin(_st * TWO_PI * freq) * amp;`,
+    },
+    {
+        name: 'cos',
+        glslName: '_cos',
+        type: 'coord',
+        inputs: [
+            {name: 'freq', type: 'float', default: 1},
+            {name: 'amp', type: 'float', default: 0.5},
+        ],
+        glsl: `return cos(_st * TWO_PI * freq) * amp;`,
+    },
+    {
+        name: 'tan',
+        glslName: '_tan',
+        type: 'coord',
+        inputs: [
+            {name: 'freq', type: 'float', default: 1},
+            {name: 'amp', type: 'float', default: 0.5},
+        ],
+        glsl: `return tan(_st * PI * freq) * amp;`,
+    },
+    {
+        name: 'atan',
+        glslName: '_atan',
+        type: 'coord',
+        inputs: [
+            {name: 'freq', type: 'float', default: 1},
+            {name: 'amp', type: 'float', default: 0.5},
+        ],
+        glsl: `return atan(_st * PI * freq) * amp;`,
+    },
+    {
+        name: 'pow',
+        glslName: '_pow',
+        type: 'coord',
+        inputs: [
+            {name: 'power', type: 'vec2', default: 2},
+        ],
+        glsl: `return pow(_st, power);`
+    }
 ]

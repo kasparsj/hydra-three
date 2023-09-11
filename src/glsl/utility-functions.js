@@ -1,6 +1,14 @@
 // functions that are only used within other functions
 
 export default {
+  _pi: {
+    type: 'util',
+    glsl: `#define PI 3.1415926535897932384626433832795`,
+  },
+  _twopi: {
+    type: 'util',
+    glsl: `#define TWO_PI 6.283185307179586`,
+  },
   _luminance: {
     type: 'util',
     glsl: `float _luminance(vec3 rgb){
