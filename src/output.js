@@ -264,14 +264,14 @@ Output.prototype.fade = function(options) {
   const fade = self.regl({
     frag: `
           precision ${self.precision} float;
-          varying vec2 uv;
+          varying vec2 vuv;
           uniform sampler2D prevBuffer;
           void main() {
-            vec4 color = mix(texture2D(prevBuffer, uv), vec4(0), ${amount});
+            vec4 color = mix(texture2D(prevBuffer, vuv), vec4(0), ${amount});
             gl_FragColor = color;
           }
         `,
-    vert: GlslSource.compileVert(this.precision, camera, { name: 'clear' }),
+    vert: GlslSource.compileVert(this.precision, camera, { glslName: 'clear' }),
     attributes: self.attributes,
     primitive: 'triangles',
     uniforms: Object.assign({}, {

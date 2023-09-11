@@ -147,9 +147,9 @@ GlslSource.compileFrag = function(precision, shaderInfo, utils) {
 }
 
 GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, utils) {
-  const useUV = typeof(transform.useUV) === 'undefined'
+  const useUV = typeof(transform.useUV) !== 'undefined'
       ? transform.useUV
-      : ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.type) === -1;
+      : ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.primitive) === -1;
   let vertHeader = `
   precision ${precision} float;
   uniform mat4 projection, view;
