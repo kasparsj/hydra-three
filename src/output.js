@@ -206,8 +206,7 @@ Output.prototype.render = function (passes) {
       continue;
     }
 
-    const {attributes, elements} = this.getAttributes(pass.primitive, pass.geometry);
-    const primitive = pass.primitive || 'triangles';
+    const {attributes, elements, primitive} = this.getAttributes(pass.primitive, pass.geometry);
     const uniforms = this.getUniforms(pass.uniforms);
     const blend = this.getBlend(pass.blendMode);
     const draw = self.regl({
@@ -294,96 +293,11 @@ Output.prototype.getAttributes = function(primitive, geometry) {
   if (geometry) {
     attributes = {};
     Object.keys(geometry.attributes).forEach((key) => attributes[key] = geometry.attributes[key].array);
-    elements = geometry.index.array;
+    elements = geometry.index ? geometry.array : geometry.attributes.position.count;
+    primitive || (primitive = geometry.parameters.primitive);
   }
-  else {
-    switch (primitive) {
-      case 'points': {
-        // todo: userArgs need to be merged with defaults
-        let points = num;
-        if (!Array.isArray(points)) points = [points, points];
-        elements = 2 * points[0] * points[1];
-        const position = Float32Array.from({length: elements * 2}, (v, k) => {
-          return k % 2 ? ((Math.floor((k-1) / 2 / points[0])+0.5) / points[1]) : ((k+1) / 2 % points[0] / points[0]);
-        });
-        attributes = {
-          position,
-          uv: position,
-        };
-        break;
-      }
-      case 'line strip': {
-        // todo: userArgs need to be merged with defaults
-        let points = num;
-        if (!Array.isArray(points)) points = [points, 1];
-        elements = points[0] * points[1];
-        const position = Float32Array.from({length: elements * 2}, (v, k) => {
-          // todo: make this an argument
-          let closed = true;
-          // todo: will be NaN when points[0] == 1
-          // todo: minimum 2 points?
-          return k % 2 ? Math.floor((k-1) / 2 / points[0]) : (k / 2 % points[0] / (points[0]-closed));
-        });
-        attributes = {
-          position,
-          uv: position,
-        };
-        break;
-      }
-      case 'line loop': {
-        // todo: userArgs need to be merged with defaults
-        let points = num;
-        if (!Array.isArray(points)) points = [points, 1];
-        elements = points[0] * points[1];
-        const position = Float32Array.from({length: elements * 2}, (v, k) => {
-          return k % 2 ? Math.floor((k-1) / 2 / points[0]) : (k / 2 % points[0] / points[0]);
-        });
-        attributes = {
-          position,
-          uv: position,
-        };
-        break;
-      }
-      case 'lines': {
-        // todo: userArgs need to be merged with defaults
-        let lines = num;
-        if (!Array.isArray(lines)) lines = [lines, 0];
-        elements = 4 * (lines[0] + lines[1]);
-        const position = Float32Array.from({length: elements * 2}, (v, k) => {
-          if (k < (lines[0] * 4)) {
-            switch (k%4) {
-              case 0:
-                return ((k+2) / 4 % lines[0] / lines[0]);
-              case 2:
-                return ((k) / 4 % lines[0] / lines[0]);
-              case 1:
-                return 0.0001;
-              case 3:
-                return 0.9999;
-            }
-          }
-          else {
-            switch (k%4) {
-              case 0:
-                return 0.0001;
-              case 2:
-                return 0.9999;
-              case 1:
-                return ((k+1) / 4 % lines[1] / lines[1]);
-              case 3:
-                return ((k-1) / 4 % lines[1] / lines[1]);
-            }
-          }
-        });
-        attributes = {
-          position,
-          uv: position,
-        };
-        break;
-      }
-    }
-  }
-  return {attributes, elements};
+  primitive || (primitive = 'triangles');
+  return {attributes, elements, primitive};
 }
 
 Output.prototype.getUniforms = function(uniforms) {

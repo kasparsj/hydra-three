@@ -147,24 +147,27 @@ GlslSource.compileFrag = function(precision, shaderInfo, utils) {
 }
 
 GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, utils) {
-  var vertHeader = `
+  const useUV = typeof(transform.useUV) === 'undefined'
+      ? transform.useUV
+      : ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.type) === -1;
+  let vertHeader = `
   precision ${precision} float;
   uniform mat4 projection, view;
   attribute vec3 position;
-  attribute vec2 uv;
+  ${useUV ? 'attribute vec2 uv;' : ''}
   varying vec2 vuv;
   `
-  var vertFn = `
+  let vertFn = `
   void ${transform.glslName}() {
     gl_Position = ${useCamera ? 'projection * view * ' : ''}vec4(position, 1.0);
   } 
   `
-  var vertCall = `${transform.glslName}();`;
+  let vertCall = `${transform.glslName}();`;
   if (transform.vert) {
     vertHeader = this.compileHeader(precision, shaderInfo.uniforms, utils) + `
     uniform mat4 projection, view;
     attribute vec3 position;
-    attribute vec2 uv;
+    ${useUV ? 'attribute vec2 uv;' : ''}
     attribute vec3 normal;
     
     ${shaderInfo.glslFunctions.map((trans) => {
@@ -177,7 +180,7 @@ GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, u
     `
     vertFn = transform.vert;
     vertCall = `
-    vec2 st = uv;
+    ${useUV ? 'vec2 st = uv;' : 'vec2 st = position.xy;'}
     vec4 pos = ${shaderInfo.position};
     gl_Position = projection * view * pos;
     `;
@@ -188,7 +191,7 @@ GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, u
   ${vertFn}
 
   void main () {
-    vuv = uv;
+    ${useUV ? 'vuv = uv;' : ''}
     ${vertCall}
   }`
 }
