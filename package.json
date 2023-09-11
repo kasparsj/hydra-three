@@ -42,7 +42,8 @@
     "gl-mat4": "^1.2.0",
     "meyda": "^5.5.1",
     "raf-loop": "^1.1.3",
-    "regl": "^1.3.13"
+    "regl": "^1.3.13",
+    "three": "^0.156.1"
   },
   "devDependencies": {
     "browserify": "^17.0.0",

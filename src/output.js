@@ -10,6 +10,11 @@ var Output = function (index, synth) {
   this.precision = synth.precision
   this.label = `o${index}`
   this.positionBuffer = this.regl.buffer([
+    [-5, -1, 0],
+    [-1, -5, 0],
+    [3, 3, 0]
+  ])
+  this.uvBuffer = this.regl.buffer([
     [-2, 0],
     [0, -2],
     [2, 2]
@@ -24,6 +29,40 @@ var Output = function (index, synth) {
 
   // for each output, create two temp buffers
   this.temp = (Array(2)).fill().map(() => this._initFbo())
+
+  this.copyPass = this.regl({
+    frag: `
+      precision ${this.precision} float;
+      varying vec2 uv;
+      uniform sampler2D tex0;
+
+      void main () {
+        gl_FragColor = texture2D(tex0, uv);
+      }
+      `,
+    vert: `
+      precision ${this.precision} float;
+      attribute vec2 position;
+      varying vec2 uv;
+
+      void main () {
+        uv = position;
+        gl_Position = vec4(2.0 * position - 1.0, 0, 1);
+      }`,
+    attributes: {
+      position: [
+        [-2, 0],
+        [0, -2],
+        [2, 2]
+      ]
+    },
+    uniforms: {
+      tex0: this.regl.prop('tex0'),
+    },
+    count: 3,
+    depth: { enable: false },
+    framebuffer: () => this.getTexture(),
+  })
 }
 
 Output.prototype._initFbo = function() {
@@ -61,7 +100,8 @@ Output.prototype.getTexture = function () {
 
 Output.prototype.init = function () {
   this.attributes = {
-    position: this.positionBuffer
+    position: this.positionBuffer,
+    uv: this.uvBuffer,
   }
   this.uniforms = {
     time: this.regl.prop('time'),
@@ -141,6 +181,10 @@ Output.prototype.ortho = function(eye, target, options = {}) {
 
 Output.prototype.render = function (passes) {
   const self = this
+  // ensure both fbo's have last frame
+  this.copyPass({
+    tex0: this.getCurrent(),
+  });
   self.draw = [];
   for (let i=0; i<passes.length; i++) {
     let pass = passes[i]
@@ -162,7 +206,7 @@ Output.prototype.render = function (passes) {
       continue;
     }
 
-    const {attributes, elements} = this.getAttributes(pass.primitive, pass.userArgs[0]);
+    const {attributes, elements} = this.getAttributes(pass.primitive, pass.geometry);
     const primitive = pass.primitive || 'triangles';
     const uniforms = this.getUniforms(pass.uniforms);
     const blend = this.getBlend(pass.blendMode);
@@ -175,9 +219,10 @@ Output.prototype.render = function (passes) {
         width: pass.viewport.w * this.fbos[0].width,
         height: pass.viewport.h * this.fbos[0].height,
       } : {},
-      // depth: {
-      //   enable: false,
-      // },
+      cull: {
+        enable: !!pass.geometry,
+        face: 'back'
+      },
       attributes,
       primitive,
       uniforms,
@@ -195,10 +240,9 @@ Output.prototype.render = function (passes) {
 }
 
 Output.prototype.clear = function(now = true) {
-  const result = [this.fbos[this.pingPongIndex ? 0 : 1], this.temp[0], this.temp[1]].map((fbo) => {
+  const result = [this.fbos[0], this.fbos[1], this.temp[0], this.temp[1]].map((fbo) => {
     const clear = () => this.regl.clear({
       color: [0, 0, 0, 0],
-      // next framebuffer
       framebuffer: fbo,
     });
     if (now) clear();
@@ -244,56 +288,68 @@ Output.prototype.fade = function(options) {
   return fade;
 }
 
-Output.prototype.getAttributes = function(primitive, num) {
+Output.prototype.getAttributes = function(primitive, geometry) {
   let elements = 3;
   let attributes = this.attributes;
-  switch (primitive) {
-    case 'points': {
-      // todo: userArgs need to be merged with defaults
-      let points = num;
-      if (!Array.isArray(points)) points = [points, points];
-      elements = 2 * points[0] * points[1];
-      attributes = {
-        position: Float32Array.from({length: elements * 2}, (v, k) => {
+  if (geometry) {
+    attributes = {};
+    Object.keys(geometry.attributes).forEach((key) => attributes[key] = geometry.attributes[key].array);
+    elements = geometry.index.array;
+  }
+  else {
+    switch (primitive) {
+      case 'points': {
+        // todo: userArgs need to be merged with defaults
+        let points = num;
+        if (!Array.isArray(points)) points = [points, points];
+        elements = 2 * points[0] * points[1];
+        const position = Float32Array.from({length: elements * 2}, (v, k) => {
           return k % 2 ? ((Math.floor((k-1) / 2 / points[0])+0.5) / points[1]) : ((k+1) / 2 % points[0] / points[0]);
-        }),
-      };
-      break;
-    }
-    case 'line strip': {
-      // todo: userArgs need to be merged with defaults
-      let points = num;
-      if (!Array.isArray(points)) points = [points, 1];
-      elements = points[0] * points[1];
-      attributes = {
-        position: Float32Array.from({length: elements * 2}, (v, k) => {
+        });
+        attributes = {
+          position,
+          uv: position,
+        };
+        break;
+      }
+      case 'line strip': {
+        // todo: userArgs need to be merged with defaults
+        let points = num;
+        if (!Array.isArray(points)) points = [points, 1];
+        elements = points[0] * points[1];
+        const position = Float32Array.from({length: elements * 2}, (v, k) => {
           // todo: make this an argument
           let closed = true;
           // todo: will be NaN when points[0] == 1
+          // todo: minimum 2 points?
           return k % 2 ? Math.floor((k-1) / 2 / points[0]) : (k / 2 % points[0] / (points[0]-closed));
-        }),
-      };
-      break;
-    }
-    case 'line loop': {
-      // todo: userArgs need to be merged with defaults
-      let points = num;
-      if (!Array.isArray(points)) points = [points, 1];
-      elements = points[0] * points[1];
-      attributes = {
-        position: Float32Array.from({length: elements * 2}, (v, k) => {
+        });
+        attributes = {
+          position,
+          uv: position,
+        };
+        break;
+      }
+      case 'line loop': {
+        // todo: userArgs need to be merged with defaults
+        let points = num;
+        if (!Array.isArray(points)) points = [points, 1];
+        elements = points[0] * points[1];
+        const position = Float32Array.from({length: elements * 2}, (v, k) => {
           return k % 2 ? Math.floor((k-1) / 2 / points[0]) : (k / 2 % points[0] / points[0]);
-        }),
-      };
-      break;
-    }
-    case 'lines': {
-      // todo: userArgs need to be merged with defaults
-      let lines = num;
-      if (!Array.isArray(lines)) lines = [lines, 0];
-      elements = 4 * (lines[0] + lines[1]);
-      attributes = {
-        position: Float32Array.from({length: elements * 2}, (v, k) => {
+        });
+        attributes = {
+          position,
+          uv: position,
+        };
+        break;
+      }
+      case 'lines': {
+        // todo: userArgs need to be merged with defaults
+        let lines = num;
+        if (!Array.isArray(lines)) lines = [lines, 0];
+        elements = 4 * (lines[0] + lines[1]);
+        const position = Float32Array.from({length: elements * 2}, (v, k) => {
           if (k < (lines[0] * 4)) {
             switch (k%4) {
               case 0:
@@ -318,34 +374,13 @@ Output.prototype.getAttributes = function(primitive, num) {
                 return ((k-1) / 4 % lines[1] / lines[1]);
             }
           }
-        }),
-      };
-      break;
-    }
-    case 'triangles': {
-      // todo: userArgs need to be merged with defaults
-      let triangles = num;
-      if (!Array.isArray(triangles)) triangles = [triangles, triangles];
-      elements = 6 * (triangles[0] * triangles[1]);
-      const position = [];
-      elements = [];
-      for (let row = 0; row <= triangles[1]; row++) {
-        for (let col = 0; col <= triangles[0]; col++) {
-          const x = col / triangles[0];
-          const y = row / triangles[1];
-          position.push(x, y);
-          if (row < triangles[1] && col < triangles[0]) {
-            const topLeft = row * (triangles[0]+1) + col;
-            const topRight = topLeft + 1;
-            const bottomLeft = (row + 1) * (triangles[0]+1) + col;
-            const bottomRight = bottomLeft + 1;
-            elements.push(topLeft, topRight, bottomLeft);
-            elements.push(topRight, bottomRight, bottomLeft);
-          }
-        }
+        });
+        attributes = {
+          position,
+          uv: position,
+        };
+        break;
       }
-      attributes = { position: Float32Array.from(position) };
-      break;
     }
   }
   return {attributes, elements};

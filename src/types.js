@@ -3,6 +3,10 @@ const typeLookup = {
         returnType: 'vec4',
         args: ['vec2 _st']
     },
+    'vert': {
+        returnType: 'vec4',
+        args: ['vec2 _st']
+    },
     'coord': {
         returnType: 'vec2',
         args: ['vec2 _st']

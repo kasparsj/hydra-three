@@ -40,6 +40,10 @@ function generateGlsl (source, transforms, shaderParams) {
   const empty = () => '';
   var fragColor = empty
   transforms.map((transform, i) => {
+    if (transform.transform.type === 'vert' && !source.geometry) {
+      source.setGeometry(transform.userArgs[0]);
+      transform.userArgs = transform.userArgs.slice(1);
+    }
     var inputs = formatArguments(transform, shaderParams.uniforms.length)
     if (transform.transform.type === 'clear') {
       source.passes.unshift({clear: transform.transform.name, userArgs: inputs.map((i) => i.value)});
@@ -55,7 +59,7 @@ function generateGlsl (source, transforms, shaderParams) {
 
     // current function for generating frag color shader code
     var f0 = fragColor
-    if (transform.transform.type === 'src') {
+    if (transform.transform.type === 'src' || transform.transform.type === 'vert') {
       fragColor = (uv, returnType, alpha) => `${shaderString(uv, transform, inputs, shaderParams, returnType, alpha)}`
     } else if (transform.transform.type === 'coord') {
       fragColor = f0 === empty

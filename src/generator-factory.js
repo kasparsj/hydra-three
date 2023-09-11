@@ -45,7 +45,7 @@ class GeneratorFactory {
     const self = this
     this.glslTransforms[method] = transform
     let retval = undefined
-    if (transform.type === 'src' || transform.type === 'coord' || transform.type === 'clear') {
+    if (['src', 'coord', 'clear', 'vert'].indexOf(transform.type) > -1) {
       const func = (...args) => new this.sourceClass({
         name: method,
         transform: transform,
@@ -59,21 +59,24 @@ class GeneratorFactory {
       this.changeListener({type: 'add', synth: this, method})
       retval = func
     }
-    if (transform.type !== 'src') {
-      this.sourceClass.prototype[method] = function (...args) {
+    this.sourceClass.prototype[method] = function (...args) {
+      const prevTransform = this.transforms[this.transforms.length-1].transform;
+      if (prevTransform.type === 'clear' || (transform.type !== 'src' && transform.type !== 'vert')) {
         this.transforms.push({name: method, transform: transform, userArgs: args, synth: self})
-        return this
       }
+      else {
+        console.error(`transform ${transform.name} not allowed after ${prevTransform.name}`);
+      }
+      return this
     }
     return retval
   }
 
   setFunction(obj) {
+    // todo: remove utils and instead manage function dependencies
     if (obj.type === 'util') this.utils[obj.name] = obj;
-    else {
-      var processedGlsl = processGlsl(obj)
-      if(processedGlsl) this._addMethod(obj.name, processedGlsl)
-    }
+    var processedGlsl = processFunction(obj)
+    if(processedGlsl) this._addMethod(obj.name, processedGlsl)
   }
 }
 
@@ -116,34 +119,61 @@ class GeneratorFactory {
 //  return vec4(r, g, b, 1.0);
 // }`
 
-function processGlsl(obj) {
+function processFunction(obj) {
   obj.glslName || (obj.glslName = obj.name);
   if (obj.type === 'clear') return obj;
+  else if (obj.type === 'util') {
+    return processGlsl(obj, obj.returnType);
+  }
   let t = typeLookup[obj.type]
   if(t) {
-  let baseArgs = t.args.map((arg) => arg).join(", ")
-  // @todo: make sure this works for all input types, add validation
-  let customArgs = obj.inputs.map((input) => `${input.type} ${input.name}`).join(', ')
-  let args = `${baseArgs}${customArgs.length > 0 ? ', '+ customArgs: ''}`
-
-  const func = `${t.returnType} ${obj.glslName}(${args})`;
-  const glslFunction = obj.glsl.indexOf(func) > -1 ? obj.glsl :
-`
-  ${func} {
-      ${obj.glsl}
-  }
-`
-
-  // add extra input to beginning for backward combatibility @todo update compiler so this is no longer necessary
-    if(obj.type === 'combine' || obj.type === 'combineCoord') obj.inputs.unshift({
-        name: 'color',
-        type: 'vec4'
-      })
-    return Object.assign({}, obj, { glsl: glslFunction})
+    return processGlsl(obj, t.returnType, t.args);
   } else {
     console.warn(`type ${obj.type} not recognized`, obj)
   }
 
+}
+
+function processGlsl(obj, returnType, args = []) {
+    let baseArgs = args.map((arg) => arg).join(", ")
+    let customArgs = (obj.inputs || (obj.inputs = [])).map((input) => `${input.type} ${input.name}`).join(', ')
+    let allArgs = `${baseArgs}${customArgs.length > 0 ? ', '+ customArgs: ''}`
+
+    const func = `${returnType || ''} ${obj.glslName}(${allArgs}`;
+    const fixOrWrap = (glsl) => {
+        if (glsl.indexOf(func) === -1) {
+            if (glsl.indexOf(`${returnType} main(${allArgs}`) > -1) {
+                return glsl.replace(`${returnType} main(${allArgs}`, func);
+            }
+            else {
+                if (obj.primitive) {
+                    let primitiveFn = obj.primitive.split(" ").join("");
+                    if (glsl.indexOf(primitiveFn) > -1) {
+                        return glsl.replace(`${returnType} ${primitiveFn}(${allArgs}`, func);
+                    }
+                }
+                if (returnType) {
+                    return `
+  ${func}) {
+      ${glsl}
+  }
+`
+                }
+            }
+        }
+        return glsl;
+    }
+    obj.glsl = fixOrWrap(obj.glsl);
+    if (obj.vert) {
+        obj.vert = fixOrWrap(obj.vert);
+    }
+
+    // add extra input to beginning for backward combatibility @todo update compiler so this is no longer necessary
+    if(obj.type === 'combine' || obj.type === 'combineCoord') obj.inputs.unshift({
+        name: 'color',
+        type: 'vec4'
+    })
+    return Object.assign({}, obj, { returnType })
 }
 
 export default GeneratorFactory

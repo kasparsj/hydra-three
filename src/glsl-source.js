@@ -1,3 +1,4 @@
+import {BufferGeometry} from "three/src/core/BufferGeometry.js";
 import generateGlsl from './generate-glsl.js'
 import utilityGlsl from './glsl/utility-functions.js'
 
@@ -85,11 +86,12 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
     };
   }
 
+  const vertTransform = this.transforms[0].transform.type === 'clear' ? this.transforms[1] : this.transforms[0];
   return Object.assign({
-    vert: GlslSource.compileVert(this.defaultOutput.precision, true, this.transforms[0].transform, shaderInfo, this.utils),
-    attributes: this.transforms[0].transform.attributes,
-    primitive: this.transforms[0].transform.primitive,
-    userArgs: this.transforms[0].userArgs,
+    vert: GlslSource.compileVert(this.defaultOutput.precision, true, vertTransform.transform, shaderInfo, this.utils),
+    primitive: vertTransform.transform.primitive,
+    userArgs: vertTransform.userArgs,
+    geometry: this.geometry,
     blendMode: this.blendMode,
     lineWidth: this.lineWidth,
     frag: GlslSource.compileFrag(this.defaultOutput.precision, shaderInfo, this.utils),
@@ -113,7 +115,7 @@ GlslSource.compileHeader = function(precision, uniforms = {}, utils = {}) {
   }).join('')}
   uniform float time;
   uniform vec2 resolution;
-  varying vec2 uv;
+  varying vec2 vuv;
   uniform sampler2D prevBuffer;
   
   ${Object.values(utils).map((transform) => {
@@ -137,7 +139,8 @@ GlslSource.compileFrag = function(precision, shaderInfo, utils) {
 
   void main () {
     vec4 c = vec4(1, 0, 0, 1);
-    vec2 st = gl_FragCoord.xy/resolution.xy;
+    //vec2 st = gl_FragCoord.xy/resolution.xy;
+    vec2 st = vuv;
     gl_FragColor = ${shaderInfo.fragColor};
   }
   `
@@ -147,19 +150,22 @@ GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, u
   var vertHeader = `
   precision ${precision} float;
   uniform mat4 projection, view;
-  attribute vec2 position;
-  varying vec2 uv;
+  attribute vec3 position;
+  attribute vec2 uv;
+  varying vec2 vuv;
   `
   var vertFn = `
   void ${transform.glslName}() {
-    gl_Position = ${useCamera ? 'projection * view * ' : ''}vec4(2.0 * position - 1.0, 0, 1);
+    gl_Position = ${useCamera ? 'projection * view * ' : ''}vec4(position, 1.0);
   } 
   `
   var vertCall = `${transform.glslName}();`;
   if (transform.vert) {
     vertHeader = this.compileHeader(precision, shaderInfo.uniforms, utils) + `
     uniform mat4 projection, view;
-    attribute vec2 position;
+    attribute vec3 position;
+    attribute vec2 uv;
+    attribute vec3 normal;
     
     ${shaderInfo.glslFunctions.map((trans) => {
       if (trans.transform.name !== transform.name) {
@@ -170,15 +176,6 @@ GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, u
     }).join('')}
     `
     vertFn = transform.vert;
-    if (vertFn.indexOf(`vec4 ${transform.glslName}(`) === -1) {
-      if (vertFn.indexOf(`vec4 main(`) > -1) {
-        vertFn = vertFn.replace(`vec4 main(`, `vec4 ${transform.glslName}(`);
-      }
-      else if (transform.primitive) {
-        let primitiveFn = transform.primitive.split(" ").join("");
-        vertFn = vertFn.replace(`vec4 ${primitiveFn}(`, `vec4 ${transform.glslName}(`);
-      }
-    }
     vertCall = `
     vec2 st = uv;
     vec4 pos = ${shaderInfo.position};
@@ -191,7 +188,7 @@ GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, u
   ${vertFn}
 
   void main () {
-    uv = position;
+    vuv = uv;
     ${vertCall}
   }`
 }
@@ -205,6 +202,15 @@ GlslSource.prototype.setBlend = function(blendMode = true) {
 GlslSource.prototype.setLineWidth = function(lineWidth) {
   this.lineWidth = lineWidth;
   return this;
+}
+
+GlslSource.prototype.setGeometry = function(input) {
+  if (!input) input = [];
+  if (!(input instanceof BufferGeometry || input.isBufferGeometry)) {
+    const vertTransform = this.transforms[0].transform.type === 'clear' ? this.transforms[1] : this.transforms[0];
+    input = new (vertTransform.transform.geometry)(...input);
+  }
+  this.geometry = input;
 }
 
 GlslSource.prototype.viewport = function(x, y, w, h) {
