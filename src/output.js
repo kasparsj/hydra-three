@@ -293,7 +293,7 @@ Output.prototype.getAttributes = function(primitive, geometry) {
   if (geometry) {
     attributes = {};
     Object.keys(geometry.attributes).forEach((key) => attributes[key] = geometry.attributes[key].array);
-    elements = geometry.index ? geometry.array : geometry.attributes.position.count;
+    elements = geometry.index ? geometry.index.array : geometry.attributes.position.count;
     primitive || (primitive = geometry.parameters.primitive);
   }
   primitive || (primitive = 'triangles');

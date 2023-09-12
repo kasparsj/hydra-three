@@ -1,4 +1,5 @@
 await loadScript("/hy/index.js");
+await loadScript("/dt/index.js");
 
 // sky
 solid(0)
