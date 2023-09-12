@@ -126,7 +126,7 @@ Output.prototype.initCamera = function() {
   });
 }
 
-Output.prototype.camera = function(eye, target, options = {}) {
+Output.prototype.camera = function(eye, target = [0,0,0], options = {}) {
   options = Object.assign({
     fovy: Math.PI / 4,
     near: 0.1,
@@ -169,12 +169,12 @@ Output.prototype.camera = function(eye, target, options = {}) {
   return this;
 }
 
-Output.prototype.perspective = function(eye, target, options = {}) {
+Output.prototype.perspective = function(eye, target = [0,0,0], options = {}) {
   options = Object.assign({type: 'perspective'}, options);
   return this.camera(eye, target, options);
 }
 
-Output.prototype.ortho = function(eye, target, options = {}) {
+Output.prototype.ortho = function(eye, target = [0,0,0], options = {}) {
   options = Object.assign({type: 'ortho'}, options);
   return this.camera(eye, target, options);
 }
