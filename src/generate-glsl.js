@@ -17,12 +17,12 @@ function createParams(options = {}) {
 
 function generateParams(shaderParams, source, transforms) {
   if (!shaderParams.fragColor) {
-    shaderParams.fragColor = generateGlsl(source, transforms, shaderParams, typeLookup['src'].returnType)('st', 'vec4', 1.0)
+    shaderParams.fragColor = generateGlsl(source, transforms, shaderParams)('st', 'vec4', 1.0)
   }
   if (!shaderParams.position && !shaderParams.combine) {
     shaderParams.position = generateGlsl(source, transforms.filter((tr) => {
       return tr.transform.type !== 'combine' && tr.transform.type !== 'clear';
-    }), shaderParams, typeLookup['src'].returnType)('st', 'vec4', 1.0)
+    }), shaderParams)('st', 'vec4', 1.0) // todo: should be vec3
   }
   // remove uniforms with duplicate names
   if (shaderParams.uniforms) {

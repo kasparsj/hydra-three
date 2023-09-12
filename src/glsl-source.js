@@ -34,11 +34,11 @@ GlslSource.prototype.out = function (_output) {
   return this;
 }
 
-GlslSource.prototype.tex = function(_output) {
+GlslSource.prototype.tex = function(_output, options = {}) {
   if (!this.output) {
     this.out(_output);
   }
-  return this.output.renderTexture();
+  return this.output.renderTexture(options);
 }
 
 GlslSource.prototype.compile = function (options = {}) {
@@ -191,8 +191,8 @@ GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, u
     vertFn = transform.vert;
     vertCall = `
     ${useUV ? 'vec2 st = uv;' : 'vec2 st = position.xy;'}
-    vposition = ${shaderInfo.position};
-    gl_Position = projection * view * vposition;
+    vposition = ${shaderInfo.position}.xyz;
+    gl_Position = projection * view * vec4(vposition, 1.0);
     `;
   }
 

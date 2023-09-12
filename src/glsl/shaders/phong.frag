@@ -1,4 +1,4 @@
-vec4 phong(vec4 _c0, vec3 lightDirection, vec3 lightColor, vec3 ambientColor, vec3 specularColor, float shininess) {
+vec4 phong(vec4 _c0, float shininess, vec3 lightDirection, vec3 lightColor, vec3 ambientColor, vec3 specularColor) {
     vec3 normal = normalize(vnormal);
     vec3 lightDir = normalize(-lightDirection);
     vec3 viewDir = normalize(-vposition);

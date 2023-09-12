@@ -65,15 +65,19 @@ var Output = function (index, synth) {
   })
 }
 
-Output.prototype._initFbo = function() {
-  return this.regl.framebuffer({
-    color: this.regl.texture({
+Output.prototype._initFbo = function(options = {}) {
+  const {color, ...fbOptions} = Object.assign({
+    color: {
       mag: 'nearest',
       width: this.width,
       height: this.height,
       format: 'rgba'
-    }),
-    depthStencil: false
+    },
+  }, options);
+  return this.regl.framebuffer({
+    color: this.regl.texture(color),
+    depthStencil: false,
+    ...fbOptions,
   })
 }
 
@@ -186,6 +190,7 @@ Output.prototype.render = function (passes) {
     tex0: this.getCurrent(),
   });
   self.draw = [];
+  self.passes = passes;
   for (let i=0; i<passes.length; i++) {
     let pass = passes[i]
     if (pass.clear) {
@@ -391,11 +396,14 @@ Output.prototype.tick = function (props) {
   });
 }
 
-Output.prototype.renderTexture = function() {
+Output.prototype.renderTexture = function(options = {}) {
+  const next = this.pingPongIndex ? 0 : 1;
+  const original = this.fbos;
+  this.fbos.map(() => this._initFbo({color: options}))
   this.synth._renderOut(this.id);
   const colorTex = this.fbos[this.pingPongIndex].color;
-  this.fbos[this.pingPongIndex] = this._initFbo();
-  return colorTex;
+  this.fbos = original;
+  return Array.isArray(colorTex) ? colorTex[0] : colorTex;
 }
 
 export default Output
