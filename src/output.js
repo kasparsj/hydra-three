@@ -66,17 +66,18 @@ var Output = function (index, synth) {
 }
 
 Output.prototype._initFbo = function(options = {}) {
-  const {color, ...fbOptions} = Object.assign({
-    color: {
-      mag: 'nearest',
-      width: this.width,
-      height: this.height,
-      format: 'rgba'
-    },
-  }, options);
+  let {color, ...fbOptions} = options;
+  color = Object.assign({
+    mag: 'nearest',
+    width: this.width,
+    height: this.height,
+    format: 'rgba'
+  }, color);
+  fbOptions = Object.assign({
+    depthStencil: false,
+  }, fbOptions);
   return this.regl.framebuffer({
     color: this.regl.texture(color),
-    depthStencil: false,
     ...fbOptions,
   })
 }
