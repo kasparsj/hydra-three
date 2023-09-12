@@ -1,6 +1,7 @@
 import glsl from 'glslify'
 import {GridGeometry} from "./geometries/GridGeometry.js";
 import * as THREE from "three/src/geometries/Geometries.js";
+import vectorizeText from "vectorize-text";
 
 const dotsFrag = glsl("./shaders/dots.frag");
 const pointsVert = glsl("./shaders/points.vert");
@@ -14,7 +15,7 @@ const lineloopVert = glsl("./shaders/lineloop.vert");
 const planeVert = glsl("./shaders/plane.vert");
 
 // todo: respect makeGlobal?
-Object.assign(window, {GridGeometry});
+Object.assign(window, {GridGeometry, vectorizeText});
 Object.assign(window, THREE);
 
 export default (hy) => [
@@ -145,5 +146,43 @@ export default (hy) => [
         glsl: `return color;`,
         primitive: 'lines',
         geometry: THREE.EdgesGeometry,
-    }
+    },
+    {
+        name: 'text',
+        type: 'vert',
+        inputs: [
+            {name: 'color', type: 'vec4', default: 1},
+        ],
+        glsl: `return color;`,
+        geometry: vectorizeText,
+        useUV: false,
+        useNormal: false,
+    },
+    // lighting related functions
+    {
+        name: 'lambert',
+        type: 'color',
+        inputs: [
+            {name: 'intensity', type: 'float', default: 1},
+            {name: 'lightDirection', type: 'vec3', default: [1.0, 1.0, -1.0]},
+        ],
+        glsl: lambertFrag,
+    },
+    {
+        name: 'phong',
+        type: 'color',
+        inputs: [
+            {name: 'shininess', type: 'float', default: 4},
+            {name: 'lightDirection', type: 'vec3', default: [1.0, 1.0, -1.0]},
+            {name: 'lightColor', type: 'vec3', default: [1.0, 1.0, 1.0]},
+            {name: 'ambientColor', type: 'vec3', default: [0.1, 0.1, 0.1]},
+            {name: 'specularColor', type: 'vec3', default: [1.0, 1.0, 1.0]},
+        ],
+        glsl: phongFrag,
+    },
+    {
+        name: 'normal',
+        type: 'src',
+        glsl: `return vec4(vnormal, 1.0);`,
+    },
 ];

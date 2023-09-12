@@ -1,6 +1,6 @@
-import {BufferGeometry} from "three/src/core/BufferGeometry.js";
 import generateGlsl from './generate-glsl.js'
 import utilityGlsl from './glsl/utility-functions.js'
+import vectorizeText from 'vectorize-text';
 
 var GlslSource = function (obj) {
   this.transforms = []
@@ -115,7 +115,9 @@ GlslSource.compileHeader = function(precision, uniforms = {}, utils = {}) {
   }).join('')}
   uniform float time;
   uniform vec2 resolution;
+  varying vec3 vposition;
   varying vec2 vuv;
+  varying vec3 vnormal;
   uniform sampler2D prevBuffer;
   
   ${Object.values(utils).map((transform) => {
@@ -148,17 +150,25 @@ GlslSource.compileFrag = function(precision, shaderInfo, utils) {
 
 GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, utils) {
   const useUV = typeof(transform.useUV) !== 'undefined'
-      ? transform.useUV
-      : ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.primitive) === -1;
+    ? transform.useUV
+    : (!transform.primitive || ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.primitive) === -1);
+  const useNormal = typeof(transform.useNormal) !== 'undefined'
+      ? transform.useNormal
+      : transform.type === 'vert' && (!transform.primitive || ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.primitive) === -1)
+
   let vertHeader = `
   precision ${precision} float;
   uniform mat4 projection, view;
   attribute vec3 position;
   ${useUV ? 'attribute vec2 uv;' : ''}
+  ${useNormal ? 'attribute vec3 normal;' : ''}
+  varying vec3 vposition;
   varying vec2 vuv;
+  varying vec3 vnormal;
   `
   let vertFn = `
   void ${transform.glslName}() {
+    vposition = position;
     gl_Position = ${useCamera ? 'projection * view * ' : ''}vec4(position, 1.0);
   } 
   `
@@ -168,7 +178,7 @@ GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, u
     uniform mat4 projection, view;
     attribute vec3 position;
     ${useUV ? 'attribute vec2 uv;' : ''}
-    attribute vec3 normal;
+    ${useNormal ? 'attribute vec3 normal;' : ''}
     
     ${shaderInfo.glslFunctions.map((trans) => {
       if (trans.transform.name !== transform.name) {
@@ -181,8 +191,8 @@ GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, u
     vertFn = transform.vert;
     vertCall = `
     ${useUV ? 'vec2 st = uv;' : 'vec2 st = position.xy;'}
-    vec4 pos = ${shaderInfo.position};
-    gl_Position = projection * view * pos;
+    vposition = ${shaderInfo.position};
+    gl_Position = projection * view * vposition;
     `;
   }
 
@@ -192,6 +202,7 @@ GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, u
 
   void main () {
     ${useUV ? 'vuv = uv;' : ''}
+    ${useNormal ? 'vnormal = normal;' : ''}
     ${vertCall}
   }`
 }
@@ -208,14 +219,29 @@ GlslSource.prototype.setLineWidth = function(lineWidth) {
 }
 
 GlslSource.prototype.setGeometry = function(input) {
+  const isGeometry = (v) => (v.isBufferGeometry || (v.positions && v.edges));
+  const isClass = (v) => typeof v === 'function' && /^\s*class\s+/.test(v.toString());
   if (!input) input = [];
-  if (!(input instanceof BufferGeometry || input.isBufferGeometry)) {
+  if (!isGeometry(input)) {
     const vertTransform = this.transforms[0].transform.type === 'clear' ? this.transforms[1] : this.transforms[0];
     if (!Array.isArray(input)) input = [input];
-    if (vertTransform.transform.geometry === GridGeometry && vertTransform.transform.primitive && typeof(input[0]) !== 'string') {
-      input.unshift(vertTransform.transform.primitive);
+    if (isClass(vertTransform.transform.geometry)) {
+      if (vertTransform.transform.geometry === GridGeometry && vertTransform.transform.primitive && typeof(input[0]) !== 'string') {
+        input.unshift(vertTransform.transform.primitive);
+      }
+      input = new (vertTransform.transform.geometry)(...input);
     }
-    input = new (vertTransform.transform.geometry)(...input);
+    else {
+      if (vertTransform.transform.geometry === vectorizeText && input.length === 1) {
+        input.push({
+          textAlign: 'center',
+          textBaseline: 'middle',
+          // font: 'arial',
+          // triangles: true, // todo: make it work
+        });
+      }
+      input = (vertTransform.transform.geometry)(...input);
+    }
   }
   this.geometry = input;
 }

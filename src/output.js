@@ -292,9 +292,17 @@ Output.prototype.getAttributes = function(primitive, geometry) {
   let attributes = this.attributes;
   if (geometry) {
     attributes = {};
-    Object.keys(geometry.attributes).forEach((key) => attributes[key] = geometry.attributes[key].array);
-    elements = geometry.index ? geometry.index.array : geometry.attributes.position.count;
-    primitive || (primitive = geometry.parameters.primitive);
+    if (geometry.isBufferGeometry) {
+      Object.keys(geometry.attributes).forEach((key) => attributes[key] = geometry.attributes[key].array);
+      elements = geometry.index ? geometry.index.array : geometry.attributes.position.count;
+      primitive || (primitive = geometry.parameters.primitive);
+    }
+    else if (geometry.positions && (geometry.edges || geometry.cells)) {
+      attributes.position = []; // todo: should be Float32Array
+      geometry.positions.map((v, k) => attributes.position.push(v[0], v[1], 0));
+      elements = geometry.edges ? geometry.edges : geometry.cells;
+      primitive = geometry.edges ? 'lines' : 'triangles';
+    }
   }
   primitive || (primitive = 'triangles');
   return {attributes, elements, primitive};
