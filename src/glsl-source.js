@@ -24,7 +24,7 @@ GlslSource.prototype.addTransform = function (obj)  {
 GlslSource.prototype.out = function (_output) {
   var output = _output || this.defaultOutput
   this.output = output;
-  var glsl = this.glsl()
+  var glsl = this.compile()
   this.synth.currentFunctions = []
   if(output) try{
     output.render(glsl)
@@ -41,7 +41,7 @@ GlslSource.prototype.tex = function(_output) {
   return this.output.renderTexture();
 }
 
-GlslSource.prototype.glsl = function (options = {}) {
+GlslSource.prototype.compile = function (options = {}) {
   this.passes = []
   this.passes.push(this.createPass(generateGlsl(this), options))
   return this.passes

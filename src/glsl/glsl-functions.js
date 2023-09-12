@@ -70,21 +70,6 @@ const types = {
 
 export default () => [
   {
-    name: 'clear',
-    type: 'clear',
-    inputs: [],
-    glsl: ``,
-  },
-  {
-    name: 'fade',
-    type: 'clear',
-    inputs: [
-        {name: 'amount', type: 'float', default: '0.01'},
-        {name: 'camera', type: 'bool', default: false},
-    ],
-    glsl: ``,
-  },
-  {
   name: 'noise',
   type: 'src',
   inputs: [
@@ -1124,6 +1109,27 @@ export default () => [
         {name: 'stop2', type: 'float', default: 1},
     ],
     glsl: `return (_c0 - start1) / (stop1 - start1) * (stop2 - start2) + start2;`
+},
+{
+    name: 'clear',
+    type: 'clear',
+    inputs: [],
+    glsl: ``,
+},
+{
+    name: 'fade',
+    type: 'clear',
+    inputs: [
+        {name: 'amount', type: 'float', default: '0.01'},
+        {name: 'camera', type: 'bool', default: false},
+    ],
+    glsl: ``,
+},
+{
+    name: 'glsl',
+    type: 'glsl',
+    inputs: [],
+    glsl: ``,
 },
     // todo: make these type agnostic (new type: 'util'?)
     {

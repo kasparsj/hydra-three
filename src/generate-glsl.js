@@ -40,6 +40,10 @@ function generateGlsl (source, transforms, shaderParams) {
   const empty = () => '';
   var fragColor = empty
   transforms.map((transform, i) => {
+    if (transform.transform.type === 'glsl') {
+      fragColor = () => transform.userArgs[0];
+      return;
+    }
     if (transform.transform.type === 'vert' && !source.geometry) {
       source.setGeometry(transform.userArgs[0]);
       transform.userArgs = transform.userArgs.slice(1);
@@ -86,7 +90,7 @@ function generateGlsl (source, transforms, shaderParams) {
       if (inputs[0].value && inputs[0].value.transforms) {
         if (inputs[0].value.transforms[0].transform.vert || source.transforms[0].transform.vert) {
           inputs[0].value.output = source.output;
-          source.passes.unshift(...inputs[0].value.glsl({framebuffer: source.output.temp[1]}));
+          source.passes.unshift(...inputs[0].value.compile({framebuffer: source.output.temp[1]}));
           const temp1 = src(source.output.temp[1]);
           f1 = (uv, returnType, alpha) => `${generateGlsl(temp1, temp1.transforms, shaderParams)(uv, returnType, alpha)}`
         }

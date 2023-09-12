@@ -49,7 +49,7 @@ class GeneratorFactory {
     const self = this
     this.glslTransforms[method] = transform
     let retval = undefined
-    if (['src', 'coord', 'clear', 'vert'].indexOf(transform.type) > -1) {
+    if (['src', 'coord', 'clear', 'vert', 'glsl'].indexOf(transform.type) > -1) {
       const func = (...args) => new this.sourceClass({
         name: method,
         transform: transform,
@@ -125,7 +125,7 @@ class GeneratorFactory {
 
 function processFunction(obj) {
   obj.glslName || (obj.glslName = obj.name);
-  if (obj.type === 'clear') return obj;
+  if (obj.type === 'clear' || obj.type === 'glsl') return obj;
   else if (obj.type === 'util') {
     return processGlsl(obj, obj.returnType);
   }

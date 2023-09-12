@@ -183,9 +183,4 @@ export default (hy) => [
         ],
         glsl: phongFrag,
     },
-    {
-        name: 'normal',
-        type: 'src',
-        glsl: `return vec4(vnormal, 1.0);`,
-    },
 ];
