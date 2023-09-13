@@ -1,7 +1,7 @@
 await loadScript("/extra-shaders-for-hydra/lib-noise.js");
 
 // todo: fix - some strange disconnected part
-plines(
+lines(
     [0,400],
     solid(noise(1, 0.03).map(-1,1,-0.1,1.1), noise(2, 0.03).map(-1,1,-0.1,1.1)),
     colornoise(1000).saturate(8)
@@ -11,11 +11,11 @@ plines(
 .out()
 
 // layering
-plines([100]).add(noise(10).add(shape(3))).out()
+lines([100]).add(noise(10).add(shape(3))).out()
 
 // todo: does not work when clearing before
-// plines(100]).add(noise(10).add(shape(3))).out()
+// lines(100]).add(noise(10).add(shape(3))).out()
 
-// plines(10], gradient()).out()
+// lines(10], gradient()).out()
 
-// plines().out()
+// lines().out()

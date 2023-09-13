@@ -55,7 +55,7 @@ GlslSource.prototype.getInfo = function () {
     return {
       shaderInfo,
       utilityGlsl: this.utils,
-      // todo: differs from compile
+      // todo: add support for generated vertex shader
       vert: this.transforms[0].transform.vert,
       // todo: differs from compile
       attributes: this.transforms[0].transform.attributes,

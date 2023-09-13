@@ -35,8 +35,13 @@ const getTypeLookup = {
 };
 
 const castType = (func, fromType, toType, alpha = 0.0) => {
-    const fromLen = fromType === 'float' ? 1 : fromType.substring(3);
-    const toLen = (toType === 'float' ? 1 : toType.substring(3));
+    let fromLen = fromType.substring(3);
+    let toLen = toType.substring(3);
+    const nonVec = {float: 1, sampler2D: 4};
+    Object.keys(nonVec).map((t) => {
+        if (fromType === t) fromLen = nonVec[t];
+        if (toType === t) toLen = nonVec[t];
+    });
     if (fromLen < toLen) {
         let diff = toLen - fromLen;
         let last = '';

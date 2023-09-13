@@ -33,8 +33,8 @@ class GridGeometry extends BufferGeometry {
                 break;
             }
             case 'lines': {
-                width || (width = 1);
-                height || (height = 1);
+                width || (width = 0);
+                height || (height = 0);
                 const count = 2 * (width + height);
                 vertices = Float32Array.from({length: count * 3}, (v, k) => {
                     if (k < (width * 6)) {

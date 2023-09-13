@@ -2,23 +2,23 @@ import glsl from 'glslify'
 import {GridGeometry} from "./geometries/GridGeometry.js";
 import vectorizeText from "vectorize-text";
 
-const pointsVert = glsl("./shaders/vert/points.vert");
-const linesVert = glsl("./shaders/vert/lines.vert");
-const linestripVert = glsl("./shaders/vert/linestrip.vert");
-const lineloopVert = glsl("./shaders/vert/lineloop.vert");
+const pointsVert = glsl("./shaders/points.vert");
+const linesVert = glsl("./shaders/lines.vert");
+const linestripVert = glsl("./shaders/linestrip.vert");
+const lineloopVert = glsl("./shaders/lineloop.vert");
 
-const pdotsFrag = glsl("./shaders/pdots.frag");
-const psquaresFrag = glsl("./shaders/psquares.frag");
-const plinesFrag = glsl("./shaders/plines.frag");
-const plinestripFrag = glsl("./shaders/plinestrip.frag");
-const plineloopFrag = glsl("./shaders/plineloop.frag");
+const dotsFrag = glsl("./shaders/dots.frag");
+const squaresFrag = glsl("./shaders/squares.frag");
+const linesFrag = glsl("./shaders/lines.frag");
+const linestripFrag = glsl("./shaders/linestrip.frag");
+const lineloopFrag = glsl("./shaders/lineloop.frag");
 
 // todo: respect makeGlobal?
 Object.assign(window, {GridGeometry, vectorizeText});
 
 export default (hy) => [
     {
-        name: 'pdots',
+        name: 'dots',
         type: 'vert',
         inputs: [
             {name: 'pos', type: 'vec3', default: hy.gradient()},
@@ -26,14 +26,14 @@ export default (hy) => [
             {name: 'color', type: 'vec4', default: 1},
             {name: 'fade', type: 'float', default: 0.025},
         ],
-        glsl: pdotsFrag,
+        glsl: dotsFrag,
         vert: pointsVert,
         primitive: 'points',
         blendMode: true,
         geometry: GridGeometry,
     },
     {
-        name: 'psquares',
+        name: 'squares',
         type: 'vert',
         inputs: [
             {name: 'pos', type: 'vec3', default: hy.gradient()},
@@ -41,44 +41,44 @@ export default (hy) => [
             {name: 'color', type: 'vec4', default: 1},
             {name: 'fade', type: 'float', default: 0.025},
         ],
-        glsl: psquaresFrag,
+        glsl: squaresFrag,
         vert: pointsVert,
         primitive: 'points',
         blendMode: true,
         geometry: GridGeometry,
     },
     {
-        name: 'plines',
+        name: 'lines',
         type: 'vert',
         inputs: [
             {name: 'pos', type: 'vec3', default: hy.gradient()},
             {name: 'color', type: 'vec4', default: 1},
         ],
-        glsl: plinesFrag,
+        glsl: linesFrag,
         vert: linesVert,
         primitive: 'lines',
         geometry: GridGeometry,
     },
     {
-        name: 'plinestrip',
+        name: 'linestrip',
         type: 'vert',
         inputs: [
             {name: 'pos', type: 'vec3', default: hy.solid(hy.noise(1).x, hy.noise(2).y, hy.noise(3).z).map(-1,1,0,1)},
             {name: 'color', type: 'vec4', default: 1},
         ],
-        glsl: plinestripFrag,
+        glsl: linestripFrag,
         vert: linestripVert,
         primitive: 'line strip',
         geometry: GridGeometry,
     },
     {
-        name: 'plineloop',
+        name: 'lineloop',
         type: 'vert',
         inputs: [
             {name: 'pos', type: 'vec3', default: hy.solid(hy.noise(1).x, hy.noise(2).y, hy.noise(3).z).map(-1,1,0,1)},
             {name: 'color', type: 'vec4', default: 1},
         ],
-        glsl: plineloopFrag,
+        glsl: lineloopFrag,
         vert: lineloopVert,
         primitive: 'line loop',
         geometry: GridGeometry,
