@@ -21,7 +21,7 @@ function generateParams(shaderParams, source, transforms) {
   }
   if (!shaderParams.position && !shaderParams.combine) {
     shaderParams.position = generateGlsl(source, transforms.filter((tr) => {
-      return tr.transform.type !== 'combine' && tr.transform.type !== 'clear';
+      return tr.transform.type !== 'combine';
     }), shaderParams)('st', 'vec4', 1.0) // todo: should be vec3
   }
   // remove uniforms with duplicate names
@@ -49,10 +49,6 @@ function generateGlsl (source, transforms, shaderParams) {
       transform.userArgs = transform.userArgs.slice(1);
     }
     var inputs = formatArguments(transform, shaderParams.uniforms.length)
-    if (transform.transform.type === 'clear') {
-      source.passes.unshift({clear: transform.transform.name, userArgs: inputs.map((i) => i.value)});
-      return;
-    }
 
     inputs.forEach((input) => {
       if(input.isUniform) shaderParams.uniforms.push(input)

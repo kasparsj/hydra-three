@@ -83,20 +83,21 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
       frag: GlslSource.compileFrag(this.defaultOutput.precision, shaderInfo, this.utils),
       uniforms: Object.assign({}, this.defaultUniforms, uniforms),
       viewport: this._viewport,
+      clear: this.clear,
     };
   }
 
-  const vertTransform = this.transforms[0].transform.type === 'clear' ? this.transforms[1] : this.transforms[0];
   return Object.assign({
-    vert: GlslSource.compileVert(this.defaultOutput.precision, true, vertTransform.transform, shaderInfo, this.utils),
-    primitive: vertTransform.transform.primitive,
-    userArgs: vertTransform.userArgs,
+    vert: GlslSource.compileVert(this.defaultOutput.precision, true, this.transforms[0].transform, shaderInfo, this.utils),
+    primitive: this.transforms[0].transform.primitive,
+    userArgs: this.transforms[0].userArgs,
     geometry: this.geometry,
     blendMode: this.blendMode,
     lineWidth: this.lineWidth,
     frag: GlslSource.compileFrag(this.defaultOutput.precision, shaderInfo, this.utils),
     uniforms: Object.assign({}, this.defaultUniforms, uniforms),
     viewport: this._viewport,
+    clear: this.clear,
   }, options)
 }
 
@@ -223,13 +224,12 @@ GlslSource.prototype.setGeometry = function(input) {
   const isClass = (v) => typeof v === 'function' && /^\s*class\s+/.test(v.toString());
   if (!input) input = [];
   if (!isGeometry(input)) {
-    const vertTransform = this.transforms[0].transform.type === 'clear' ? this.transforms[1] : this.transforms[0];
     if (!Array.isArray(input)) input = [input];
-    if (isClass(vertTransform.transform.geometry)) {
-      if (vertTransform.transform.geometry === GridGeometry && vertTransform.transform.primitive && typeof(input[0]) !== 'string') {
-        input.unshift(vertTransform.transform.primitive);
+    if (isClass(this.transforms[0].transform.geometry)) {
+      if (this.transforms[0].transform.geometry === GridGeometry && this.transforms[0].transform.primitive && typeof(input[0]) !== 'string') {
+        input.unshift(this.transforms[0].transform.primitive);
       }
-      input = new (vertTransform.transform.geometry)(...input);
+      input = new (this.transforms[0].transform.geometry)(...input);
     }
     else {
       if (vertTransform.transform.geometry === vectorizeText && input.length === 1) {
@@ -248,6 +248,14 @@ GlslSource.prototype.setGeometry = function(input) {
 
 GlslSource.prototype.viewport = function(x, y, w, h) {
   this._viewport = {x, y, w, h};
+  return this;
+}
+
+GlslSource.prototype.setAutoClear = function(amount = 1.0, options = {}) {
+  this.clear = {
+    amount,
+    ...options,
+  };
   return this;
 }
 

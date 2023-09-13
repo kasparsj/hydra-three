@@ -49,7 +49,7 @@ class GeneratorFactory {
     const self = this
     this.glslTransforms[method] = transform
     let retval = undefined
-    if (['src', 'coord', 'clear', 'vert', 'glsl'].indexOf(transform.type) > -1) {
+    if (['src', 'coord', 'vert', 'glsl'].indexOf(transform.type) > -1) {
       const func = (...args) => new this.sourceClass({
         name: method,
         transform: transform,
@@ -64,12 +64,11 @@ class GeneratorFactory {
       retval = func
     }
     this.sourceClass.prototype[method] = function (...args) {
-      const prevTransform = this.transforms[this.transforms.length-1].transform;
-      if (prevTransform.type === 'clear' || (transform.type !== 'src' && transform.type !== 'vert')) {
+      if (transform.type !== 'src' && transform.type !== 'vert') {
         this.transforms.push({name: method, transform: transform, userArgs: args, synth: self})
       }
       else {
-        console.error(`transform ${transform.name} not allowed after ${prevTransform.name}`);
+          console.error(`transform ${transform.name} not allowed after ${this.transforms[this.transforms.length-1].name}`);
       }
       return this
     }
@@ -125,7 +124,7 @@ class GeneratorFactory {
 
 function processFunction(obj) {
   obj.glslName || (obj.glslName = obj.name);
-  if (obj.type === 'clear' || obj.type === 'glsl') return obj;
+  if (obj.type === 'glsl') return obj;
   else if (obj.type === 'util') {
     return processGlsl(obj, obj.returnType);
   }

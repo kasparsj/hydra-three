@@ -1,6 +1,5 @@
 import glsl from 'glslify'
 import {GridGeometry} from "./geometries/GridGeometry.js";
-import * as THREE from "three/src/geometries/Geometries.js";
 import vectorizeText from "vectorize-text";
 
 const pointsVert = glsl("./shaders/vert/points.vert");
@@ -13,13 +12,9 @@ const psquaresFrag = glsl("./shaders/psquares.frag");
 const plinesFrag = glsl("./shaders/plines.frag");
 const plinestripFrag = glsl("./shaders/plinestrip.frag");
 const plineloopFrag = glsl("./shaders/plineloop.frag");
-const planeVert = glsl("./shaders/plane.vert");
-const phongFrag = glsl("./shaders/phong.frag");
-const lambertFrag = glsl("./shaders/lambert.frag");
 
 // todo: respect makeGlobal?
 Object.assign(window, {GridGeometry, vectorizeText});
-Object.assign(window, THREE);
 
 export default (hy) => [
     {
@@ -89,68 +84,6 @@ export default (hy) => [
         geometry: GridGeometry,
     },
     {
-        name: 'plane',
-        type: 'vert',
-        inputs: [
-            {name: 'pos', type: 'vec3', default: hy.gradient()},
-            {name: 'color', type: 'vec4', default: 1},
-        ],
-        glsl: `return color;`,
-        vert: planeVert,
-        primitive: 'triangles',
-        geometry: THREE.PlaneGeometry,
-    },
-    {
-        name: 'box',
-        type: 'vert',
-        inputs: [
-            {name: 'color', type: 'vec4', default: 1},
-        ],
-        glsl: `return color;`,
-        primitive: 'triangles',
-        geometry: THREE.BoxGeometry,
-    },
-    {
-        name: 'sphere',
-        type: 'vert',
-        inputs: [
-            {name: 'color', type: 'vec4', default: 1},
-        ],
-        glsl: `return color;`,
-        primitive: 'triangles',
-        geometry: THREE.SphereGeometry,
-    },
-    {
-        name: 'cylinder',
-        type: 'vert',
-        inputs: [
-            {name: 'color', type: 'vec4', default: 1},
-        ],
-        glsl: `return color;`,
-        primitive: 'triangles',
-        geometry: THREE.CylinderGeometry,
-    },
-    {
-        name: 'cone',
-        type: 'vert',
-        inputs: [
-            {name: 'color', type: 'vec4', default: 1},
-        ],
-        glsl: `return color;`,
-        primitive: 'triangles',
-        geometry: THREE.ConeGeometry,
-    },
-    {
-        name: 'edges',
-        type: 'vert',
-        inputs: [
-            {name: 'color', type: 'vec4', default: 1},
-        ],
-        glsl: `return color;`,
-        primitive: 'lines',
-        geometry: THREE.EdgesGeometry,
-    },
-    {
         name: 'text',
         type: 'vert',
         inputs: [
@@ -160,27 +93,5 @@ export default (hy) => [
         geometry: vectorizeText,
         useUV: false,
         useNormal: false,
-    },
-    // lighting related functions
-    {
-        name: 'lambert',
-        type: 'color',
-        inputs: [
-            {name: 'intensity', type: 'float', default: 1},
-            {name: 'lightDirection', type: 'vec3', default: [1.0, 1.0, -1.0]},
-        ],
-        glsl: lambertFrag,
-    },
-    {
-        name: 'phong',
-        type: 'color',
-        inputs: [
-            {name: 'shininess', type: 'float', default: 4},
-            {name: 'lightDirection', type: 'vec3', default: [1.0, 1.0, -1.0]},
-            {name: 'lightColor', type: 'vec3', default: [1.0, 1.0, 1.0]},
-            {name: 'ambientColor', type: 'vec3', default: [0.1, 0.1, 0.1]},
-            {name: 'specularColor', type: 'vec3', default: [1.0, 1.0, 1.0]},
-        ],
-        glsl: phongFrag,
     },
 ];

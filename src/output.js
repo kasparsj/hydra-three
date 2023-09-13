@@ -195,21 +195,12 @@ Output.prototype.render = function (passes) {
   for (let i=0; i<passes.length; i++) {
     let pass = passes[i]
     if (pass.clear) {
-      switch (pass.clear) {
-        case 'clear':
-          self.draw.push(...this.clear(false));
-          break;
-        case 'fade': {
-          const opt = typeof(pass.userArgs[0]) === 'object' ? pass.userArgs[0] : {amount: pass.userArgs[0]};
-          opt.now = false;
-          self.draw.push(this.fade(opt));
-          break;
-        }
-        default:
-          console.warn(`unrecognized clear: ${pass.clear}(${pass.userArgs.join(", ")})`);
-          break;
+      if (pass.clear.amount >= 1) {
+        self.draw.push(...this.clear(false));
       }
-      continue;
+      else {
+        self.draw.push(this.fade({now: false, ...pass.clear}));
+      }
     }
 
     const {attributes, elements, primitive} = this.getAttributes(pass.primitive, pass.geometry);

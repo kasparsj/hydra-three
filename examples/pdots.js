@@ -21,7 +21,7 @@ solid(0)
     .layer(
         pdots([20, 20], solid(noise(100).map(-1,1,0,1), tex(arr.random(50, 50, {max: 255}))), noise().mult(10), colornoise(1000, 0.1)
             .brightness())
-            .clear()
+            .setAutoClear()
     )
     .scrollY(0, 0.1)
     .out();
