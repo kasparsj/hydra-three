@@ -350,67 +350,56 @@ export default () => [
 },
 {
   name: 'shift',
-  type: 'color',
+  type: 'genType',
   inputs: [
     {
-      type: 'float',
-      name: 'r',
+      type: 'vec4',
+      name: 'val',
       default: 0.5,
     },
-{
-      type: 'float',
-      name: 'g',
-      default: 0,
-    },
-{
-      type: 'float',
-      name: 'b',
-      default: 0,
-    },
-{
-      type: 'float',
-      name: 'a',
-      default: 0,
-    }
   ],
   glsl:
 `   vec4 c2 = vec4(_c0);
-   c2.r = fract(c2.r + r);
-   c2.g = fract(c2.g + g);
-   c2.b = fract(c2.b + b);
-   c2.a = fract(c2.a + a);
-   return vec4(c2.rgba);`
+   c2 = fract(c2 + val);
+   return c2;`
 },
 {
   name: 'repeat',
-  type: 'coord',
+  type: 'genType',
   inputs: [
     {
-      type: 'float',
-      name: 'repeatX',
+      type: 'vec3',
+      name: 'repeat',
       default: 3,
     },
-{
-      type: 'float',
-      name: 'repeatY',
-      default: 3,
-    },
-{
-      type: 'float',
-      name: 'offsetX',
+    {
+      type: 'vec3',
+      name: 'offset',
       default: 0,
     },
-{
-      type: 'float',
-      name: 'offsetY',
-      default: 0,
-    }
   ],
   glsl:
-`   vec2 st = _st * vec2(repeatX, repeatY);
-   st.x += step(1., mod(st.y,2.0)) * offsetX;
-   st.y += step(1., mod(st.x,2.0)) * offsetY;
-   return fract(st);`
+`   vec3 c2 = _c0.rgb * repeat;
+   c2 += step(1., mod(c2,2.0)) * offset;
+   return vec4(fract(c2), _c0.a);`,
+  coord: {
+      inputs: [
+          {
+              type: 'vec2',
+              name: 'repeat',
+              default: 3,
+          },
+          {
+              type: 'vec2',
+              name: 'offset',
+              default: 0,
+          },
+      ],
+      glsl:
+          ` vec2 st = _st * repeat;
+            st += step(1., mod(st,2.0)) * offset;
+            return fract(st);`,
+  }
 },
 {
   name: 'modulateRepeat',
@@ -568,38 +557,45 @@ export default () => [
 },
 {
   name: 'scroll',
-  type: 'coord',
+  type: 'genType',
   inputs: [
     {
-      type: 'float',
-      name: 'scrollX',
+      type: 'vec3',
+      name: 'scroll',
       default: 0.5,
     },
-{
-      type: 'float',
-      name: 'scrollY',
-      default: 0.5,
-    },
-{
-      type: 'float',
-      name: 'speedX',
+    {
+      type: 'vec3',
+      name: 'speed',
       default: 0,
     },
-{
-      type: 'float',
-      name: 'speedY',
-      default: 0,
-    }
   ],
   glsl:
 `
-   _st.x += scrollX + time*speedX;
-   _st.y += scrollY + time*speedY;
-   return fract(_st);`
+   _c0.rgb += scroll + time*speed;
+   return vec4(fract(_c0.rgb), _c0.a);`,
+  coord: {
+      inputs: [
+          {
+              type: 'vec2',
+              name: 'scroll',
+              default: 0.5,
+          },
+          {
+              type: 'vec2',
+              name: 'speed',
+              default: 0,
+          },
+      ],
+      glsl:
+          `
+        _st.xy += scroll + time*speed;
+        return fract(_st);`,
+  }
 },
 {
   name: 'scrollX',
-  type: 'coord',
+  type: 'genType',
   inputs: [
     {
       type: 'float',
@@ -613,8 +609,13 @@ export default () => [
     }
   ],
   glsl:
-`   _st.x += scrollX + time*speed;
-   return fract(_st);`
+`   _c0.x += scrollX + time*speed;
+   return vec4(fract(_c0.x), _c0.y, _c0.z, _c0.a);`,
+  coord: {
+      glsl:
+      `   _st.x += scrollX + time*speed;
+          return fract(_st);`,
+  }
 },
 {
   name: 'modulateScrollX',
@@ -637,22 +638,27 @@ export default () => [
 },
 {
   name: 'scrollY',
-  type: 'coord',
+  type: 'genType',
   inputs: [
     {
       type: 'float',
       name: 'scrollY',
       default: 0.5,
     },
-{
+    {
       type: 'float',
       name: 'speed',
       default: 0,
     }
   ],
   glsl:
-`   _st.y += scrollY + time*speed;
-   return fract(_st);`
+`   _c0.y += scrollY + time*speed;
+   return vec4(_c0.x, fract(_c0.y), _c0.z, _c0.a);`,
+  coord: {
+      glsl:
+      `   _st.y += scrollY + time*speed;
+          return fract(_st);`
+  }
 },
 {
   name: 'modulateScrollY',
@@ -834,7 +840,7 @@ export default () => [
 },
 {
   name: 'invert',
-  type: 'color',
+  type: 'genType',
   inputs: [
     {
       type: 'float',
@@ -842,8 +848,10 @@ export default () => [
       default: 1,
     }
   ],
-  glsl:
-`   return vec4((1.0-_c0.rgb)*amount + _c0.rgb*(1.0-amount), _c0.a);`
+  glsl: `return vec4((1.0-_c0.rgb)*amount + _c0.rgb*(1.0-amount), _c0.a);`,
+  coord: {
+      glsl: `return (1.0-_st)*amount + _st*(1.0-amount);`,
+  },
 },
 {
   name: 'contrast',
@@ -1099,16 +1107,129 @@ export default () => [
   glsl:
 `   return vec4(_c0.a * scale + offset);`
 },
+// todo: make these genType
+// todo: the question is should genType behave like coord or like color, when piped?
 {
     name: 'map',
+    type: 'genType',
+    inputs: [
+        {name: 'start1', type: 'vec4', default: NaN},
+        {name: 'stop1', type: 'vec4', default: NaN},
+        {name: 'start2', type: 'vec4', default: 0},
+        {name: 'stop2', type: 'vec4', default: 1},
+    ],
+    glsl: `return (_c0 - start1) / (stop1 - start1) * (stop2 - start2) + start2;`,
+    coord: {
+        inputs: [
+            {name: 'start1', type: 'vec2', default: NaN},
+            {name: 'stop1', type: 'vec2', default: NaN},
+            {name: 'start2', type: 'vec2', default: 0},
+            {name: 'stop2', type: 'vec2', default: 1},
+        ],
+        glsl: `return (_st - start1) / (stop1 - start1) * (stop2 - start2) + start2;`,
+    },
+},
+{
+    name: 'sin',
+    glslName: '_sin',
+    type: 'genType',
+    inputs: [
+        {name: 'freq', type: 'vec3', default: 1.0},
+        {name: 'amp', type: 'vec3', default: 1.0},
+    ],
+    glsl: `return vec4(sin(_c0.rgb * TWO_PI * freq) * amp, _c0.a);`,
+    coord: {
+        inputs: [
+            {name: 'freq', type: 'vec2', default: 1.0},
+            {name: 'amp', type: 'vec2', default: 0.5},
+        ],
+        glsl: `return sin(_st * TWO_PI * freq) * amp;`,
+    },
+},
+{
+    name: 'cos',
+    glslName: '_cos',
+    type: 'genType',
+    inputs: [
+        {name: 'freq', type: 'vec3', default: 1},
+        {name: 'amp', type: 'vec3', default: 1},
+    ],
+    glsl: `return vec4(cos(_c0.rgb * TWO_PI * freq) * amp, _c0.a);`,
+    coord: {
+        inputs: [
+            {name: 'freq', type: 'vec2', default: 1},
+            {name: 'amp', type: 'vec2', default: 0.5},
+        ],
+        glsl: `return cos(_st * TWO_PI * freq) * amp;`,
+    },
+},
+{
+    name: 'tan',
+    glslName: '_tan',
+    type: 'genType',
+    inputs: [
+        {name: 'freq', type: 'vec3', default: 1},
+        {name: 'amp', type: 'vec3', default: 1.0},
+    ],
+    glsl: `return vec4(tan(_c0.rgb * PI * freq) * amp, _c0.a);`,
+    coord: {
+        inputs: [
+            {name: 'freq', type: 'vec2', default: 1},
+            {name: 'amp', type: 'vec2', default: 0.5},
+        ],
+        glsl: `return tan(_st * PI * freq) * amp;`,
+    },
+},
+{
+    name: 'atan',
+    glslName: '_atan',
+    type: 'genType',
+    inputs: [
+        {name: 'freq', type: 'vec3', default: 1},
+        {name: 'amp', type: 'vec3', default: 1},
+    ],
+    glsl: `return vec4(atan(_c0.rgb * PI * freq) * amp, _c0.a);`,
+    coord: {
+        inputs: [
+            {name: 'freq', type: 'vec2', default: 1},
+            {name: 'amp', type: 'vec2', default: 0.5},
+        ],
+        glsl: `return atan(_st * PI * freq) * amp;`,
+    },
+},
+{
+    name: 'pow',
+    glslName: '_pow',
+    type: 'genType',
+    inputs: [
+        {name: 'power', type: 'vec3', default: 2},
+    ],
+    glsl: `return vec4(pow(_c0.rgb, power), _c0.a);`,
+    coord: {
+        inputs: [
+            {name: 'power', type: 'vec2', default: 2},
+        ],
+        glsl: `return pow(_st, power);`
+    },
+},
+{
+    name: 'scrollZ',
     type: 'color',
     inputs: [
-        {name: 'start1', type: 'float', default: NaN},
-        {name: 'stop1', type: 'float', default: NaN},
-        {name: 'start2', type: 'float', default: 0},
-        {name: 'stop2', type: 'float', default: 1},
+        {
+            type: 'float',
+            name: 'scrollZ',
+            default: 0.5,
+        },
+        {
+            type: 'float',
+            name: 'speed',
+            default: 0,
+        }
     ],
-    glsl: `return (_c0 - start1) / (stop1 - start1) * (stop2 - start2) + start2;`
+    glsl:
+    `   _c0.y += scrollZ + time*speed;
+        return fract(_c0);`,
 },
 {
     name: 'glsl',
@@ -1116,54 +1237,4 @@ export default () => [
     inputs: [],
     glsl: ``,
 },
-    // todo: make these type agnostic (new type: 'util'?)
-    {
-        name: 'sin',
-        glslName: '_sin',
-        type: 'coord',
-        inputs: [
-            {name: 'freq', type: 'float', default: 1},
-            {name: 'amp', type: 'float', default: 0.5},
-        ],
-        glsl: `return sin(_st * TWO_PI * freq) * amp;`,
-    },
-    {
-        name: 'cos',
-        glslName: '_cos',
-        type: 'coord',
-        inputs: [
-            {name: 'freq', type: 'float', default: 1},
-            {name: 'amp', type: 'float', default: 0.5},
-        ],
-        glsl: `return cos(_st * TWO_PI * freq) * amp;`,
-    },
-    {
-        name: 'tan',
-        glslName: '_tan',
-        type: 'coord',
-        inputs: [
-            {name: 'freq', type: 'float', default: 1},
-            {name: 'amp', type: 'float', default: 0.5},
-        ],
-        glsl: `return tan(_st * PI * freq) * amp;`,
-    },
-    {
-        name: 'atan',
-        glslName: '_atan',
-        type: 'coord',
-        inputs: [
-            {name: 'freq', type: 'float', default: 1},
-            {name: 'amp', type: 'float', default: 0.5},
-        ],
-        glsl: `return atan(_st * PI * freq) * amp;`,
-    },
-    {
-        name: 'pow',
-        glslName: '_pow',
-        type: 'coord',
-        inputs: [
-            {name: 'power', type: 'vec2', default: 2},
-        ],
-        glsl: `return pow(_st, power);`
-    }
 ]

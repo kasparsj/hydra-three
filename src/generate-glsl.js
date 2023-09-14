@@ -1,5 +1,5 @@
 import formatArguments from './format-arguments.js'
-import {typeLookup, getLookup, getTypeLookup, castType} from "./types.js";
+import {typeLookup, getLookup, getTypeLookup, castType, replaceGenType} from "./types.js";
 
 // converts a tree of javascript functions to a shader
 export default function(source) {
@@ -40,6 +40,9 @@ function generateGlsl (source, transforms, shaderParams) {
   const empty = () => '';
   var fragColor = empty
   transforms.map((transform, i) => {
+    if (transform.transform.type === 'genType') {
+      transform.transform = replaceGenType(transform.transform, i ? 'color' : 'coord');
+    }
     if (transform.transform.type === 'glsl') {
       fragColor = () => transform.userArgs[0];
       return;

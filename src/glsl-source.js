@@ -1,6 +1,7 @@
 import generateGlsl from './generate-glsl.js'
 import utilityGlsl from './glsl/utility-functions.js'
 import vectorizeText from 'vectorize-text';
+import {replaceGenType} from "./types.js";
 
 var GlslSource = function (obj) {
   this.transforms = []
@@ -256,6 +257,17 @@ GlslSource.prototype.setAutoClear = function(amount = 1.0, options = {}) {
     amount,
     ...options,
   };
+  return this;
+}
+
+GlslSource.prototype.st = function(source) {
+  const self = this;
+  source.transforms.map((transform) => {
+    if (transform.transform.type === 'genType') {
+      transform.transform = replaceGenType(transform.transform, 'coord')
+    }
+    self.transforms.push(transform);
+  });
   return this;
 }
 

@@ -64,7 +64,13 @@ class HydraRenderer {
       tick: this.tick.bind(this)
     }
 
-    if (makeGlobal) window.loadScript = this.loadScript
+    if (makeGlobal) {
+      window.loadScript = this.loadScript
+      window.getCode = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        console.log(decodeURIComponent(urlParams.get('code')));
+      }
+    }
 
 
     this.timeSinceLastUpdate = 0

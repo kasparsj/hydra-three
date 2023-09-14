@@ -54,4 +54,62 @@ const castType = (func, fromType, toType, alpha = 0.0) => {
     return func;
 }
 
-export { typeLookup, getLookup, getTypeLookup, castType };
+function processGlsl(obj, returnType, args = []) {
+    let baseArgs = args.map((arg) => arg).join(", ")
+    let customArgs = (obj.inputs || (obj.inputs = [])).map((input) => `${input.type} ${input.name}`).join(', ')
+    let allArgs = `${baseArgs}${customArgs.length > 0 ? ', '+ customArgs: ''}`
+
+    const func = `${returnType || ''} ${obj.glslName}(${allArgs}`;
+    const fixOrWrap = (glsl) => {
+        if (glsl.indexOf(func) === -1) {
+            if (glsl.indexOf(`${returnType} main(${allArgs}`) > -1) {
+                return glsl.replace(`${returnType} main(${allArgs}`, func);
+            }
+            else {
+                if (obj.primitive) {
+                    let primitiveFn = obj.primitive.split(" ").join("");
+                    if (glsl.indexOf(primitiveFn) > -1) {
+                        return glsl.replace(`${returnType} ${primitiveFn}(${allArgs}`, func);
+                    }
+                }
+                if (returnType) {
+                    return `
+  ${func}) {
+      ${glsl}
+  }
+`
+                }
+            }
+        }
+        return glsl;
+    }
+    obj.glsl = fixOrWrap(obj.glsl);
+    if (obj.vert) {
+        obj.vert = fixOrWrap(obj.vert);
+    }
+
+    // add extra input to beginning for backward combatibility @todo update compiler so this is no longer necessary
+    if(obj.type === 'combine' || obj.type === 'combineCoord') obj.inputs.unshift({
+        name: 'color',
+        type: 'vec4'
+    })
+    return Object.assign({}, obj, { returnType })
+}
+
+function replaceGenType(transform, toType) {
+    const t = typeLookup[toType];
+    let result;
+    if (toType === 'coord') {
+        result = Object.assign({}, transform, transform.coord, {
+            type: toType,
+        });
+    }
+    else { // color
+        result = Object.assign({}, transform, {
+            type: toType,
+        });
+    }
+    return processGlsl(result, t.returnType, t.args);
+}
+
+export { typeLookup, getLookup, getTypeLookup, castType, processGlsl, replaceGenType };

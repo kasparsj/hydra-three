@@ -1,7 +1,7 @@
 import GlslSource from './glsl-source.js'
 import glslFunctions from './glsl/glsl-functions.js'
 import vertFunctions from './glsl/vert-functions.js'
-import {typeLookup} from "./types.js";
+import {typeLookup, processGlsl} from "./types.js";
 
 class GeneratorFactory {
   constructor ({
@@ -49,7 +49,7 @@ class GeneratorFactory {
     const self = this
     this.glslTransforms[method] = transform
     let retval = undefined
-    if (['src', 'coord', 'vert', 'glsl'].indexOf(transform.type) > -1) {
+    if (['src', 'coord', 'genType', 'vert', 'glsl'].indexOf(transform.type) > -1) {
       const func = (...args) => new this.sourceClass({
         name: method,
         transform: transform,
@@ -124,7 +124,7 @@ class GeneratorFactory {
 
 function processFunction(obj) {
   obj.glslName || (obj.glslName = obj.name);
-  if (obj.type === 'glsl') return obj;
+  if (obj.type === 'glsl' || obj.type === 'genType') return obj;
   else if (obj.type === 'util') {
     return processGlsl(obj, obj.returnType);
   }
@@ -135,48 +135,6 @@ function processFunction(obj) {
     console.warn(`type ${obj.type} not recognized`, obj)
   }
 
-}
-
-function processGlsl(obj, returnType, args = []) {
-    let baseArgs = args.map((arg) => arg).join(", ")
-    let customArgs = (obj.inputs || (obj.inputs = [])).map((input) => `${input.type} ${input.name}`).join(', ')
-    let allArgs = `${baseArgs}${customArgs.length > 0 ? ', '+ customArgs: ''}`
-
-    const func = `${returnType || ''} ${obj.glslName}(${allArgs}`;
-    const fixOrWrap = (glsl) => {
-        if (glsl.indexOf(func) === -1) {
-            if (glsl.indexOf(`${returnType} main(${allArgs}`) > -1) {
-                return glsl.replace(`${returnType} main(${allArgs}`, func);
-            }
-            else {
-                if (obj.primitive) {
-                    let primitiveFn = obj.primitive.split(" ").join("");
-                    if (glsl.indexOf(primitiveFn) > -1) {
-                        return glsl.replace(`${returnType} ${primitiveFn}(${allArgs}`, func);
-                    }
-                }
-                if (returnType) {
-                    return `
-  ${func}) {
-      ${glsl}
-  }
-`
-                }
-            }
-        }
-        return glsl;
-    }
-    obj.glsl = fixOrWrap(obj.glsl);
-    if (obj.vert) {
-        obj.vert = fixOrWrap(obj.vert);
-    }
-
-    // add extra input to beginning for backward combatibility @todo update compiler so this is no longer necessary
-    if(obj.type === 'combine' || obj.type === 'combineCoord') obj.inputs.unshift({
-        name: 'color',
-        type: 'vec4'
-    })
-    return Object.assign({}, obj, { returnType })
 }
 
 export default GeneratorFactory
