@@ -192,17 +192,23 @@ Output.prototype.render = function (passes) {
   });
   self.draw = [];
   self.passes = passes;
+  let clear = false;
+  for (let i=0; i<passes.length; i++) {
+    if (passes[i].clear) {
+      clear = passes[i].clear;
+      break;
+    }
+  }
+  if (clear) {
+    if (clear.amount >= 1) {
+      self.draw.push(...this.clear(false));
+    }
+    else {
+      self.draw.push(this.fade({now: false, ...clear}));
+    }
+  }
   for (let i=0; i<passes.length; i++) {
     let pass = passes[i]
-    if (pass.clear) {
-      if (pass.clear.amount >= 1) {
-        self.draw.push(...this.clear(false));
-      }
-      else {
-        self.draw.push(this.fade({now: false, ...pass.clear}));
-      }
-    }
-
     const {attributes, elements, primitive} = this.getAttributes(pass.primitive, pass.geometry);
     const uniforms = this.getUniforms(pass.uniforms);
     const blend = this.getBlend(pass.blendMode);

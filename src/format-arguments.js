@@ -58,10 +58,10 @@ export default function formatArguments(transform, startIndex, synthContext) {
     // if user has input something for this argument
     if (userArgs.length > index) {
       typedArg.value = userArgs[index];
-      if (typeof typedArg.value === 'function' && typedArg.value.name !== 'reglTexture2D' && typedArg.value.name !== 'reglFramebuffer') {
+      if (typeof typedArg.value === 'function' && !typedArg.value._texture && !typedArg.value._framebuffer) {
         typedArg.value = getFunctionValue(typedArg.value, input);
         typedArg.isUniform = true
-      } else if (typedArg.value.constructor === Array) {
+      } else if (typedArg.value.constructor === Array) { // todo: maybe check for undefined
         typedArg.value = getArrayValue(typedArg.value, input, typedArg.vecLen)
         typedArg.isUniform = true
         // }
@@ -105,7 +105,7 @@ export default function formatArguments(transform, startIndex, synthContext) {
         typedArg.isUniform = true
       } else {
         // if passing in a texture reference, when function asks for vec4, convert to vec4
-        if (typedArg.value.getTexture || typedArg.value.name === 'reglTexture2D') {
+        if (typedArg.value.getTexture || typedArg.value._texture) {
           var x1 = typedArg.value
           if (input.type === 'vec4') {
             typedArg.value = src(x1)
