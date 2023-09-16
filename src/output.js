@@ -24,11 +24,7 @@ var Output = function (index, synth) {
   this.init()
   this.pingPongIndex = 0
 
-  // for each output, create two fbos for pingponging
-  this.fbos = (Array(2)).fill().map(() => this._initFbo())
-
-  // for each output, create two temp buffers
-  this.temp = (Array(2)).fill().map(() => this._initFbo())
+  this.initFbos();
 
   this.copyPass = this.regl({
     frag: `
@@ -72,7 +68,7 @@ Output.prototype._initFbo = function(options = {}) {
     width: this.width,
     height: this.height,
     format: 'rgba'
-  }, color);
+  }, color || {});
   fbOptions = Object.assign({
     depthStencil: false,
   }, fbOptions);
@@ -80,6 +76,25 @@ Output.prototype._initFbo = function(options = {}) {
     color: this.regl.texture(color),
     ...fbOptions,
   })
+}
+
+Output.prototype.initFbos = function(options = {}) {
+  // for each output, create two fbos for pingponging
+  this.fbos = (Array(2)).fill().map(() => this._initFbo(options))
+
+  // for each output, create two temp buffers
+  this.temp = (Array(2)).fill().map(() => this._initFbo(options))
+}
+
+Output.prototype.initFloat = function(options = {}) {
+  let {color, ...fbOptions} = options;
+  color = Object.assign({
+    type: this.regl.hasExtension('oes_texture_float') ? 'float' : this.regl.hasExtension('oes_texture_half_float' ? 'half float' : 'uint8'),
+  }, color || {});
+  this.initFbos(Object.assign(options, {
+    color: color,
+    ...fbOptions,
+  }));
 }
 
 Output.prototype.resize = function(width, height) {
@@ -397,7 +412,7 @@ Output.prototype.tick = function (props) {
 Output.prototype.renderTexture = function(options = {}) {
   const next = this.pingPongIndex ? 0 : 1;
   const original = this.fbos;
-  this.fbos.map(() => this._initFbo({color: options}))
+  this.initFbos({color: options});
   this.synth._renderOut(this.id);
   const colorTex = this.fbos[this.pingPongIndex].color;
   this.fbos = original;
