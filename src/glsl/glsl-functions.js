@@ -221,29 +221,34 @@ export default () => [
   name: 'solid',
   type: 'src',
   inputs: [
-    {
-      type: 'float',
-      name: 'r',
-      default: 0,
-    },
-{
-      type: 'float',
-      name: 'g',
-      default: 0,
-    },
-{
-      type: 'float',
-      name: 'b',
-      default: 0,
-    },
-{
-      type: 'float',
-      name: 'a',
-      default: 1,
-    }
+    { type: 'float', name: 'r', default: 0 },
+    { type: 'float', name: 'g', default: 0 },
+    { type: 'float', name: 'b', default: 0 },
+    { type: 'float', name: 'a', default: 1,}
   ],
   glsl:
 `   return vec4(r, g, b, a);`
+},
+{
+    name: 'solid2',
+    type: 'src',
+    inputs: [
+        { type: 'vec2', name: 'rg', default: 0 },
+        { type: 'float', name: 'b', default: 0 },
+        { type: 'float', name: 'a', default: 1 },
+    ],
+    glsl:
+        `   return vec4(rg, b, a);`
+},
+{
+    name: 'solid3',
+    type: 'src',
+    inputs: [
+        { type: 'vec3', name: 'rgb', default: 0 },
+        { type: 'float', name: 'a', default: 1 },
+    ],
+    glsl:
+        `   return vec4(rgb, a);`
 },
 {
   name: 'rotate',
