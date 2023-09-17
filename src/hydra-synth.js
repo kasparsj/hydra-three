@@ -9,7 +9,9 @@ import ArrayUtils from './lib/array-utils.js'
 // import strudel from './lib/strudel.js'
 import Sandbox from './eval-sandbox.js'
 import Generator from './generator-factory.js'
-import regl from 'regl'
+//import regl from 'regl'
+import regl from 'regl/dist/regl.unchecked.js'
+import webgl2 from "./regl-webgl2-compat.js";
 // const window = global.window
 
 
@@ -261,8 +263,8 @@ class HydraRenderer {
   }
 
   _initRegl () {
-    this.regl = regl({
-    //  profile: true,
+    const reglOptions = {
+      //  profile: true,
       canvas: this.canvas,
       pixelRatio: 1,
       optionalExtensions: [
@@ -270,8 +272,18 @@ class HydraRenderer {
         'oes_texture_half_float_linear',
         'oes_texture_float',
         'oes_texture_float_linear'
-     ]
-   })
+      ]
+    };
+    const gl = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl');
+    if (gl) {
+      if (gl instanceof WebGL2RenderingContext) {
+        this.regl = webgl2.overrideContextType(() => regl(reglOptions));
+      } else if (gl instanceof WebGLRenderingContext) {
+        this.regl = regl(reglOptions);
+      }
+    } else {
+      throw "WebGL is not supported in this browser.";
+    }
 
     // This clears the color buffer to black and the depth buffer to 1
     this.regl.clear({
