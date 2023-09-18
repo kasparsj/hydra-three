@@ -9,8 +9,8 @@ import ArrayUtils from './lib/array-utils.js'
 // import strudel from './lib/strudel.js'
 import Sandbox from './eval-sandbox.js'
 import Generator from './generator-factory.js'
-//import regl from 'regl'
-import regl from 'regl/dist/regl.unchecked.js'
+import regl from 'regl'
+// import regl from 'regl/dist/regl.unchecked.js'
 import webgl2 from "./regl-webgl2-compat.js";
 // const window = global.window
 
@@ -271,7 +271,8 @@ class HydraRenderer {
         'oes_texture_half_float',
         'oes_texture_half_float_linear',
         'oes_texture_float',
-        'oes_texture_float_linear'
+        'oes_texture_float_linear',
+        'oes_standard_derivatives',
       ]
     };
     const gl = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl');

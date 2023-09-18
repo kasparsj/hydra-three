@@ -84,6 +84,9 @@ function processGlsl(obj, returnType, args = []) {
         return glsl;
     }
     obj.glsl = fixOrWrap(obj.glsl);
+    if (obj.glsl300) {
+        obj.glsl300 = fixOrWrap(obj.glsl300);
+    }
     if (obj.vert) {
         obj.vert = fixOrWrap(obj.vert);
     }

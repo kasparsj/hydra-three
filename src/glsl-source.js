@@ -69,19 +69,20 @@ GlslSource.prototype.getInfo = function () {
 }
 
 GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
-  var uniforms = {}
-  shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
+  const uniforms = {}
+  shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value });
+  const precision = this.defaultOutput.precision;
 
   if (shaderInfo.combine) {
     return {
-      vert: GlslSource.compileVert(this.defaultOutput.precision, false, {
+      vert: GlslSource.compileVert({
         glslName: 'combine',
-      }, shaderInfo),
+      }, shaderInfo, [], { precision, useCamera: false }),
       userArgs: this.transforms[0].userArgs,
       // todo: fix or delete
       // blendMode: this.blendMode,
       lineWidth: this.lineWidth,
-      frag: GlslSource.compileFrag(this.defaultOutput.precision, shaderInfo, this.utils),
+      frag: GlslSource.compileFrag(this.transforms[0].transform, shaderInfo, this.utils, {precision}),
       uniforms: Object.assign({}, this.defaultUniforms, uniforms),
       viewport: this._viewport,
       clear: this.clear,
@@ -89,22 +90,30 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
   }
 
   return Object.assign({
-    vert: GlslSource.compileVert(this.defaultOutput.precision, true, this.transforms[0].transform, shaderInfo, this.utils),
+    vert: GlslSource.compileVert(this.transforms[0].transform, shaderInfo, this.utils, { precision, useCamera: true }),
     primitive: this.transforms[0].transform.primitive,
     userArgs: this.transforms[0].userArgs,
     geometry: this.geometry,
     blendMode: this.blendMode,
     lineWidth: this.lineWidth,
-    frag: GlslSource.compileFrag(this.defaultOutput.precision, shaderInfo, this.utils),
+    frag: GlslSource.compileFrag(this.transforms[0].transform, shaderInfo, this.utils, {precision}),
     uniforms: Object.assign({}, this.defaultUniforms, uniforms),
     viewport: this._viewport,
     clear: this.clear,
   }, options)
 }
 
-GlslSource.compileHeader = function(precision, uniforms = {}, utils = {}) {
-  return `
-  precision ${precision} float;
+GlslSource.compileHeader = function(transform, uniforms = {}, utils = {}, options = {}) {
+  let varying = 'varying';
+  let outColor = '';
+  let version = transform.version;
+  if (version >= 300) {
+    varying = options.vert ? 'out' : 'in';
+    outColor = 'out vec4 outColor;';
+    version += ' es';
+  }
+  return `#version ${version || '100'}
+  precision ${options.precision} float;
   ${Object.values(uniforms).map((uniform) => {
     let type = uniform.type
     switch (uniform.type) {
@@ -117,27 +126,28 @@ GlslSource.compileHeader = function(precision, uniforms = {}, utils = {}) {
   }).join('')}
   uniform float time;
   uniform vec2 resolution;
-  varying vec3 vposition;
-  varying vec2 vuv;
-  varying vec3 vnormal;
+  ${varying} vec3 vposition;
+  ${varying} vec2 vuv;
+  ${varying} vec3 vnormal;
   uniform sampler2D prevBuffer;
+  ${outColor}
   
-  ${Object.values(utils).map((transform) => {
-    //  console.log(transform.glsl)
+  ${Object.values(utils).map((trans) => {
     return `
-            ${transform.glsl}
+            ${trans[('glsl' + transform.version)] || trans.glsl}
           `
   }).join('')}
   `
 }
 
-GlslSource.compileFrag = function(precision, shaderInfo, utils) {
-  const header = this.compileHeader(precision, shaderInfo.uniforms, utils);
+GlslSource.compileFrag = function(transform, shaderInfo, utils, options = {}) {
+  const fragColor = transform.version >= 300 ? 'outColor' : 'gl_FragColor';
+  const header = this.compileHeader(transform, shaderInfo.uniforms, utils, options);
   return header + `
   
-  ${shaderInfo.glslFunctions.map((transform) => {
+  ${shaderInfo.glslFunctions.map((trans) => {
     return `
-            ${transform.transform.glsl}
+            ${trans.transform[('glsl' + transform.version)] || trans.transform.glsl}
           `
   }).join('')}
 
@@ -145,47 +155,55 @@ GlslSource.compileFrag = function(precision, shaderInfo, utils) {
     vec4 c = vec4(1, 0, 0, 1);
     //vec2 st = gl_FragCoord.xy/resolution.xy;
     vec2 st = vuv;
-    gl_FragColor = ${shaderInfo.fragColor};
+    ${fragColor} = ${shaderInfo.fragColor};
   }
   `
 }
 
-GlslSource.compileVert = function(precision, useCamera, transform, shaderInfo, utils) {
+GlslSource.compileVert = function(transform, shaderInfo, utils, options = {}) {
   const useUV = typeof(transform.useUV) !== 'undefined'
     ? transform.useUV
     : (!transform.primitive || ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.primitive) === -1);
   const useNormal = typeof(transform.useNormal) !== 'undefined'
       ? transform.useNormal
-      : transform.type === 'vert' && (!transform.primitive || ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.primitive) === -1)
+      : transform.type === 'vert' && (!transform.primitive || ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.primitive) === -1);
+  let attribute = 'attribute';
+  let varying = 'varying';
+  let version = transform.version;
+  if (version >= 300) {
+    attribute = 'in';
+    varying = 'out';
+    version += ' es';
+  }
 
-  let vertHeader = `
-  precision ${precision} float;
+  let vertHeader = `#version ${version || '100'}
+  precision ${options.precision} float;
   uniform mat4 projection, view;
-  attribute vec3 position;
-  ${useUV ? 'attribute vec2 uv;' : ''}
-  ${useNormal ? 'attribute vec3 normal;' : ''}
-  varying vec3 vposition;
-  varying vec2 vuv;
-  varying vec3 vnormal;
+  ${attribute} vec3 position;
+  ${useUV ? `${attribute} vec2 uv;` : ''}
+  ${useNormal ? `${attribute} vec3 normal;` : ''}
+  ${varying} vec3 vposition;
+  ${varying} vec2 vuv;
+  ${varying} vec3 vnormal;
   `
   let vertFn = `
   void ${transform.glslName}() {
     vposition = position;
-    gl_Position = ${useCamera ? 'projection * view * ' : ''}vec4(position, 1.0);
+    gl_Position = ${options.useCamera ? 'projection * view * ' : ''}vec4(position, 1.0);
   } 
   `
   let vertCall = `${transform.glslName}();`;
   if (transform.vert) {
-    vertHeader = this.compileHeader(precision, shaderInfo.uniforms, utils) + `
+    vertHeader = this.compileHeader(transform, shaderInfo.uniforms, utils, Object.assign({vert: true}, options)) + `
     uniform mat4 projection, view;
-    attribute vec3 position;
-    ${useUV ? 'attribute vec2 uv;' : ''}
-    ${useNormal ? 'attribute vec3 normal;' : ''}
+    ${attribute} vec3 position;
+    ${useUV ? `${attribute} vec2 uv;` : ''}
+    ${useNormal ? `${attribute} vec3 normal;` : ''}
     
     ${shaderInfo.glslFunctions.map((trans) => {
       if (trans.transform.name !== transform.name) {
         return `
-            ${trans.transform.glsl}
+            ${trans.transform[('glsl' + transform.version)] || trans.transform.glsl}
           `
       }
     }).join('')}
