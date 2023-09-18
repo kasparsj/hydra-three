@@ -225,8 +225,7 @@ export default () => [
     { type: 'float', name: 'b', default: 0 },
     { type: 'float', name: 'a', default: 1,}
   ],
-  glsl:
-`   return vec4(r, g, b, a);`
+  glsl: `return vec4(r, g, b, a);`
 },
 {
     name: 'solid2',
@@ -236,8 +235,7 @@ export default () => [
         { type: 'float', name: 'b', default: 0 },
         { type: 'float', name: 'a', default: 1 },
     ],
-    glsl:
-        `   return vec4(rg, b, a);`
+    glsl: `return vec4(rg, b, a);`
 },
 {
     name: 'solid3',
@@ -246,8 +244,21 @@ export default () => [
         { type: 'vec3', name: 'rgb', default: 0 },
         { type: 'float', name: 'a', default: 1 },
     ],
+    glsl: `return vec4(rgb, a);`
+},
+{
+    name: 'hex',
+    type: 'src',
+    inputs: [
+        { type: 'int', name: 'rgb', default: 0 },
+        { type: 'float', name: 'a', default: 1 },
+    ],
     glsl:
-        `   return vec4(rgb, a);`
+        `
+        int r = (rgb / 256 / 256) % 256;
+        int g = (rgb / 256) % 256;
+        int b = (rgb) % 256;
+        return vec4(float(r) / 255.0f, float(g) / 255.0f, float(b) / 255.0f, a);`
 },
 {
   name: 'rotate',
