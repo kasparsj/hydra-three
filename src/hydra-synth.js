@@ -9,10 +9,10 @@ import ArrayUtils from './lib/array-utils.js'
 // import strudel from './lib/strudel.js'
 import Sandbox from './eval-sandbox.js'
 import Generator from './generator-factory.js'
-import regl from 'regl'
-// import regl from 'regl/dist/regl.unchecked.js'
-import webgl2Compat from "./regl-webgl2-compat.js";
-// const window = global.window
+import * as THREE from "three";
+import { HydraUniform } from "./lib/three-utils.js"
+import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
+import {ShaderPass} from "three/examples/jsm/postprocessing/ShaderPass.js";
 
 
 
@@ -107,7 +107,7 @@ class HydraRenderer {
 
     this.generator = undefined
 
-    this._initRegl(webgl)
+    this._initThree(webgl);
     this._initOutputs(numOutputs)
     this._initSources(numSources)
     this._generateGlslTransforms()
@@ -185,7 +185,7 @@ class HydraRenderer {
  }
 
   setResolution(width, height) {
-  //  console.log(width, height)
+    console.log("setResolution", width, height)
     this.canvas.width = width
     this.canvas.height = height
     this.width = width // is this necessary?
@@ -198,8 +198,6 @@ class HydraRenderer {
     this.s.forEach((source) => {
       source.resize(width, height)
     })
-    this.regl._refresh()
-     console.log(this.canvas.width)
   }
 
   canvasToImage (callback) {
@@ -263,50 +261,47 @@ class HydraRenderer {
     }
   }
 
-  _initRegl (webgl) {
-    const reglOptions = {
-      //  profile: true,
+  _initThree (webgl) {
+    const options = {
       canvas: this.canvas,
-      pixelRatio: 1,
-      optionalExtensions: [
-        'oes_texture_half_float',
-        'oes_texture_half_float_linear',
-        'oes_texture_float',
-        'oes_texture_float_linear',
-        'oes_standard_derivatives',
-      ]
+      antialias: true,
+      // alpha: true,
     };
-    const gl = webgl == 2
-      ? this.canvas.getContext('webgl2') || this.canvas.getContext('webgl')
-      : this.canvas.getContext('webgl');
-    if (gl) {
-      if (gl instanceof WebGL2RenderingContext) {
-        console.log('webgl2 compat');
-        this.regl = webgl2Compat.overrideContextType(() => regl(reglOptions));
-      } else if (gl instanceof WebGLRenderingContext) {
-        console.log('webgl1');
-        this.regl = regl(reglOptions);
+
+    this.renderer = webgl === 1 ? new THREE.WebGL1Renderer( options ) : new THREE.WebGLRenderer( options);
+    this.renderer.clear();
+    this.renderer.autoClear = false;
+    this.composer = new EffectComposer(this.renderer);
+
+    new HydraUniform('tex', null, () => this.output.getCurrent(), 'hydra');
+    new HydraUniform('tex0', null, () => this.o[0].getCurrent(), 'hydra');
+    new HydraUniform('tex1', null, () => this.o[1].getCurrent(), 'hydra');
+    new HydraUniform('tex2', null, () => this.o[2].getCurrent(), 'hydra');
+    new HydraUniform('tex3', null, () => this.o[3].getCurrent(), 'hydra');
+    new HydraUniform('resolution', null, () => [this.canvas.width, this.canvas.height], 'hydra');
+    new HydraUniform('time', this.synth.time, () => this.synth.time, 'hydra');
+    new HydraUniform('mouse', this.synth.mouse, () => this.synth.mouse, 'hydra');
+    new HydraUniform('bpm', this.synth.bpm, () => this.synth.bpm, 'hydra');
+
+    this.renderAll = new ShaderPass(new THREE.ShaderMaterial({
+      vertexShader: `
+      varying vec2 vUv;
+      
+      void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
       }
-    } else {
-      throw "WebGL is not supported in this browser.";
-    }
-
-    // This clears the color buffer to black and the depth buffer to 1
-    this.regl.clear({
-      color: [0, 0, 0, 1]
-    })
-
-    this.renderAll = this.regl({
-      frag: `
-      precision ${this.precision} float;
-      varying vec2 uv;
+      `,
+      fragmentShader: `
       uniform sampler2D tex0;
       uniform sampler2D tex1;
       uniform sampler2D tex2;
       uniform sampler2D tex3;
+      
+      varying vec2 vUv;
 
       void main () {
-        vec2 st = vec2(1.0 - uv.x, uv.y);
+        vec2 st = vec2(1.0 - vUv.x, vUv.y);
         st*= vec2(2);
         vec2 q = floor(st).xy*(vec2(2.0, 1.0));
         int quad = int(q.x) + int(q.y);
@@ -325,66 +320,43 @@ class HydraRenderer {
 
       }
       `,
-      vert: `
-      precision ${this.precision} float;
-      attribute vec2 position;
-      varying vec2 uv;
-
-      void main () {
-        uv = position;
-        gl_Position = vec4(1.0 - 2.0 * position, 0, 1);
-      }`,
-      attributes: {
-        position: [
-          [-2, 0],
-          [0, -2],
-          [2, 2]
-        ]
-      },
       uniforms: {
-        tex0: this.regl.prop('tex0'),
-        tex1: this.regl.prop('tex1'),
-        tex2: this.regl.prop('tex2'),
-        tex3: this.regl.prop('tex3')
+        tex0: HydraUniform.get('tex0', 'hydra'),
+        tex1: HydraUniform.get('tex1', 'hydra'),
+        tex2: HydraUniform.get('tex2', 'hydra'),
+        tex3: HydraUniform.get('tex3', 'hydra')
       },
-      count: 3,
-      depth: { enable: false }
-    })
+      depthTest: false
+    }));
 
-    this.renderFbo = this.regl({
-      frag: `
-      precision ${this.precision} float;
-      varying vec2 uv;
-      uniform vec2 resolution;
-      uniform sampler2D tex0;
-
-      void main () {
-        gl_FragColor = texture2D(tex0, vec2(1.0 - uv.x, uv.y));
+    this.renderFbo = new ShaderPass(new THREE.ShaderMaterial({
+      vertexShader: `
+      varying vec2 vUv;
+      
+      void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
       }
       `,
-      vert: `
-      precision ${this.precision} float;
-      attribute vec2 position;
-      varying vec2 uv;
+      fragmentShader: `
+      uniform vec2 resolution;
+      uniform sampler2D tex0;
+      
+      varying vec2 vUv;
 
       void main () {
-        uv = position;
-        gl_Position = vec4(1.0 - 2.0 * position, 0, 1);
-      }`,
-      attributes: {
-        position: [
-          [-2, 0],
-          [0, -2],
-          [2, 2]
-        ]
-      },
+          gl_FragColor = texture2D(tex0, vec2(1.0 - vUv.x, vUv.y));
+      }
+      `,
       uniforms: {
-        tex0: this.regl.prop('tex0'),
-        resolution: this.regl.prop('resolution')
+        tex0: HydraUniform.get('tex', 'hydra'),
+        resolution: HydraUniform.get('resolution', 'hydra'),
       },
-      count: 3,
-      depth: { enable: false }
-    })
+      depthTest: false
+    }));
+
+    this.composer.addPass(this.renderAll);
+    this.composer.addPass(this.renderFbo);
   }
 
   _initOutputs (numOutputs) {
@@ -443,12 +415,7 @@ class HydraRenderer {
   }
 
   _renderOut (i) {
-    this.o[i].tick({
-      time: this.synth.time,
-      mouse: this.synth.mouse,
-      bpm: this.synth.bpm,
-      resolution: [this.canvas.width, this.canvas.height]
-    })
+    this.o[i].tick()
   }
 
   // dt in ms
@@ -464,29 +431,22 @@ class HydraRenderer {
       if(this.synth.update) {
         try { this.synth.update(this.timeSinceLastUpdate) } catch (e) { console.log(e) }
       }
-    //  console.log(this.synth.speed, this.synth.time)
       for (let i = 0; i < this.s.length; i++) {
         this.s[i].tick(this.synth.time)
       }
-    //  console.log(this.canvas.width, this.canvas.height)
+      HydraUniform.update();
       for (let i = 0; i < this.o.length; i++) {
         this._renderOut(i);
       }
+      this.renderer.setRenderTarget(null);
       if (this.isRenderingAll) {
-        this.renderAll({
-          tex0: this.o[0].getCurrent(),
-          tex1: this.o[1].getCurrent(),
-          tex2: this.o[2].getCurrent(),
-          tex3: this.o[3].getCurrent(),
-          resolution: [this.canvas.width, this.canvas.height]
-        })
+        this.renderAll.enabled = true;
+        this.renderFbo.enabled = false;
       } else {
-
-        this.renderFbo({
-          tex0: this.output.getCurrent(),
-          resolution: [this.canvas.width, this.canvas.height]
-        })
+        this.renderFbo.enabled = true;
+        this.renderAll.enabled = false;
       }
+      this.composer.render();
       this.timeSinceLastUpdate = 0
     }
     if(this.saveFrame === true) {

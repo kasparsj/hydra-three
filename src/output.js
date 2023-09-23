@@ -1,190 +1,79 @@
-import * as mat4 from "gl-mat4";
 import GlslSource from "./glsl-source.js";
+import * as THREE from "three";
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { ClearPass } from "three/examples/jsm/postprocessing/ClearPass.js";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
+import { HydraUniform } from "./lib/three-utils.js";
 
 var Output = function (index, synth) {
   this.id = index;
   this.synth = synth;
   this.width = synth.width
   this.height = synth.height
-  this.regl = synth.regl
+  this.composer = new EffectComposer(synth.renderer)
+  this.composer.renderToScreen = false
+  this._camera = null
   this.precision = synth.precision
   this.label = `o${index}`
-  this.positionBuffer = this.regl.buffer([
-    [-5, -1, 0],
-    [-1, -5, 0],
-    [3, 3, 0]
-  ])
-  this.uvBuffer = this.regl.buffer([
-    [-2, 0],
-    [0, -2],
-    [2, 2]
-  ])
 
-  this.draw = []
   this.init()
-  this.pingPongIndex = 0
-
-  this.initFbos();
-
-  this.copyPass = this.regl({
-    frag: `
-      precision ${this.precision} float;
-      varying vec2 uv;
-      uniform sampler2D tex0;
-
-      void main () {
-        gl_FragColor = texture2D(tex0, uv);
-      }
-      `,
-    vert: `
-      precision ${this.precision} float;
-      attribute vec2 position;
-      varying vec2 uv;
-
-      void main () {
-        uv = position;
-        gl_Position = vec4(2.0 * position - 1.0, 0, 1);
-      }`,
-    attributes: {
-      position: [
-        [-2, 0],
-        [0, -2],
-        [2, 2]
-      ]
-    },
-    uniforms: {
-      tex0: this.regl.prop('tex0'),
-    },
-    count: 3,
-    depth: { enable: false },
-    framebuffer: () => this.getTexture(),
-  })
 }
 
-Output.prototype._initFbo = function(options = {}) {
-  let {color, ...fbOptions} = options;
-  color = Object.assign({
-    mag: 'nearest',
-    width: this.width,
-    height: this.height,
-    format: 'rgba'
-  }, color || {});
-  fbOptions = Object.assign({
-    depthStencil: false,
-  }, fbOptions);
-  return this.regl.framebuffer({
-    color: this.regl.texture(color),
-    ...fbOptions,
-  })
-}
-
-Output.prototype.initFbos = function(options = {}) {
-  // for each output, create two fbos for pingponging
-  this.fbos = (Array(2)).fill().map(() => this._initFbo(options))
-
-  // for each output, create two temp buffers
-  this.temp = (Array(2)).fill().map(() => this._initFbo(options))
-}
-
-Output.prototype.initFloat = function(options = {}) {
-  let {color, ...fbOptions} = options;
-  color = Object.assign({
-    type: this.regl.hasExtension('oes_texture_float') ? 'float' : this.regl.hasExtension('oes_texture_half_float' ? 'half float' : 'uint8'),
-  }, color || {});
-  this.initFbos(Object.assign(options, {
-    color: color,
-    ...fbOptions,
-  }));
+Output.prototype.init = function () {
+  new HydraUniform('prevBuffer', this.getTexture(), () => this.getTexture(), 'hydra-' + this.label);
+  new HydraUniform('currentBuffer', this.getCurrent(), () => this.getCurrent(), 'hydra-' + this.label);
+  this.uniforms = {
+    time: HydraUniform.get('time', 'hydra'),
+    resolution: HydraUniform.get('resolution', 'hydra'),
+  }
+  return this
 }
 
 Output.prototype.resize = function(width, height) {
   this.width = width;
   this.height = height;
-  this.fbos.forEach((fbo) => {
-    fbo.resize(width, height)
-  })
-  this.temp.forEach((tmp) => {
-    tmp.resize(width, height)
-  })
+  this.composer.setSize(width, height);
 }
 
 
 Output.prototype.getCurrent = function () {
-  return this.fbos[this.pingPongIndex]
+  return this.composer.writeBuffer.texture;
 }
 
 Output.prototype.getTexture = function () {
-   var index = this.pingPongIndex ? 0 : 1
-  return this.fbos[index]
-}
-
-Output.prototype.init = function () {
-  this.attributes = {
-    position: this.positionBuffer,
-    uv: this.uvBuffer,
-  }
-  this.uniforms = {
-    time: this.regl.prop('time'),
-    resolution: this.regl.prop('resolution'),
-  }
-
-  this.initCamera();
-
-  return this
-}
-
-Output.prototype.initCamera = function() {
-  this._camera = this.regl({
-    context: {
-      projection: mat4.identity([]),
-      view: mat4.identity([]),
-    },
-    uniforms: {
-      view: this.regl.context('view'),
-      projection: this.regl.context('projection')
-    }
-  });
+   return this.composer.readBuffer.texture;
 }
 
 Output.prototype.camera = function(eye, target = [0,0,0], options = {}) {
   options = Object.assign({
-    fovy: Math.PI / 4,
-    near: 0.1,
-    far: 1000.0,
+    fov: 50,
+    aspect: 1,
+    near: 0,
+    far: 1,
+    left: -1,
+    right: 1,
+    top: 1,
+    bottom: -1,
   }, options);
   this.eye = eye;
   this.target = target;
   if (eye && target) {
-    this._camera = this.regl({
-      context: {
-        projection: function (context) {
-          if (options.type === 'perspective') {
-            return mat4.perspective([],
-                options.fovy,
-                options.aspect || (context.viewportWidth / context.viewportHeight),
-                options.near,
-                options.far)
-          }
-          else {
-            return mat4.ortho([], -1.0, 1.0, -1.0, 1.0, options.near, options.far);
-          }
-        },
-        view: function (context, props) {
-          return mat4.lookAt([],
-              props.eye,
-              props.target,
-              [0, 1, 0])
-        },
-        eye: this.regl.prop('eye'),
-      },
-      uniforms: {
-        view: this.regl.context('view'),
-        projection: this.regl.context('projection'),
-      }
-    });
+    switch (options.type) {
+      case 'perspective':
+        this._camera = new THREE.PerspectiveCamera( options.fov, options.aspect, options.near, options.far);
+        break;
+      case 'ortho':
+      case 'orthographic':
+      default:
+        this._camera = new THREE.OrthographicCamera(options.left, options.right, options.top, options.bottom, options.near, options.far);
+        break;
+    }
+    this._camera.position.set(...eye);
+    this._camera.lookAt(...target);
+    this._camera.updateProjectionMatrix();
   }
   else {
-    this.initCamera();
+    this._camera = null;
   }
   return this;
 }
@@ -200,13 +89,13 @@ Output.prototype.ortho = function(eye, target = [0,0,0], options = {}) {
 }
 
 Output.prototype.render = function (passes) {
-  const self = this
   // ensure both fbo's have last frame
-  this.copyPass({
-    tex0: this.getCurrent(),
-  });
-  self.draw = [];
-  self.passes = passes;
+  // todo: make sure needsSwap is true
+  for (let i=0; i<this.composer.passes.length; i++) {
+    this.composer.passes[i].dispose();
+  }
+  this.composer.passes = [];
+  this.passes = passes;
   let clear = false;
   for (let i=0; i<passes.length; i++) {
     if (passes[i].clear) {
@@ -216,55 +105,57 @@ Output.prototype.render = function (passes) {
   }
   if (clear) {
     if (clear.amount >= 1) {
-      self.draw.push(...this.clear(false));
+      this.composer.addPass(this.clear(false));
     }
     else {
-      self.draw.push(this.fade({now: false, ...clear}));
+      this.composer.addPass(this.fade({now: false, ...clear}));
     }
   }
   for (let i=0; i<passes.length; i++) {
     let pass = passes[i]
-    const {attributes, elements, primitive} = this.getAttributes(pass.primitive, pass.geometry);
+    // todo: add support vectorizeText?
+    // if (geometry.positions && (geometry.edges || geometry.cells)) {
+    //   attributes.position = []; // todo: should be Float32Array
+    //   geometry.positions.map((v, k) => attributes.position.push(v[0], v[1], 0));
+    //   elements = geometry.edges ? geometry.edges : geometry.cells;
+    //   primitive = geometry.edges ? 'lines' : 'triangles';
+    // }
     const uniforms = this.getUniforms(pass.uniforms);
-    const blend = this.getBlend(pass.blendMode);
-    const draw = self.regl({
-      frag: pass.frag,
-      vert: pass.vert,
-      viewport: typeof(pass.viewport.x) !== 'undefined' ? {
-        x: pass.viewport.x * this.fbos[0].width,
-        y: pass.viewport.y * this.fbos[0].height,
-        width: pass.viewport.w * this.fbos[0].width,
-        height: pass.viewport.h * this.fbos[0].height,
-      } : {},
-      cull: {
-        enable: !!pass.geometry,
-        face: 'back'
-      },
-      attributes,
-      primitive,
+    const blending = this.getBlend(pass.blendMode);
+    const shaderPass = new ShaderPass(new THREE.ShaderMaterial({
+      fragmentShader: pass.frag,
+      vertexShader: pass.vert,
+      glslVersion: pass.version,
+      // todo: add support for viewport?
+      // viewport: typeof(pass.viewport.x) !== 'undefined' ? {
+      //   x: pass.viewport.x * this.fbos[0].width,
+      //   y: pass.viewport.y * this.fbos[0].height,
+      //   width: pass.viewport.w * this.fbos[0].width,
+      //   height: pass.viewport.h * this.fbos[0].height,
+      // } : {},
+      // todo: add support for side parameter
+      // cull: {
+      //   enable: !!pass.geometry,
+      //   face: 'back'
+      // },
       uniforms,
-      count: typeof(elements) === 'number' ? elements : elements.length,
-      elements: typeof(elements) === 'number' ? null : elements,
-      blend,
-      lineWidth: pass.lineWidth,
-      framebuffer: pass.framebuffer || (() => {
-        self.pingPongIndex = self.pingPongIndex ? 0 : 1
-        return self.fbos[self.pingPongIndex]
-      }),
-    })
-    self.draw.push(draw)
+      blending,
+      linewidth: pass.linewidth,
+      transparent: true,
+    }))
+    if (pass.geometry) {
+      shaderPass.fsQuad._mesh.geometry = pass.geometry
+    }
+    this.composer.addPass(shaderPass)
   }
 }
 
 Output.prototype.clear = function(now = true) {
-  const result = [this.fbos[0], this.fbos[1], this.temp[0], this.temp[1]].map((fbo) => {
-    const clear = () => this.regl.clear({
-      color: [0, 0, 0, 0],
-      framebuffer: fbo,
-    });
-    if (now) clear();
+  const result = (() => {
+    const clear = new ClearPass();
+    if (now) clear.render(this.composer.renderer, this.composer.writeBuffer, this.composer.readBuffer);
     else return clear;
-  });
+  })();
   if (now) return this;
   return result;
 }
@@ -277,139 +168,72 @@ Output.prototype.fade = function(options) {
     ({amount, camera} = options);
     now = typeof(options.now) === 'undefined' ? true : options.now;
   }
-  const self = this;
   // todo: do we need to fade also temp buffers?
-  const fade = self.regl({
-    frag: `
-          precision ${self.precision} float;
+  const fade = new ShaderPass(new THREE.ShaderMaterial({
+    fragmentShader: `
           varying vec2 vuv;
-          uniform sampler2D prevBuffer;
+          uniform sampler2D currentBuffer;
           void main() {
-            vec4 color = mix(texture2D(prevBuffer, vuv), vec4(0), ${amount});
+            vec4 color = mix(texture2D(currentBuffer, vuv), vec4(0), ${amount});
             gl_FragColor = color;
           }
         `,
-    vert: GlslSource.compileVert(this.precision, camera, { glslName: 'clear' }),
-    attributes: self.attributes,
-    primitive: 'triangles',
+    vertexShader: GlslSource.compileVert(this.precision, camera, { glslName: 'clear' }),
     uniforms: Object.assign({}, {
-      prevBuffer: () =>  { return self.fbos[self.pingPongIndex] },
+      currentBuffer: HydraUniform.get('currentBuffer', 'hydra-' + this.label),
     }, this.uniforms),
-    count: 3,
-    // next framebuffer
-    framebuffer: () => {
-      return self.fbos[self.pingPongIndex ? 0 : 1]
-    }
-  });
+  }));
   if (now) return this;
   return fade;
 }
 
-Output.prototype.getAttributes = function(primitive, geometry) {
-  let elements = 3;
-  let attributes = this.attributes;
-  if (geometry) {
-    attributes = {};
-    if (geometry.isBufferGeometry) {
-      Object.keys(geometry.attributes).forEach((key) => attributes[key] = geometry.attributes[key].array);
-      elements = geometry.index ? geometry.index.array : geometry.attributes.position.count;
-      primitive || (primitive = geometry.parameters.primitive);
-    }
-    else if (geometry.positions && (geometry.edges || geometry.cells)) {
-      attributes.position = []; // todo: should be Float32Array
-      geometry.positions.map((v, k) => attributes.position.push(v[0], v[1], 0));
-      elements = geometry.edges ? geometry.edges : geometry.cells;
-      primitive = geometry.edges ? 'lines' : 'triangles';
-    }
-  }
-  primitive || (primitive = 'triangles');
-  return {attributes, elements, primitive};
-}
-
 Output.prototype.getUniforms = function(uniforms) {
-  const self = this;
-  uniforms = Object.assign(uniforms, { prevBuffer:  () =>  {
-    // todo: changed, originally:
-    // return self.fbos[self.pingPongIndex]
-    return self.fbos[self.pingPongIndex ? 0 : 1]
-    }
-  })
+  HydraUniform.destroyGroup(this.label);
+  uniforms = Object.assign(uniforms, {
+    prevBuffer: HydraUniform.get('prevBuffer', 'hydra-' + this.label),
+  });
+  const props = () => {
+    return {
+      time: HydraUniform.get('time', 'hydra').value,
+      bpm: HydraUniform.get('bpm', 'hydra').value,
+    };
+  };
   return Object.keys(uniforms).reduce((acc, key) => {
     acc[key] = typeof(uniforms[key]) === 'string' ? parseFloat(uniforms[key]) : uniforms[key];
+    if (typeof acc[key] === 'function') {
+      const func = acc[key];
+      acc[key] = new HydraUniform(key, null, ()=>func(null, props()), this.label);
+    }
+    else if (typeof acc[key].value === 'undefined') acc[key] = { value: acc[key] }
     return acc;
   }, {});
 }
 
 Output.prototype.getBlend = function(blendMode) {
-  let func;
   switch (blendMode) {
     case 'custom':
-      func = {
-        srcRGB: 'custom',  // Define your custom blending function here
-        dstRGB: 'custom',
-        srcAlpha: 'custom',
-        dstAlpha: 'custom',
-      };
-      break;
-    case 'overlay':
-      func = {
-        srcRGB: 'dst color',
-        dstRGB: 'one minus src color',
-        srcAlpha: 'dst alpha',
-        dstAlpha: 'one minus src alpha',
-      };
-      break;
-    case 'screen':
-      func = {
-        srcRGB: 'one minus dst color',
-        dstRGB: 'one',
-        srcAlpha: 'one minus dst alpha',
-        dstAlpha: 'one',
-      };
-      break;
+      // todo: implement CustomBlending
+      return THREE.CustomBlending;
+    case 'subtractive':
+      return THREE.SubtractiveBlending;
     case 'multiply':
-      func = {
-        srcRGB: 'dst color',
-        dstRGB: 'zero',
-        srcAlpha: 'dst alpha',
-        dstAlpha: 'zero',
-      };
-      break;
+      return THREE.MultiplyBlending;
     case 'add':
-      func = {
-        srcRGB: 'one',
-        dstRGB: 'one',
-        srcAlpha: 'one',
-        dstAlpha: 'one',
-      };
-      break;
+      return THREE.AdditiveBlending;
     case 'alpha':
+    case 'normal':
+      return THREE.NormalBlending;
     default:
-      func = {
-        srcRGB: 'src alpha',
-        srcAlpha: 1,
-        dstRGB: 'one minus src alpha',
-        dstAlpha: 1
-      };
-      break;
+      return THREE.NoBlending;
   }
-  return {
-    enable: blendMode ? (typeof(blendMode) === 'string' ? blendMode !== 'disabled' : blendMode) : false,
-    func,
-  };
 }
 
-Output.prototype.tick = function (props) {
-  const doDraw = () => this.draw.map((fn) => fn(props));
-  this._camera({
-    eye: this.eye,
-    target: this.target,
-  }, function() {
-    doDraw();
-  });
+Output.prototype.tick = function () {
+  this.composer.render();
 }
 
 Output.prototype.renderTexture = function(options = {}) {
+  // todo: fix
   const next = this.pingPongIndex ? 0 : 1;
   const original = this.fbos;
   this.initFbos({color: options});

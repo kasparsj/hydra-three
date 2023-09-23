@@ -1,7 +1,8 @@
 import generateGlsl from './generate-glsl.js'
 import utilityGlsl from './glsl/utility-functions.js'
-import vectorizeText from 'vectorize-text';
-import {replaceGenType} from "./types.js";
+import vectorizeText from 'vectorize-text'
+import {replaceGenType} from "./types.js"
+import * as THREE from "three"
 
 var GlslSource = function (obj) {
   this.transforms = []
@@ -11,10 +12,10 @@ var GlslSource = function (obj) {
   this.synth = obj.synth
   this.type = 'GlslSource'
   this.defaultUniforms = obj.defaultUniforms
-  this.utils = Object.assign({}, utilityGlsl, obj.utils);
-  this.blendMode = typeof(obj.transform.blendMode) !== 'undefined' ? obj.transform.blendMode : false;
-  this.lineWidth = obj.transform.lineWidth || 1;
-  this._viewport = {};
+  this.utils = Object.assign({}, utilityGlsl, obj.utils)
+  this.blendMode = typeof(obj.transform.blendMode) !== 'undefined' ? obj.transform.blendMode : false
+  this.linewidth = obj.transform.linewidth || 1
+  this._viewport = {}
   return this
 }
 
@@ -72,17 +73,18 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
   const uniforms = {}
   shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value });
   const precision = this.defaultOutput.precision;
-
+  const transform = this.transforms[0];
   if (shaderInfo.combine) {
     return {
       vert: GlslSource.compileVert({
         glslName: 'combine',
       }, shaderInfo, [], { precision, useCamera: false }),
-      userArgs: this.transforms[0].userArgs,
+      userArgs: transform.userArgs,
       // todo: fix or delete
       // blendMode: this.blendMode,
-      lineWidth: this.lineWidth,
-      frag: GlslSource.compileFrag(this.transforms[0].transform, shaderInfo, this.utils, {precision}),
+      linewidth: this.linewidth,
+      frag: GlslSource.compileFrag(transform.transform, shaderInfo, this.utils, {precision}),
+      version: transform.version >= 300 ? THREE.GLSL3 : THREE.GLSL1,
       uniforms: Object.assign({}, this.defaultUniforms, uniforms),
       viewport: this._viewport,
       clear: this.clear,
@@ -91,12 +93,13 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
 
   return Object.assign({
     vert: GlslSource.compileVert(this.transforms[0].transform, shaderInfo, this.utils, { precision, useCamera: true }),
-    primitive: this.transforms[0].transform.primitive,
-    userArgs: this.transforms[0].userArgs,
+    primitive: transform.transform.primitive,
+    userArgs: transform.userArgs,
     geometry: this.geometry,
     blendMode: this.blendMode,
-    lineWidth: this.lineWidth,
-    frag: GlslSource.compileFrag(this.transforms[0].transform, shaderInfo, this.utils, {precision}),
+    linewidth: this.linewidth,
+    frag: GlslSource.compileFrag(transform.transform, shaderInfo, this.utils, {precision}),
+    version: transform.version >= 300 ? THREE.GLSL3 : THREE.GLSL1,
     uniforms: Object.assign({}, this.defaultUniforms, uniforms),
     viewport: this._viewport,
     clear: this.clear,
@@ -110,10 +113,8 @@ GlslSource.compileHeader = function(transform, uniforms = {}, utils = {}, option
   if (version >= 300) {
     varying = options.vert ? 'out' : 'in';
     outColor = 'out vec4 outColor;';
-    version += ' es';
   }
-  return `#version ${version || '100'}
-  precision ${options.precision} float;
+  return `
   ${Object.values(uniforms).map((uniform) => {
     let type = uniform.type
     switch (uniform.type) {
@@ -167,21 +168,13 @@ GlslSource.compileVert = function(transform, shaderInfo, utils, options = {}) {
   const useNormal = typeof(transform.useNormal) !== 'undefined'
       ? transform.useNormal
       : transform.type === 'vert' && (!transform.primitive || ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.primitive) === -1);
-  let attribute = 'attribute';
   let varying = 'varying';
   let version = transform.version;
   if (version >= 300) {
-    attribute = 'in';
     varying = 'out';
-    version += ' es';
   }
 
-  let vertHeader = `#version ${version || '100'}
-  precision ${options.precision} float;
-  uniform mat4 projection, view;
-  ${attribute} vec3 position;
-  ${useUV ? `${attribute} vec2 uv;` : ''}
-  ${useNormal ? `${attribute} vec3 normal;` : ''}
+  let vertHeader = `
   ${varying} vec3 vposition;
   ${varying} vec2 vuv;
   ${varying} vec3 vnormal;
@@ -189,16 +182,12 @@ GlslSource.compileVert = function(transform, shaderInfo, utils, options = {}) {
   let vertFn = `
   void ${transform.glslName}() {
     vposition = position;
-    gl_Position = ${options.useCamera ? 'projection * view * ' : ''}vec4(position, 1.0);
+    gl_Position = ${options.useCamera ? 'projectionMatrix * modelViewMatrix * ' : ''}vec4(position, 1.0);
   } 
   `
   let vertCall = `${transform.glslName}();`;
   if (transform.vert) {
     vertHeader = this.compileHeader(transform, shaderInfo.uniforms, utils, Object.assign({vert: true}, options)) + `
-    uniform mat4 projection, view;
-    ${attribute} vec3 position;
-    ${useUV ? `${attribute} vec2 uv;` : ''}
-    ${useNormal ? `${attribute} vec3 normal;` : ''}
     
     ${shaderInfo.glslFunctions.map((trans) => {
       if (trans.transform.name !== transform.name) {
@@ -212,7 +201,7 @@ GlslSource.compileVert = function(transform, shaderInfo, utils, options = {}) {
     vertCall = `
     ${useUV ? 'vec2 st = uv;' : 'vec2 st = position.xy;'}
     vposition = ${shaderInfo.position}.xyz;
-    gl_Position = projection * view * vec4(vposition, 1.0);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(vposition, 1.0);
     `;
   }
 
@@ -233,8 +222,8 @@ GlslSource.prototype.setBlend = function(blendMode = true) {
   return this;
 }
 
-GlslSource.prototype.setLineWidth = function(lineWidth) {
-  this.lineWidth = lineWidth;
+GlslSource.prototype.setLinewidth = function(linewidth) {
+  this.linewidth = linewidth;
   return this;
 }
 

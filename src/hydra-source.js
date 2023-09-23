@@ -1,25 +1,22 @@
 import Webcam from './lib/webcam.js'
 import Screen from './lib/screenmedia.js'
+import * as THREE from "three";
 
 class HydraSource {
-  constructor ({ regl, width, height, pb, label = ""}) {
+  constructor ({ width, height, pb, label = ""}) {
     this.label = label
-    this.regl = regl
     this.src = null
     this.dynamic = true
     this.width = width
     this.height = height
-    this.tex = this.regl.texture({
-      //  shape: [width, height]
-      shape: [ 1, 1 ]
-    })
+    this.tex = null
     this.pb = pb
   }
 
   init (opts, params) {
     if ('src' in opts) {
       this.src = opts.src
-      this.tex = this.regl.texture({ data: this.src, ...params })
+      this.tex = new THREE.CanvasTexture(this.src, ...params)
     }
     if ('dynamic' in opts) this.dynamic = opts.dynamic
   }
@@ -30,7 +27,7 @@ class HydraSource {
       .then(response => {
         self.src = response.video
         self.dynamic = true
-        self.tex = self.regl.texture({ data: self.src, ...params })
+        self.tex = new THREE.VideoTexture(self.src, ...params)
       })
       .catch(err => console.log('could not get camera', err))
   }
@@ -45,7 +42,7 @@ class HydraSource {
     const onload = vid.addEventListener('loadeddata', () => {
       this.src = vid
       vid.play()
-      this.tex = this.regl.texture({ data: this.src, ...params})
+      this.tex = new THREE.VideoTexture(this.src, ...params)
       this.dynamic = true
     })
     vid.src = url
@@ -58,7 +55,7 @@ class HydraSource {
     img.onload = () => {
       this.src = img
       this.dynamic = false
-      this.tex = this.regl.texture({ data: this.src, ...params})
+      this.tex = new THREE.DataTexture(this.src, ...params)
     }
   }
 
@@ -72,7 +69,7 @@ class HydraSource {
         if (nick === streamName) {
           self.src = video
           self.dynamic = true
-          self.tex = self.regl.texture({ data: self.src, ...params})
+          self.tex = new THREE.VideoTexture(self.src, ...params)
         }
       })
     }
@@ -84,7 +81,7 @@ class HydraSource {
     Screen()
       .then(function (response) {
         self.src = response.video
-        self.tex = self.regl.texture({ data: self.src, ...params})
+        self.tex = new THREE.VideoTexture(self.src, ...params)
         self.dynamic = true
         //  console.log("received screen input")
       })
@@ -103,7 +100,10 @@ class HydraSource {
       }
     }
     this.src = null
-    this.tex = this.regl.texture({ shape: [ 1, 1 ] })
+    if (this.tex) {
+      this.tex.dispose()
+    }
+    this.tex = null
   }
 
   tick (time) {
@@ -116,13 +116,16 @@ class HydraSource {
           this.tex.width,
           this.tex.height
         )
+        // todo: implement resize
         this.tex.resize(this.src.videoWidth, this.src.videoHeight)
       }
 
       if (this.src.width && this.src.width !== this.tex.width) {
+        // todo: implement resize
         this.tex.resize(this.src.width, this.src.height)
       }
 
+      // todo: implement resize
       this.tex.subimage(this.src)
     }
   }

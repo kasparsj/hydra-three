@@ -188,7 +188,8 @@ export default () => [
    float a = atan(st.x,st.y)+3.1416;
    float r = (2.*3.1416)/sides;
    float d = cos(floor(.5+a/r)*r-a)*length(st);
-   return vec4(vec3(1.0-smoothstep(radius,radius + smoothing + 0.0000001,d)), 1.0);`
+   float v = 1.0-smoothstep(radius, radius + smoothing + 0.0000001, d);
+   return vec4(v);`
 },
 {
   name: 'gradient',
