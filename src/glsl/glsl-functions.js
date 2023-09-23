@@ -289,35 +289,20 @@ export default () => [
   type: 'coord',
   inputs: [
     {
-      type: 'float',
+      type: 'vec2',
       name: 'amount',
       default: 1.5,
     },
-{
-      type: 'float',
-      name: 'xMult',
-      default: 1,
-    },
-{
-      type: 'float',
-      name: 'yMult',
-      default: 1,
-    },
-{
-      type: 'float',
-      name: 'offsetX',
+    {
+      type: 'vec2',
+      name: 'offset',
       default: 0.5,
     },
-{
-      type: 'float',
-      name: 'offsetY',
-      default: 0.5,
-    }
   ],
   glsl:
-`   vec2 xy = _st - vec2(offsetX, offsetY);
-   xy*=(1.0/vec2(amount*xMult, amount*yMult));
-   xy+=vec2(offsetX, offsetY);
+`   vec2 xy = _st - offset;
+   xy*=(1.0/amount);
+   xy+=offset;
    return xy;
    `
 },

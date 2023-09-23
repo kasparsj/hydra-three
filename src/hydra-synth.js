@@ -11,7 +11,7 @@ import Sandbox from './eval-sandbox.js'
 import Generator from './generator-factory.js'
 import regl from 'regl'
 // import regl from 'regl/dist/regl.unchecked.js'
-import webgl2 from "./regl-webgl2-compat.js";
+import webgl2Compat from "./regl-webgl2-compat.js";
 // const window = global.window
 
 
@@ -30,6 +30,7 @@ class HydraRenderer {
     autoLoop = true,
     detectAudio = true,
     enableStreamCapture = true,
+    webgl = 2,
     canvas,
     precision,
     extendTransforms = {} // add your own functions on init
@@ -106,7 +107,7 @@ class HydraRenderer {
 
     this.generator = undefined
 
-    this._initRegl()
+    this._initRegl(webgl)
     this._initOutputs(numOutputs)
     this._initSources(numSources)
     this._generateGlslTransforms()
@@ -262,7 +263,7 @@ class HydraRenderer {
     }
   }
 
-  _initRegl () {
+  _initRegl (webgl) {
     const reglOptions = {
       //  profile: true,
       canvas: this.canvas,
@@ -275,11 +276,15 @@ class HydraRenderer {
         'oes_standard_derivatives',
       ]
     };
-    const gl = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl');
+    const gl = webgl == 2
+      ? this.canvas.getContext('webgl2') || this.canvas.getContext('webgl')
+      : this.canvas.getContext('webgl');
     if (gl) {
       if (gl instanceof WebGL2RenderingContext) {
-        this.regl = webgl2.overrideContextType(() => regl(reglOptions));
+        console.log('webgl2 compat');
+        this.regl = webgl2Compat.overrideContextType(() => regl(reglOptions));
       } else if (gl instanceof WebGLRenderingContext) {
+        console.log('webgl1');
         this.regl = regl(reglOptions);
       }
     } else {
