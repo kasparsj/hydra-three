@@ -113,13 +113,6 @@ Output.prototype.render = function (passes) {
   }
   for (let i=0; i<passes.length; i++) {
     let pass = passes[i]
-    // todo: add support vectorizeText?
-    // if (geometry.positions && (geometry.edges || geometry.cells)) {
-    //   attributes.position = []; // todo: should be Float32Array
-    //   geometry.positions.map((v, k) => attributes.position.push(v[0], v[1], 0));
-    //   elements = geometry.edges ? geometry.edges : geometry.cells;
-    //   primitive = geometry.edges ? 'lines' : 'triangles';
-    // }
     const uniforms = this.getUniforms(pass.uniforms);
     const blending = this.getBlend(pass.blendMode);
     const shaderPass = new ShaderPass(new THREE.ShaderMaterial({
@@ -144,7 +137,33 @@ Output.prototype.render = function (passes) {
       transparent: true,
     }))
     if (pass.geometry) {
-      shaderPass.fsQuad._mesh.geometry = pass.geometry
+      shaderPass.fsQuad.dispose();
+      // todo: add support vectorizeText?
+      // if (geometry.positions && (geometry.edges || geometry.cells)) {
+      //   attributes.position = []; // todo: should be Float32Array
+      //   geometry.positions.map((v, k) => attributes.position.push(v[0], v[1], 0));
+      //   elements = geometry.edges ? geometry.edges : geometry.cells;
+      //   primitive = geometry.edges ? 'lines' : 'triangles';
+      // }
+      switch (pass.primitive) {
+        case 'points':
+          shaderPass.fsQuad._mesh = new THREE.Points(pass.geometry, shaderPass.material);
+          break;
+        case 'line loop':
+        case 'lineloop':
+          shaderPass.fsQuad._mesh = new THREE.LineLoop(pass.geometry, shaderPass.material);
+          break;
+        case 'line strip':
+        case 'linestrip':
+          shaderPass.fsQuad._mesh = new THREE.Line(pass.geometry, shaderPass.material);
+          break;
+        case 'lines':
+          shaderPass.fsQuad._mesh = new THREE.LineSegments(pass.geometry, shaderPass.material);
+          break;
+        default:
+          shaderPass.fsQuad._mesh.geometry = pass.geometry;
+          break;
+      }
     }
     this.composer.addPass(shaderPass)
   }
