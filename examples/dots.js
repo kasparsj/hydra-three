@@ -3,17 +3,17 @@ await loadScript("/dt/index.js");
 await loadScript("/extra-shaders-for-hydra/lib-noise.js");
 
 // noise
-dots([50,50], solid(noise(0.4, 0.03).map(-1,1,-0.1,1.1), noise(0.6, 0.03).map(-1,1,-0.1,1.1)), noise(0.4).mult(10), colornoise(1000))
-    .fade(0.05)
+dots([50,50], solid(noise(0.4, 0.03).map(-1,1,-0.1,1.1), noise(0.6, 0.03).map(-1,1,-0.1,1.1)), noise(0.4).map(-1,1,1,10), colornoise(1000))
+    .setAutoClear(0.05)
     .out()
 
 // smearing color
 dots([500, 500], solid(pnoise(0.4, 0.1).map(-1,1,-0.1,1.1), noise(0.6, 0.03).map(-1,1,-0.1,1.1)), noise(0.4).mult(20), colornoise(100).saturate(()=>time%2.0))
-    .fade(0.001)
+    .setAutoClear(0.001)
     .out()
 
 dots([800, 800], solid(noise(1, 0.01).map(-1,1,-0.2,1.2).scrollX(0, 0.01), noise(2, 0.01).map(-1,1,-0.2,1.2)), noise(1).mult(3), solid(1,1,1))
-    .fade(0.05)
+    .setAutoClear(0.05)
     .out()
 
 // storm

@@ -2,8 +2,7 @@ import GlslSource from "./glsl-source.js";
 import * as THREE from "three";
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { ClearPass } from "three/examples/jsm/postprocessing/ClearPass.js";
-import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
-import { HydraUniform, HydraRenderPass } from "./lib/three.js";
+import { HydraUniform, HydraShaderPass, HydraRenderPass } from "./lib/three.js";
 
 var Output = function (index, synth) {
   this.id = index;
@@ -52,8 +51,8 @@ Output.prototype.camera = function(eye = [0,0,1], target = [0,0,0], options = {}
   options = Object.assign({
     fov: 50,
     aspect: 1,
-    near: 0,
-    far: 1,
+    near: 0.1,
+    far: 10,
     left: -1,
     right: 1,
     top: 1,
@@ -75,12 +74,12 @@ Output.prototype.camera = function(eye = [0,0,1], target = [0,0,0], options = {}
   return this;
 }
 
-Output.prototype.perspective = function(eye, target = [0,0,0], options = {}) {
+Output.prototype.perspective = function(eye = [0,0,3], target = [0,0,0], options = {}) {
   options = Object.assign({type: 'perspective'}, options);
   return this.camera(eye, target, options);
 }
 
-Output.prototype.ortho = function(eye, target = [0,0,0], options = {}) {
+Output.prototype.ortho = function(eye = [0,0,1], target = [0,0,0], options = {}) {
   options = Object.assign({type: 'ortho'}, options);
   return this.camera(eye, target, options);
 }
@@ -97,17 +96,23 @@ Output.prototype.render = function (passes) {
     for (let i=0; i<passes.length; i++) {
       let options = passes[i];
       options.label = this.label;
-      options.camera || (options.camera = this._camera);
-      const renderPass = new HydraRenderPass(options);
+      let pass;
+      if (options.geometry) {
+        options.camera || (options.camera = this._camera);
+        pass = new HydraRenderPass(options);
+      }
+      else {
+        pass = new HydraShaderPass(options);
+      }
       if (options.clear) {
         if (options.clear.amount >= 1) {
-          renderPass.clear = true;
+          pass.clear = true;
         }
         else {
           this.composer.addPass(this.fade({now: false, ...options.clear}));
         }
       }
-      this.composer.addPass(renderPass);
+      this.composer.addPass(pass);
     }
   }
 }
@@ -128,8 +133,8 @@ Output.prototype.fade = function(options) {
     now = typeof(options.now) === 'undefined' ? true : options.now;
   }
   // todo: do we need to fade also temp buffers?
-  const shaderPass = new ShaderPass(new THREE.ShaderMaterial({
-    fragmentShader: `
+  const passOptions = {
+    frag: `
           varying vec2 vuv;
           uniform sampler2D prevBuffer;
           void main() {
@@ -137,12 +142,10 @@ Output.prototype.fade = function(options) {
             gl_FragColor = color;
           }
         `,
-    vertexShader: GlslSource.compileVert(this.precision, camera, { glslName: 'clear' }),
-    uniforms: Object.assign({
-      prevBuffer: { value: null }
-    }, this.uniforms),
-    depthTest: false,
-  }), 'prevBuffer');
+    vert: GlslSource.compileVert(this.precision, camera, { glslName: 'clear' }),
+    uniforms: this.uniforms,
+  };
+  const shaderPass = new HydraShaderPass(passOptions);
   shaderPass.needsSwap = false;
   if (now) {
     shaderPass.render(this.composer.renderer, this.composer.writeBuffer, this.composer.readBuffer);
