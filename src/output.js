@@ -3,16 +3,14 @@ import * as THREE from "three";
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { ClearPass } from "three/examples/jsm/postprocessing/ClearPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
-import { HydraUniform } from "./lib/three-utils.js";
+import { HydraUniform, HydraRenderPass } from "./lib/three.js";
+import { FullScreenQuad } from "three/examples/jsm/postprocessing/Pass.js";
 
 var Output = function (index, synth) {
   this.id = index;
   this.synth = synth;
   this.width = synth.width
   this.height = synth.height
-  this.composer = new EffectComposer(synth.renderer)
-  this.composer.renderToScreen = false
-  this._camera = null
   this.precision = synth.precision
   this.label = `o${index}`
 
@@ -20,12 +18,23 @@ var Output = function (index, synth) {
 }
 
 Output.prototype.init = function () {
+  this.composer = new EffectComposer(this.synth.renderer);
+  this.composer.renderToScreen = false;
+
   new HydraUniform('prevBuffer', this.getTexture(), () => this.getTexture(), 'hydra-' + this.label);
   new HydraUniform('currentBuffer', this.getCurrent(), () => this.getCurrent(), 'hydra-' + this.label);
   this.uniforms = {
     time: HydraUniform.get('time', 'hydra'),
     resolution: HydraUniform.get('resolution', 'hydra'),
   }
+
+  this.temp0 = this.composer.renderTarget2.clone();
+  this.temp0.texture.name = this.label + '.temp0';
+  this.temp1 = this.composer.renderTarget2.clone();
+  this.temp1.texture.name = this.label + '.temp1';
+
+  this.camera();
+
   return this
 }
 
@@ -33,18 +42,20 @@ Output.prototype.resize = function(width, height) {
   this.width = width;
   this.height = height;
   this.composer.setSize(width, height);
+  this.temp0.setSize(width, height);
+  this.temp1.setSize(width, height);
 }
 
 
 Output.prototype.getCurrent = function () {
-  return this.composer.writeBuffer.texture;
+  return this.composer.readBuffer.texture;
 }
 
 Output.prototype.getTexture = function () {
-   return this.composer.readBuffer.texture;
+   return this.composer.writeBuffer.texture;
 }
 
-Output.prototype.camera = function(eye, target = [0,0,0], options = {}) {
+Output.prototype.camera = function(eye = [0,0,0], target = [0,0,0], options = {}) {
   options = Object.assign({
     fov: 50,
     aspect: 1,
@@ -55,26 +66,19 @@ Output.prototype.camera = function(eye, target = [0,0,0], options = {}) {
     top: 1,
     bottom: -1,
   }, options);
-  this.eye = eye;
-  this.target = target;
-  if (eye && target) {
-    switch (options.type) {
-      case 'perspective':
-        this._camera = new THREE.PerspectiveCamera( options.fov, options.aspect, options.near, options.far);
-        break;
-      case 'ortho':
-      case 'orthographic':
-      default:
-        this._camera = new THREE.OrthographicCamera(options.left, options.right, options.top, options.bottom, options.near, options.far);
-        break;
-    }
-    this._camera.position.set(...eye);
-    this._camera.lookAt(...target);
-    this._camera.updateProjectionMatrix();
+  switch (options.type) {
+    case 'perspective':
+      this._camera = new THREE.PerspectiveCamera( options.fov, options.aspect, options.near, options.far);
+      break;
+    case 'ortho':
+    case 'orthographic':
+    default:
+      this._camera = new THREE.OrthographicCamera(options.left, options.right, options.top, options.bottom, options.near, options.far);
+      break;
   }
-  else {
-    this._camera = null;
-  }
+  this._camera.position.set(...eye);
+  this._camera.lookAt(...target);
+  this._camera.updateProjectionMatrix();
   return this;
 }
 
@@ -96,87 +100,30 @@ Output.prototype.render = function (passes) {
   }
   this.composer.passes = [];
   this.passes = passes;
-  let clear = false;
-  for (let i=0; i<passes.length; i++) {
-    if (passes[i].clear) {
-      clear = passes[i].clear;
-      break;
-    }
-  }
-  if (clear) {
-    if (clear.amount >= 1) {
-      this.composer.addPass(this.clear(false));
-    }
-    else {
-      this.composer.addPass(this.fade({now: false, ...clear}));
-    }
-  }
-  for (let i=0; i<passes.length; i++) {
-    let pass = passes[i]
-    const uniforms = this.getUniforms(pass.uniforms);
-    const blending = this.getBlend(pass.blendMode);
-    const shaderPass = new ShaderPass(new THREE.ShaderMaterial({
-      fragmentShader: pass.frag,
-      vertexShader: pass.vert,
-      glslVersion: pass.version,
-      // todo: add support for viewport?
-      // viewport: typeof(pass.viewport.x) !== 'undefined' ? {
-      //   x: pass.viewport.x * this.fbos[0].width,
-      //   y: pass.viewport.y * this.fbos[0].height,
-      //   width: pass.viewport.w * this.fbos[0].width,
-      //   height: pass.viewport.h * this.fbos[0].height,
-      // } : {},
-      // todo: add support for side parameter
-      // cull: {
-      //   enable: !!pass.geometry,
-      //   face: 'back'
-      // },
-      uniforms,
-      blending,
-      linewidth: pass.linewidth,
-      transparent: true,
-    }))
-    if (pass.geometry) {
-      shaderPass.fsQuad.dispose();
-      // todo: add support vectorizeText?
-      // if (geometry.positions && (geometry.edges || geometry.cells)) {
-      //   attributes.position = []; // todo: should be Float32Array
-      //   geometry.positions.map((v, k) => attributes.position.push(v[0], v[1], 0));
-      //   elements = geometry.edges ? geometry.edges : geometry.cells;
-      //   primitive = geometry.edges ? 'lines' : 'triangles';
-      // }
-      switch (pass.primitive) {
-        case 'points':
-          shaderPass.fsQuad._mesh = new THREE.Points(pass.geometry, shaderPass.material);
-          break;
-        case 'line loop':
-        case 'lineloop':
-          shaderPass.fsQuad._mesh = new THREE.LineLoop(pass.geometry, shaderPass.material);
-          break;
-        case 'line strip':
-        case 'linestrip':
-          shaderPass.fsQuad._mesh = new THREE.Line(pass.geometry, shaderPass.material);
-          break;
-        case 'lines':
-          shaderPass.fsQuad._mesh = new THREE.LineSegments(pass.geometry, shaderPass.material);
-          break;
-        default:
-          shaderPass.fsQuad._mesh.geometry = pass.geometry;
-          break;
+  if (passes.length > 0) {
+    for (let i=0; i<passes.length; i++) {
+      let pass = passes[i];
+      const scene = new THREE.Scene();
+      // todo: allow change camera at pass level
+      const renderPass = new HydraRenderPass(scene, this._camera, pass.renderTarget);
+      if (pass.clear) {
+        if (pass.clear.amount >= 1) {
+          renderPass.clear = true;
+        }
+        else {
+          this.composer.addPass(this.fade({now: false, ...pass.clear}));
+        }
       }
+      scene.add(this.createObject3D(pass.primitive, pass.geometry, this.createMaterial(pass)));
+      this.composer.addPass(renderPass);
     }
-    this.composer.addPass(shaderPass)
   }
 }
 
-Output.prototype.clear = function(now = true) {
-  const result = (() => {
-    const clear = new ClearPass();
-    if (now) clear.render(this.composer.renderer, this.composer.writeBuffer, this.composer.readBuffer);
-    else return clear;
-  })();
-  if (now) return this;
-  return result;
+Output.prototype.clear = function() {
+  const clear = new ClearPass();
+  clear.render(this.composer.renderer, this.composer.writeBuffer, this.composer.readBuffer);
+  return this;
 }
 
 Output.prototype.fade = function(options) {
@@ -204,6 +151,61 @@ Output.prototype.fade = function(options) {
   }));
   if (now) return this;
   return fade;
+}
+
+Output.prototype.createMaterial = function(pass) {
+  const uniforms = this.getUniforms(pass.uniforms);
+  const blending = this.getBlend(pass.blendMode);
+  return new THREE.ShaderMaterial({
+    fragmentShader: pass.frag,
+    vertexShader: pass.vert,
+    glslVersion: pass.version,
+    // todo: add support for viewport?
+    // viewport: typeof(pass.viewport.x) !== 'undefined' ? {
+    //   x: pass.viewport.x * this.fbos[0].width,
+    //   y: pass.viewport.y * this.fbos[0].height,
+    //   width: pass.viewport.w * this.fbos[0].width,
+    //   height: pass.viewport.h * this.fbos[0].height,
+    // } : {},
+    // todo: add support for side parameter
+    // cull: {
+    //   enable: !!pass.geometry,
+    //   face: 'back'
+    // },
+    uniforms,
+    blending,
+    linewidth: pass.linewidth,
+    transparent: true,
+  });
+}
+
+Output.prototype.createObject3D = function(primitive, geometry, material) {
+  // todo: add support vectorizeText?
+  // if (geometry.positions && (geometry.edges || geometry.cells)) {
+  //   attributes.position = []; // todo: should be Float32Array
+  //   geometry.positions.map((v, k) => attributes.position.push(v[0], v[1], 0));
+  //   elements = geometry.edges ? geometry.edges : geometry.cells;
+  //   primitive = geometry.edges ? 'lines' : 'triangles';
+  // }
+  switch (primitive) {
+    case 'points':
+      return new THREE.Points(geometry, material);
+    case 'line loop':
+    case 'lineloop':
+      return new THREE.LineLoop(geometry, material);
+    case 'line strip':
+    case 'linestrip':
+      return new THREE.Line(geometry, material);
+    case 'lines':
+      return new THREE.LineSegments(geometry, material);
+    default:
+      const quad = new FullScreenQuad(material);
+      if (geometry) {
+        quad._mesh.geometry.dispose();
+        quad._mesh.geometry = geometry;
+      }
+      return quad._mesh;
+  }
 }
 
 Output.prototype.getUniforms = function(uniforms) {

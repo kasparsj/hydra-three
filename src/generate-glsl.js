@@ -81,16 +81,16 @@ function generateGlsl (source, transforms, shaderParams) {
           combine: true,
         }));
         const trans = source.transforms.slice(0, source.transforms.indexOf(transform));
-        source.passes.unshift(source.createPass(generateParams(params, source, trans), {framebuffer: source.output.temp[0]}));
-        const temp0 = src(source.output.temp[0]);
+        source.passes.unshift(source.createPass(generateParams(params, source, trans), {renderTarget: source.output.temp0}));
+        const temp0 = src(source.output.temp0.texture);
         f0 = (uv, returnType, alpha) => `${generateGlsl(temp0, temp0.transforms, shaderParams)(uv, returnType, alpha)}`
       }
       var f1;
       if (inputs[0].value && inputs[0].value.transforms) {
         if (inputs[0].value.transforms[0].transform.vert || source.transforms[0].transform.vert) {
           inputs[0].value.output = source.output;
-          source.passes.unshift(...inputs[0].value.compile({framebuffer: source.output.temp[1]}));
-          const temp1 = src(source.output.temp[1]);
+          source.passes.unshift(...inputs[0].value.compile({renderTarget: source.output.temp1}));
+          const temp1 = src(source.output.temp1.texture);
           f1 = (uv, returnType, alpha) => `${generateGlsl(temp1, temp1.transforms, shaderParams)(uv, returnType, alpha)}`
         }
         else {
