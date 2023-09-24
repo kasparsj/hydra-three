@@ -97,7 +97,7 @@ class HydraRenderPass extends Pass {
 
         }
 
-        renderer.setRenderTarget( this.renderToScreen ? null : (this.renderTarget ? this.renderTarget : readBuffer) );
+        renderer.setRenderTarget( this.renderToScreen ? null : (this.renderTarget ? this.renderTarget : writeBuffer) );
 
         if ( this.clear === true ) {
 

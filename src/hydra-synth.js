@@ -273,11 +273,11 @@ class HydraRenderer {
     this.renderer.autoClear = false;
     this.composer = new EffectComposer(this.renderer);
 
-    new HydraUniform('tex', null, () => this.output.getCurrent(), 'hydra');
-    new HydraUniform('tex0', null, () => this.o[0].getCurrent(), 'hydra');
-    new HydraUniform('tex1', null, () => this.o[1].getCurrent(), 'hydra');
-    new HydraUniform('tex2', null, () => this.o[2].getCurrent(), 'hydra');
-    new HydraUniform('tex3', null, () => this.o[3].getCurrent(), 'hydra');
+    new HydraUniform('tex', null, () => this.output.getTexture(), 'hydra');
+    new HydraUniform('tex0', null, () => this.o[0].getTexture(), 'hydra');
+    new HydraUniform('tex1', null, () => this.o[1].getTexture(), 'hydra');
+    new HydraUniform('tex2', null, () => this.o[2].getTexture(), 'hydra');
+    new HydraUniform('tex3', null, () => this.o[3].getTexture(), 'hydra');
     new HydraUniform('resolution', null, () => [this.canvas.width, this.canvas.height], 'hydra');
     new HydraUniform('time', this.synth.time, () => this.synth.time, 'hydra');
     new HydraUniform('mouse', this.synth.mouse, () => this.synth.mouse, 'hydra');
@@ -414,10 +414,6 @@ class HydraRenderer {
     }
   }
 
-  _renderOut (i) {
-    this.o[i].tick()
-  }
-
   // dt in ms
   tick (dt, uniforms) {
     this.sandbox.tick()
@@ -436,7 +432,7 @@ class HydraRenderer {
       }
       HydraUniform.update();
       for (let i = 0; i < this.o.length; i++) {
-        this._renderOut(i);
+        this.o[i].tick()
       }
       this.renderer.setRenderTarget(null);
       if (this.isRenderingAll) {

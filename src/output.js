@@ -22,7 +22,6 @@ Output.prototype.init = function () {
   this.composer.renderToScreen = false;
 
   new HydraUniform('prevBuffer', this.getTexture(), () => this.getTexture(), 'hydra-' + this.label);
-  new HydraUniform('currentBuffer', this.getCurrent(), () => this.getCurrent(), 'hydra-' + this.label);
   this.uniforms = {
     time: HydraUniform.get('time', 'hydra'),
     resolution: HydraUniform.get('resolution', 'hydra'),
@@ -47,15 +46,11 @@ Output.prototype.resize = function(width, height) {
 }
 
 
-Output.prototype.getCurrent = function () {
-  return this.composer.readBuffer.texture;
-}
-
 Output.prototype.getTexture = function () {
-   return this.composer.writeBuffer.texture;
+   return this.composer.readBuffer.texture;
 }
 
-Output.prototype.camera = function(eye = [0,0,0], target = [0,0,0], options = {}) {
+Output.prototype.camera = function(eye = [0,0,1], target = [0,0,0], options = {}) {
   options = Object.assign({
     fov: 50,
     aspect: 1,
@@ -138,15 +133,15 @@ Output.prototype.fade = function(options) {
   const fade = new ShaderPass(new THREE.ShaderMaterial({
     fragmentShader: `
           varying vec2 vuv;
-          uniform sampler2D currentBuffer;
+          uniform sampler2D prevBuffer;
           void main() {
-            vec4 color = mix(texture2D(currentBuffer, vuv), vec4(0), ${amount});
+            vec4 color = mix(texture2D(prevBuffer, vuv), vec4(0), ${amount});
             gl_FragColor = color;
           }
         `,
     vertexShader: GlslSource.compileVert(this.precision, camera, { glslName: 'clear' }),
     uniforms: Object.assign({}, {
-      currentBuffer: HydraUniform.get('currentBuffer', 'hydra-' + this.label),
+      prevBuffer: HydraUniform.get('prevBuffer', 'hydra-' + this.label),
     }, this.uniforms),
   }));
   if (now) return this;
@@ -254,14 +249,15 @@ Output.prototype.tick = function () {
 }
 
 Output.prototype.renderTexture = function(options = {}) {
-  // todo: fix
-  const next = this.pingPongIndex ? 0 : 1;
-  const original = this.fbos;
-  this.initFbos({color: options});
-  this.synth._renderOut(this.id);
-  const colorTex = this.fbos[this.pingPongIndex].color;
-  this.fbos = original;
-  return Array.isArray(colorTex) ? colorTex[0] : colorTex;
+  const temp = new EffectComposer(this.synth.renderer);
+  HydraUniform.update();
+  for (let i=0; i<this.composer.passes.length; i++) {
+    temp.addPass(this.composer.passes[i]);
+  }
+  temp.render();
+  const tex = temp.readBuffer.texture.clone();
+  temp.dispose();
+  return tex;
 }
 
 export default Output

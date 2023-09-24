@@ -16,6 +16,6 @@ lines([100]).add(noise(10).add(shape(3))).out()
 // todo: does not work when clearing before
 // lines(100]).add(noise(10).add(shape(3))).out()
 
-// lines(10], gradient()).out()
+// lines([10], gradient()).out()
 
 // lines().out()
