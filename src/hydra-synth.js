@@ -434,7 +434,6 @@ class HydraRenderer {
       for (let i = 0; i < this.o.length; i++) {
         this.o[i].tick()
       }
-      this.renderer.setRenderTarget(null);
       if (this.isRenderingAll) {
         this.renderAll.enabled = true;
         this.renderFbo.enabled = false;

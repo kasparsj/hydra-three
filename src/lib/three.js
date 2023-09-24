@@ -1,6 +1,5 @@
 import * as THREE from "three";
-import {Pass} from "three/examples/jsm/postprocessing/Pass.js";
-import {Color} from "three";
+import {Pass, FullScreenQuad} from "three/examples/jsm/postprocessing/Pass.js";
 
 class HydraUniform extends THREE.Uniform
 {
@@ -43,26 +42,133 @@ class HydraUniform extends THREE.Uniform
 }
 
 class HydraRenderPass extends Pass {
-    constructor( scene, camera, renderTarget = null, overrideMaterial = null, clearColor = null, clearAlpha = null ) {
+    constructor( options ) {
 
         super();
 
-        this.scene = scene;
-        this.camera = camera;
+        this.options = options;
+        this.scene = new THREE.Scene();
+        this.camera = options.camera;
 
-        this.renderTarget = renderTarget;
-        this.overrideMaterial = overrideMaterial;
+        this.renderTarget = options.renderTarget || null;
+        this.overrideMaterial = options.overrideMaterial || null;
 
-        this.clearColor = clearColor;
-        this.clearAlpha = clearAlpha;
+        this.clearColor = options.clearColor || null;
+        this.clearAlpha = options.clearAlpha || null;
 
         this.clearDepth = false;
-        this.needsSwap = true;
-        this._oldClearColor = new Color();
+        this._oldClearColor = new THREE.Color();
+
+        this.material = this.createMaterial(options);
+        this.object = this.createObject(options.primitive, options.geometry, this.material);
+        this.scene.add(this.object);
+
+        this.textureID = options.textureID || 'prevBuffer';
 
     }
 
+    createMaterial(options) {
+        const uniforms = Object.assign({
+            prevBuffer: { value: null },
+        }, this.getUniforms(options.uniforms));
+        const blending = this.getBlend(options.blendMode);
+        return new THREE.ShaderMaterial({
+            fragmentShader: options.frag,
+            vertexShader: options.vert,
+            glslVersion: options.version,
+            // todo: add support for viewport?
+            // viewport: typeof(options.viewport.x) !== 'undefined' ? {
+            //   x: options.viewport.x * this.fbos[0].width,
+            //   y: options.viewport.y * this.fbos[0].height,
+            //   width: options.viewport.w * this.fbos[0].width,
+            //   height: options.viewport.h * this.fbos[0].height,
+            // } : {},
+            // todo: add support for side parameter
+            // cull: {
+            //   enable: !!options.geometry,
+            //   face: 'back'
+            // },
+            uniforms,
+            blending,
+            linewidth: options.linewidth,
+            transparent: true,
+        });
+    }
+
+    createObject(primitive, geometry, material) {
+        // todo: add support vectorizeText?
+        // if (geometry.positions && (geometry.edges || geometry.cells)) {
+        //   attributes.position = []; // todo: should be Float32Array
+        //   geometry.positions.map((v, k) => attributes.position.push(v[0], v[1], 0));
+        //   elements = geometry.edges ? geometry.edges : geometry.cells;
+        //   primitive = geometry.edges ? 'lines' : 'triangles';
+        // }
+        switch (primitive) {
+            case 'points':
+                return new THREE.Points(geometry, material);
+            case 'line loop':
+            case 'lineloop':
+                return new THREE.LineLoop(geometry, material);
+            case 'line strip':
+            case 'linestrip':
+                return new THREE.Line(geometry, material);
+            case 'lines':
+                return new THREE.LineSegments(geometry, material);
+            default:
+                const quad = new FullScreenQuad(material);
+                if (geometry) {
+                    quad._mesh.geometry.dispose();
+                    quad._mesh.geometry = geometry;
+                }
+                return quad._mesh;
+        }
+    }
+
+    getUniforms(uniforms) {
+        HydraUniform.destroyGroup(this.options.label);
+        const props = () => {
+            return {
+                time: HydraUniform.get('time', 'hydra').value,
+                bpm: HydraUniform.get('bpm', 'hydra').value,
+            };
+        };
+        return Object.keys(uniforms).reduce((acc, key) => {
+            acc[key] = typeof(uniforms[key]) === 'string' ? parseFloat(uniforms[key]) : uniforms[key];
+            if (typeof acc[key] === 'function') {
+                const func = acc[key];
+                acc[key] = new HydraUniform(key, null, ()=>func(null, props()), this.options.label);
+            }
+            else if (typeof acc[key].value === 'undefined') acc[key] = { value: acc[key] }
+            return acc;
+        }, {});
+    }
+
+    getBlend(blendMode) {
+        switch (blendMode) {
+            case 'custom':
+                // todo: implement CustomBlending
+                return THREE.CustomBlending;
+            case 'subtractive':
+                return THREE.SubtractiveBlending;
+            case 'multiply':
+                return THREE.MultiplyBlending;
+            case 'add':
+                return THREE.AdditiveBlending;
+            case 'alpha':
+            case 'normal':
+                return THREE.NormalBlending;
+            default:
+                return THREE.NoBlending;
+        }
+    }
+
     render( renderer, writeBuffer, readBuffer /*, deltaTime, maskActive */ ) {
+
+        if ( this.material.uniforms[ this.textureID ] ) {
+
+            this.material.uniforms[ this.textureID ].value = readBuffer.texture;
+
+        }
 
         const oldAutoClear = renderer.autoClear;
         renderer.autoClear = false;

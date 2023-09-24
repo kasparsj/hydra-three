@@ -4,7 +4,6 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { ClearPass } from "three/examples/jsm/postprocessing/ClearPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { HydraUniform, HydraRenderPass } from "./lib/three.js";
-import { FullScreenQuad } from "three/examples/jsm/postprocessing/Pass.js";
 
 var Output = function (index, synth) {
   this.id = index;
@@ -21,7 +20,6 @@ Output.prototype.init = function () {
   this.composer = new EffectComposer(this.synth.renderer);
   this.composer.renderToScreen = false;
 
-  new HydraUniform('prevBuffer', this.getTexture(), () => this.getTexture(), 'hydra-' + this.label);
   this.uniforms = {
     time: HydraUniform.get('time', 'hydra'),
     resolution: HydraUniform.get('resolution', 'hydra'),
@@ -97,19 +95,18 @@ Output.prototype.render = function (passes) {
   this.passes = passes;
   if (passes.length > 0) {
     for (let i=0; i<passes.length; i++) {
-      let pass = passes[i];
-      const scene = new THREE.Scene();
-      // todo: allow change camera at pass level
-      const renderPass = new HydraRenderPass(scene, this._camera, pass.renderTarget);
-      if (pass.clear) {
-        if (pass.clear.amount >= 1) {
+      let options = passes[i];
+      options.label = this.label;
+      options.camera || (options.camera = this._camera);
+      const renderPass = new HydraRenderPass(options);
+      if (options.clear) {
+        if (options.clear.amount >= 1) {
           renderPass.clear = true;
         }
         else {
-          this.composer.addPass(this.fade({now: false, ...pass.clear}));
+          this.composer.addPass(this.fade({now: false, ...options.clear}));
         }
       }
-      scene.add(this.createObject3D(pass.primitive, pass.geometry, this.createMaterial(pass)));
       this.composer.addPass(renderPass);
     }
   }
@@ -118,6 +115,7 @@ Output.prototype.render = function (passes) {
 Output.prototype.clear = function() {
   const clear = new ClearPass();
   clear.render(this.composer.renderer, this.composer.writeBuffer, this.composer.readBuffer);
+  clear.render(this.composer.renderer, this.composer.readBuffer, this.composer.writeBuffer);
   return this;
 }
 
@@ -130,7 +128,7 @@ Output.prototype.fade = function(options) {
     now = typeof(options.now) === 'undefined' ? true : options.now;
   }
   // todo: do we need to fade also temp buffers?
-  const fade = new ShaderPass(new THREE.ShaderMaterial({
+  const shaderPass = new ShaderPass(new THREE.ShaderMaterial({
     fragmentShader: `
           varying vec2 vuv;
           uniform sampler2D prevBuffer;
@@ -140,108 +138,17 @@ Output.prototype.fade = function(options) {
           }
         `,
     vertexShader: GlslSource.compileVert(this.precision, camera, { glslName: 'clear' }),
-    uniforms: Object.assign({}, {
-      prevBuffer: HydraUniform.get('prevBuffer', 'hydra-' + this.label),
+    uniforms: Object.assign({
+      prevBuffer: { value: null }
     }, this.uniforms),
-  }));
-  if (now) return this;
-  return fade;
-}
-
-Output.prototype.createMaterial = function(pass) {
-  const uniforms = this.getUniforms(pass.uniforms);
-  const blending = this.getBlend(pass.blendMode);
-  return new THREE.ShaderMaterial({
-    fragmentShader: pass.frag,
-    vertexShader: pass.vert,
-    glslVersion: pass.version,
-    // todo: add support for viewport?
-    // viewport: typeof(pass.viewport.x) !== 'undefined' ? {
-    //   x: pass.viewport.x * this.fbos[0].width,
-    //   y: pass.viewport.y * this.fbos[0].height,
-    //   width: pass.viewport.w * this.fbos[0].width,
-    //   height: pass.viewport.h * this.fbos[0].height,
-    // } : {},
-    // todo: add support for side parameter
-    // cull: {
-    //   enable: !!pass.geometry,
-    //   face: 'back'
-    // },
-    uniforms,
-    blending,
-    linewidth: pass.linewidth,
-    transparent: true,
-  });
-}
-
-Output.prototype.createObject3D = function(primitive, geometry, material) {
-  // todo: add support vectorizeText?
-  // if (geometry.positions && (geometry.edges || geometry.cells)) {
-  //   attributes.position = []; // todo: should be Float32Array
-  //   geometry.positions.map((v, k) => attributes.position.push(v[0], v[1], 0));
-  //   elements = geometry.edges ? geometry.edges : geometry.cells;
-  //   primitive = geometry.edges ? 'lines' : 'triangles';
-  // }
-  switch (primitive) {
-    case 'points':
-      return new THREE.Points(geometry, material);
-    case 'line loop':
-    case 'lineloop':
-      return new THREE.LineLoop(geometry, material);
-    case 'line strip':
-    case 'linestrip':
-      return new THREE.Line(geometry, material);
-    case 'lines':
-      return new THREE.LineSegments(geometry, material);
-    default:
-      const quad = new FullScreenQuad(material);
-      if (geometry) {
-        quad._mesh.geometry.dispose();
-        quad._mesh.geometry = geometry;
-      }
-      return quad._mesh;
+    depthTest: false,
+  }), 'prevBuffer');
+  shaderPass.needsSwap = false;
+  if (now) {
+    shaderPass.render(this.composer.renderer, this.composer.writeBuffer, this.composer.readBuffer);
+    return this;
   }
-}
-
-Output.prototype.getUniforms = function(uniforms) {
-  HydraUniform.destroyGroup(this.label);
-  uniforms = Object.assign(uniforms, {
-    prevBuffer: HydraUniform.get('prevBuffer', 'hydra-' + this.label),
-  });
-  const props = () => {
-    return {
-      time: HydraUniform.get('time', 'hydra').value,
-      bpm: HydraUniform.get('bpm', 'hydra').value,
-    };
-  };
-  return Object.keys(uniforms).reduce((acc, key) => {
-    acc[key] = typeof(uniforms[key]) === 'string' ? parseFloat(uniforms[key]) : uniforms[key];
-    if (typeof acc[key] === 'function') {
-      const func = acc[key];
-      acc[key] = new HydraUniform(key, null, ()=>func(null, props()), this.label);
-    }
-    else if (typeof acc[key].value === 'undefined') acc[key] = { value: acc[key] }
-    return acc;
-  }, {});
-}
-
-Output.prototype.getBlend = function(blendMode) {
-  switch (blendMode) {
-    case 'custom':
-      // todo: implement CustomBlending
-      return THREE.CustomBlending;
-    case 'subtractive':
-      return THREE.SubtractiveBlending;
-    case 'multiply':
-      return THREE.MultiplyBlending;
-    case 'add':
-      return THREE.AdditiveBlending;
-    case 'alpha':
-    case 'normal':
-      return THREE.NormalBlending;
-    default:
-      return THREE.NoBlending;
-  }
+  return shaderPass;
 }
 
 Output.prototype.tick = function () {
