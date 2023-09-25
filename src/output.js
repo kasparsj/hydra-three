@@ -159,17 +159,18 @@ Output.prototype.tick = function () {
 Output.prototype.renderTexture = function(options = {}) {
   // todo: create RenderTarget with options
   // renderTarget = new WebGLRenderTarget( this._width * this._pixelRatio, this._height * this._pixelRatio, { type: HalfFloatType } );
-  if (this.texComposer) {
-    this.texComposer.dispose();
-  }
-  this.texComposer = new EffectComposer(this.synth.renderer);
-  this.texComposer.renderToScreen = false;
+  const texComposer = new EffectComposer(this.synth.renderer);
+  texComposer.renderToScreen = false;
   HydraUniform.update();
   for (let i=0; i<this.composer.passes.length; i++) {
-    this.texComposer.addPass(this.composer.passes[i]);
+    texComposer.addPass(this.composer.passes[i]);
   }
-  this.texComposer.render();
-  return this.texComposer.readBuffer.texture;
+  texComposer.render();
+  if (this.texComposer) {
+    this.texComposer.dispose();
+    this.texComposer = texComposer;
+  }
+  return texComposer.readBuffer.texture;
 }
 
 export default Output
