@@ -19,7 +19,7 @@ dots([800, 800], solid(noise(1, 0.01).map(-1,1,-0.2,1.2).scrollX(0, 0.01), noise
 // storm
 solid(0)
     .layer(
-        dots([20, 20], solid(noise(100).map(-1,1,0,1), tex(arr.random(50, 50, {max: 255}))), noise().mult(10), colornoise(1000, 0.1)
+        dots([20, 20], solid(noise(100).map(-1,1,0,1), tx.data(arr.random(50, 50, {max: 255}))), noise().mult(10), colornoise(1000, 0.1)
             .brightness())
             .setAutoClear()
     )

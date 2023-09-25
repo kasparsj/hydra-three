@@ -85,8 +85,6 @@ Output.prototype.ortho = function(eye = [0,0,1], target = [0,0,0], options = {})
 }
 
 Output.prototype.render = function (passes) {
-  // ensure both fbo's have last frame
-  // todo: make sure needsSwap is true
   for (let i=0; i<this.composer.passes.length; i++) {
     this.composer.passes[i].dispose();
   }

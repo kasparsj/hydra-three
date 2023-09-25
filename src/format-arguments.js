@@ -1,5 +1,6 @@
 import arrayUtils from './lib/array-utils.js'
 import {getLookup} from "./types.js";
+import * as THREE from "three";
 
 // [WIP] how to treat different dimensions (?)
 const DEFAULT_CONVERSIONS = {
@@ -58,7 +59,7 @@ export default function formatArguments(transform, startIndex, synthContext) {
     // if user has input something for this argument
     if (userArgs.length > index) {
       typedArg.value = userArgs[index];
-      if (typeof typedArg.value === 'function' && !typedArg.value._texture && !typedArg.value._framebuffer) {
+      if (typeof typedArg.value === 'function') {
         typedArg.value = getFunctionValue(typedArg.value, input);
         typedArg.isUniform = true
       } else if (typedArg.value.constructor === Array) { // todo: maybe check for undefined
@@ -87,7 +88,7 @@ export default function formatArguments(transform, startIndex, synthContext) {
         typedArg.isUniform = false
       } else if (typedArg.type === 'float' && typeof typedArg.value === 'number') {
         typedArg.value = ensure_decimal_dot(typedArg.value)
-      } else if (typedArg.type.startsWith('vec') && typeof typedArg.value !== 'function' && !typedArg.value.getTexture) {
+      } else if (typedArg.type.startsWith('vec') && typeof typedArg.value !== 'function' && !typedArg.value.isTexture && !typedArg.value.isRenderTarget) {
         typedArg.isUniform = false
         if (Array.isArray(typedArg.value) || typedArg.value instanceof Float32Array || typedArg.value instanceof Uint8Array) {
           // todo: accept smaller arrays?
@@ -101,12 +102,12 @@ export default function formatArguments(transform, startIndex, synthContext) {
       } else if (input.type === 'sampler2D') {
         // typedArg.tex = typedArg.value
         var x = typedArg.value
-        typedArg.value = x.getTexture ? () => (x.getTexture()) : x
+        typedArg.value = x.isRenderTarget ? x.texture : x
         typedArg.isUniform = true
       } else {
         // if passing in a texture reference, when function asks for vec4, convert to vec4
-        if (typedArg.value.getTexture || typedArg.value._texture) {
-          var x1 = typedArg.value
+        if (typedArg.value.isTexture || typedArg.value.isRenderTarget) {
+          var x1 = typedArg.value.isRenderTarget ? typedArg.value.texture : typedArg.value
           if (input.type === 'vec4') {
             typedArg.value = src(x1)
           }
