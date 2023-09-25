@@ -66,7 +66,8 @@ const createMaterial = (options) => {
         uniforms,
         blending,
         linewidth: options.linewidth,
-        transparent: true,
+        // todo: not sure about this
+        //transparent: true,
         depthTest,
     });
 }
