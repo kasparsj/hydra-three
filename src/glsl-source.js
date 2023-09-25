@@ -108,11 +108,9 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
 
 GlslSource.compileHeader = function(transform, uniforms = {}, utils = {}, options = {}) {
   let varying = 'varying';
-  let outColor = '';
   let version = transform.version;
   if (version >= 300) {
     varying = options.vert ? 'out' : 'in';
-    outColor = 'out vec4 outColor;';
   }
   return `
   ${Object.values(uniforms).map((uniform) => {
@@ -131,7 +129,6 @@ GlslSource.compileHeader = function(transform, uniforms = {}, utils = {}, option
   ${varying} vec2 vuv;
   ${varying} vec3 vnormal;
   uniform sampler2D prevBuffer;
-  ${outColor}
   
   ${Object.values(utils).map((trans) => {
     return `
@@ -142,7 +139,6 @@ GlslSource.compileHeader = function(transform, uniforms = {}, utils = {}, option
 }
 
 GlslSource.compileFrag = function(transform, shaderInfo, utils, options = {}) {
-  const fragColor = transform.version >= 300 ? 'outColor' : 'gl_FragColor';
   const header = this.compileHeader(transform, shaderInfo.uniforms, utils, options);
   return header + `
   
@@ -156,7 +152,7 @@ GlslSource.compileFrag = function(transform, shaderInfo, utils, options = {}) {
     vec4 c = vec4(1, 0, 0, 1);
     //vec2 st = gl_FragCoord.xy/resolution.xy;
     vec2 st = vuv;
-    ${fragColor} = ${shaderInfo.fragColor};
+    gl_FragColor = ${shaderInfo.fragColor};
   }
   `
 }
