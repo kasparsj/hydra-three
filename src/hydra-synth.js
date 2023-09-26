@@ -65,7 +65,7 @@ class HydraRenderer {
       update: (dt) => {},// user defined update function
       hush: this.hush.bind(this),
       tick: this.tick.bind(this),
-      geom: this.geom.bind(this),
+      mesh: this.mesh.bind(this),
     }
 
     if (makeGlobal) {
@@ -460,8 +460,8 @@ class HydraRenderer {
   //  this.regl.poll()
   }
 
-  geom(...args) {
-    const name = 'geom' + (this.i++);
+  mesh(...args) {
+    const name = 'msh' + (this.i++);
     return this.generator.createSource(name, processFunction({
       name,
       type: 'vert',
