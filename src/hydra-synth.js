@@ -262,6 +262,8 @@ class HydraRenderer {
   }
 
   _initThree (webgl) {
+    window.THREE = THREE;
+
     const options = {
       canvas: this.canvas,
       antialias: true,

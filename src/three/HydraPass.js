@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import {Pass, FullScreenQuad} from "three/examples/jsm/postprocessing/Pass.js";
-
+import HydraUniform from "./HydraUniform.js";
 const createMaterial = (options) => {
     const uniforms = Object.assign({
         prevBuffer: { value: null },
