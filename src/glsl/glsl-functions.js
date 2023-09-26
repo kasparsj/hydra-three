@@ -963,6 +963,7 @@ export default () => [
 },
 {
   name: 'saturate',
+  glslName: '_saturate',
   type: 'color',
   inputs: [
     {

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import {Pass, FullScreenQuad} from "three/examples/jsm/postprocessing/Pass.js";
 import HydraUniform from "./HydraUniform.js";
+import Output from "../output.js";
 const createMaterial = (options) => {
     const uniforms = Object.assign({}, {
         prevBuffer: { value: null },
@@ -90,6 +91,10 @@ const getUniforms = (uniforms, group) => {
         if (typeof acc[key] === 'function') {
             const func = acc[key];
             acc[key] = new HydraUniform(key, null, ()=>func(null, props()), group);
+        }
+        else if (acc[key] instanceof Output) {
+            const o = acc[key];
+            acc[key] = new HydraUniform(key, null, ()=>o.getTexture(), group);
         }
         else if (typeof acc[key].value === 'undefined') acc[key] = { value: acc[key] }
         return acc;

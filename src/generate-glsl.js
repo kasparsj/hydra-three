@@ -73,7 +73,7 @@ function generateGlsl (source, transforms, shaderParams) {
     } else if (transform.transform.type === 'combine') {
       // combining two generated shader strings (i.e. for blend, mult, add funtions)
       const sourceVert = source.transforms[0].transform.vert || source.transforms[0].transform.type === 'vert';
-      const input0Vert = inputs[0].value && inputs[0].value.transforms && inputs[0].value.transforms[0].transform.vert || inputs[0].value.transforms[0].transform.type === 'vert';
+      const input0Vert = inputs[0].value && inputs[0].value.transforms && (inputs[0].value.transforms[0].transform.vert || inputs[0].value.transforms[0].transform.type === 'vert');
       if (sourceVert || input0Vert) {
         const params = Object.assign({}, shaderParams, {
           fragColor: fragColor('st', 'vec4', 1.0) || 'vec4(0)',
