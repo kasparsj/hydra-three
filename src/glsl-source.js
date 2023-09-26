@@ -249,6 +249,14 @@ GlslSource.prototype.phong = function(options) {
   return this;
 }
 
+GlslSource.prototype.lambert = function(options) {
+  this.material(Object.assign({
+    isMeshLambertMaterial: true,
+    color: new THREE.Color( 0xffffff ),
+  }, options));
+  return this;
+}
+
 GlslSource.prototype.viewport = function(x, y, w, h) {
   this._viewport = {x, y, w, h};
   return this;
