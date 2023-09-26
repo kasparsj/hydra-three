@@ -13,6 +13,7 @@ const createMaterial = (options) => {
         defines: {
             FLAT_SHADED: !options.useNormal,
             USE_UV: options.useUV,
+            USE_ALPHAHASH: true,
         },
         uniforms,
         lights: !!options.lights,

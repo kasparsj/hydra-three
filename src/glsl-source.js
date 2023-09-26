@@ -151,7 +151,11 @@ GlslSource.compileFrag = function(transform, shaderInfo, utils, options = {}) {
   }).join('')}
   `
   const call = `
+  #if defined( USE_UV )
   vec2 st = vUv;
+  #else
+  vec2 st = vPosition.xy;
+  #endif
   gl_FragColor = ${shaderInfo.fragColor};
   `
   return [header, fn, call]
