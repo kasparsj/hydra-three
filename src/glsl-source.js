@@ -92,6 +92,12 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
   }
 
   return Object.assign({
+    useUV: typeof(transform.transform.useUV) !== 'undefined'
+        ? transform.transform.useUV
+        : (!transform.transform.primitive || ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.transform.primitive) === -1),
+    useNormal: typeof(transform.transform.useNormal) !== 'undefined'
+        ? transform.transform.useNormal
+        : transform.transform.type === 'vert' && (!transform.transform.primitive || ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.transform.primitive) === -1),
     vert: GlslSource.compileVert(this.transforms[0].transform, shaderInfo, this.utils, { precision, useCamera: true }),
     primitive: transform.transform.primitive,
     userArgs: transform.userArgs,
@@ -107,12 +113,11 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
 }
 
 GlslSource.compileHeader = function(transform, uniforms = {}, utils = {}, options = {}) {
-  let varying = 'varying';
-  let version = transform.version;
-  if (version >= 300) {
-    varying = options.vert ? 'out' : 'in';
-  }
+  const vertex = options.vert;
   return `
+  #include <common>
+  ${vertex ? '#include <uv_pars_vertex>' : '#include <uv_pars_fragment>'}
+  ${vertex ? '#include <normal_pars_vertex>' : '#include <normal_pars_fragment>'}
   ${Object.values(uniforms).map((uniform) => {
     let type = uniform.type
     switch (uniform.type) {
@@ -125,9 +130,6 @@ GlslSource.compileHeader = function(transform, uniforms = {}, utils = {}, option
   }).join('')}
   uniform float time;
   uniform vec2 resolution;
-  ${varying} vec3 vposition;
-  ${varying} vec2 vuv;
-  ${varying} vec3 vnormal;
   uniform sampler2D prevBuffer;
   
   ${Object.values(utils).map((trans) => {
@@ -151,34 +153,24 @@ GlslSource.compileFrag = function(transform, shaderInfo, utils, options = {}) {
   void main () {
     vec4 c = vec4(1, 0, 0, 1);
     //vec2 st = gl_FragCoord.xy/resolution.xy;
-    vec2 st = vuv;
+    vec2 st = vUv;
     gl_FragColor = ${shaderInfo.fragColor};
   }
   `
 }
 
 GlslSource.compileVert = function(transform, shaderInfo, utils, options = {}) {
-  const useUV = typeof(transform.useUV) !== 'undefined'
-    ? transform.useUV
-    : (!transform.primitive || ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.primitive) === -1);
-  const useNormal = typeof(transform.useNormal) !== 'undefined'
-      ? transform.useNormal
-      : transform.type === 'vert' && (!transform.primitive || ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.primitive) === -1);
-  let varying = 'varying';
-  let version = transform.version;
-  if (version >= 300) {
-    varying = 'out';
-  }
-
   let vertHeader = `
-  ${varying} vec3 vposition;
-  ${varying} vec2 vuv;
-  ${varying} vec3 vnormal;
+  #include <common>
+  #include <uv_pars_vertex>
+  #include <normal_pars_vertex>
+  varying vec3 vViewPosition;
   `
+  
   let vertFn = `
   void ${transform.glslName}() {
-    vposition = position;
-    gl_Position = ${options.useCamera ? 'projectionMatrix * modelViewMatrix * ' : ''}vec4(position, 1.0);
+    #include <begin_vertex>
+    ${options.useCamera ? '#include <project_vertex>' : 'gl_Position = vec4(position, 1.0);'}
   } 
   `
   let vertCall = `${transform.glslName}();`;
@@ -195,9 +187,13 @@ GlslSource.compileVert = function(transform, shaderInfo, utils, options = {}) {
     `
     vertFn = transform.vert;
     vertCall = `
-    ${useUV ? 'vec2 st = uv;' : 'vec2 st = position.xy;'}
-    vposition = ${shaderInfo.position}.xyz;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(vposition, 1.0);
+    #if defined( USE_UV )
+    vec2 st = uv;
+    #else
+    vec2 st = position.xy;
+    #endif
+    vPosition = ${shaderInfo.position}.xyz;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(vPosition, 1.0);
     `;
   }
 
@@ -206,8 +202,13 @@ GlslSource.compileVert = function(transform, shaderInfo, utils, options = {}) {
   ${vertFn}
 
   void main () {
-    ${useUV ? 'vuv = uv;' : ''}
-    ${useNormal ? 'vnormal = normal;' : ''}
+    #include <uv_vertex>
+    #include <beginnormal_vertex>
+    #include <defaultnormal_vertex>
+    #include <normal_vertex>
+    #include <begin_vertex>
+    #include <project_vertex>
+    vViewPosition = - mvPosition.xyz;
     ${vertCall}
   }`
 }

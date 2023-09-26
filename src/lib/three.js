@@ -46,11 +46,16 @@ const createMaterial = (options) => {
         prevBuffer: { value: null },
     }, getUniforms(options.uniforms, options.label));
     const blending = getBlend(options.blendMode);
-    const depthTest = typeof(options.depthTest) !== 'undefined' ? options.depthTest : true;
+    const depthTest = typeof(options.depthTest) !== 'undefined' ? options.depthTest : options.useNormal;
     return new THREE.ShaderMaterial({
         fragmentShader: options.frag,
         vertexShader: options.vert,
         glslVersion: options.version,
+        //flatShading: !options.useNormal,
+        defines: {
+            FLAT_SHADED: !options.useNormal,
+            USE_UV: options.useUV,
+        },
         // todo: add support for viewport?
         // viewport: typeof(options.viewport.x) !== 'undefined' ? {
         //   x: options.viewport.x * this.fbos[0].width,
