@@ -226,8 +226,8 @@ GlslSource.prototype.geometry = function(input) {
       }
       input = new (this.transforms[0].transform.geometry)(...input);
     }
-    else {
-      if (vertTransform.transform.geometry === vectorizeText && input.length === 1) {
+    else if (typeof this.transforms[0].transform.geometry === 'function') {
+      if (this.transforms[0].transform.geometry === vectorizeText && input.length === 1) {
         input.push({
           textAlign: 'center',
           textBaseline: 'middle',
@@ -235,7 +235,7 @@ GlslSource.prototype.geometry = function(input) {
           // triangles: true, // todo: make it work
         });
       }
-      input = (vertTransform.transform.geometry)(...input);
+      input = (this.transforms[0].transform.geometry)(...input);
     }
   }
   this._geometry = input;

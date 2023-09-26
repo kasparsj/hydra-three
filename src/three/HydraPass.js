@@ -233,6 +233,7 @@ class HydraShaderPass extends HydraPass {
 
         super(options);
 
+        options.material || (options.material = {});
         options.material.depthTest = false;
         this.material = createMaterial(options);
 

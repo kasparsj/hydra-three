@@ -49,24 +49,31 @@ class GeneratorFactory {
     functions3.map((transform) => this.setFunction(transform))
  }
 
+  createSource(method, transform, args) {
+    if (!this.glslTransforms[method]) {
+      this.glslTransforms[method] = transform
+    }
+    return new this.sourceClass({
+      name: method,
+      transform: transform,
+      userArgs: args,
+      defaultOutput: this.defaultOutput,
+      defaultUniforms: this.defaultUniforms,
+      synth: this,
+      utils: this.utils,
+    })
+  }
+
  _addMethod (method, transform) {
-    const self = this
     this.glslTransforms[method] = transform
     let retval = undefined
     if (['src', 'coord', 'genType', 'vert', 'glsl'].indexOf(transform.type) > -1) {
-      const func = (...args) => new this.sourceClass({
-        name: method,
-        transform: transform,
-        userArgs: args,
-        defaultOutput: this.defaultOutput,
-        defaultUniforms: this.defaultUniforms,
-        synth: self,
-        utils: this.utils,
-      })
+      const func = (...args) => this.createSource(method, transform, args)
       this.generators[method] = func
       this.changeListener({type: 'add', synth: this, method})
       retval = func
     }
+    const self = this
     this.sourceClass.prototype[method] = function (...args) {
       if (transform.type !== 'src' && transform.type !== 'vert') {
         this.transforms.push({name: method, transform: transform, userArgs: args, synth: self})
@@ -141,4 +148,4 @@ function processFunction(obj) {
 
 }
 
-export default GeneratorFactory
+export { GeneratorFactory, processFunction }

@@ -37,7 +37,7 @@ export default (hy) => [
         type: 'vert',
         inputs: [
             {name: 'pos', type: 'vec3', default: hy.gradient()},
-            {name: 'size', type: 'float', default: 1},
+            {name: 'size', type: 'float', default: 10},
             {name: 'color', type: 'vec4', default: 1},
             {name: 'fade', type: 'float', default: 0.025},
         ],

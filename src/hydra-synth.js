@@ -8,7 +8,7 @@ import VidRecorder from './lib/video-recorder.js'
 import ArrayUtils from './lib/array-utils.js'
 // import strudel from './lib/strudel.js'
 import Sandbox from './eval-sandbox.js'
-import Generator from './generator-factory.js'
+import {GeneratorFactory, processFunction} from './generator-factory.js'
 import * as THREE from "three";
 import HydraUniform from "./three/HydraUniform.js"
 import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
@@ -64,7 +64,8 @@ class HydraRenderer {
       setResolution: this.setResolution.bind(this),
       update: (dt) => {},// user defined update function
       hush: this.hush.bind(this),
-      tick: this.tick.bind(this)
+      tick: this.tick.bind(this),
+      geom: this.geom.bind(this),
     }
 
     if (makeGlobal) {
@@ -133,6 +134,8 @@ class HydraRenderer {
 
     // final argument is properties that the user can set, all others are treated as read-only
     this.sandbox = new Sandbox(this.synth, makeGlobal, ['speed', 'update', 'bpm', 'fps'])
+
+    this.i = 0
   }
 
   eval(code) {
@@ -390,7 +393,7 @@ class HydraRenderer {
 
   _generateGlslTransforms () {
     var self = this
-    this.generator = new Generator({
+    this.generator = new GeneratorFactory({
       defaultOutput: this.o[0],
       defaultUniforms: this.o[0].uniforms,
       extendTransforms: this.extendTransforms,
@@ -454,6 +457,19 @@ class HydraRenderer {
   //  this.regl.poll()
   }
 
+  geom(...args) {
+    const name = 'geom' + (this.i++);
+    return this.generator.createSource(name, processFunction({
+      name,
+      type: 'vert',
+      inputs: [
+        {name: 'color', type: 'vec4', default: 1},
+      ],
+      glsl: `return color;`,
+      primitive: 'triangles',
+      geometry: args[0],
+    }), args)
+  }
 
 }
 
