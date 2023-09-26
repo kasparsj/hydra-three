@@ -116,7 +116,8 @@ Output.prototype.render = function (passes) {
   if (passes.length > 0) {
     for (let i=0; i<passes.length; i++) {
       let options = passes[i];
-      options.label = this.label;
+      // todo: quickfix
+      options.label = this.label + i;
       let pass;
       if (options.geometry) {
         options.camera || (options.camera = this._camera);
