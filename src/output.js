@@ -4,6 +4,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { ClearPass } from "three/examples/jsm/postprocessing/ClearPass.js";
 import HydraUniform from "./three/HydraUniform.js";
 import { HydraShaderPass, HydraRenderPass } from "./three/HydraPass.js";
+import {HydraOrbitControls} from "./three/HydraOrbitControls.js";
 
 var Output = function (index, synth) {
   this.id = index;
@@ -72,6 +73,21 @@ Output.prototype.camera = function(eye = [0,0,1], target = [0,0,0], options = {}
   this._camera.position.set(...eye);
   this._camera.lookAt(...target);
   this._camera.updateProjectionMatrix();
+  if (options.controls) {
+    options = Object.assign({
+      domElement: document.body,
+      enableZoom: true,
+    }, options || {});
+    if (this._controls) {
+      this._controls.dispose();
+    }
+    this._controls = new HydraOrbitControls(this._camera, options.domElement);
+    for (let attr in options) {
+      if (this._controls.hasOwnProperty(attr)) {
+        this._controls[attr] = options[attr];
+      }
+    }
+  }
   return this;
 }
 

@@ -8,6 +8,7 @@ box([], osc().rotate(snoise(0.1).mult(45)))
     .out();
 
 update = () => {
-    o0.obj[0].rotation.x += 0.01;
-    o0.obj[0].rotation.y += 0.01;
+    const box = o0.obj[0];
+    box.rotation.x += 0.01;
+    box.rotation.y += 0.01;
 }
