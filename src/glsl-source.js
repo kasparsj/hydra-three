@@ -246,6 +246,14 @@ GlslSource.prototype.material = function(options) {
   return this;
 }
 
+GlslSource.prototype.basic = function(options) {
+  this.material(Object.assign({
+    isMeshBasicMaterial: true,
+    color: new THREE.Color( 0xffffff ),
+  }, options));
+  return this;
+}
+
 GlslSource.prototype.phong = function(options) {
   this.material(Object.assign({
     isMeshPhongMaterial: true,

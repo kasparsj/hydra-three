@@ -8,7 +8,7 @@ const createMaterial = (options) => {
     }, getUniforms(options.uniforms, options.label));
     const properties = options.material;
     const {
-        isMeshLambertMaterial, isMeshPhongMaterial,
+        isMeshBasicMaterial, isMeshLambertMaterial, isMeshPhongMaterial,
         blendMode, color, specular, shininess, map, displacementMap, displacementScale,
         ...props
     } = properties;
@@ -35,29 +35,39 @@ const createMaterial = (options) => {
         // todo: not sure about this
         // transparent: true,
     }, props));
-    if (isMeshLambertMaterial || isMeshPhongMaterial) {
-        if (!material.lights) {
-            console.warn(".lights() must be called for lambert/phong lighting to work");
-        }
+    if (isMeshBasicMaterial || isMeshLambertMaterial || isMeshPhongMaterial) {
         material.color = color;
         material.map = map;
         material.displacementMap = displacementMap;
         material.displacementScale = displacementScale;
-        if (isMeshLambertMaterial) {
-            material.isMeshLambertMaterial = true;
-            material.vertexShader = options.vert[0][1] + options.vert[1] + THREE.ShaderLib.lambert.vertexShader;
-            material.fragmentShader = options.frag[0][1] + options.frag[1] + THREE.ShaderLib.lambert.fragmentShader;
-            material.uniforms = Object.assign({}, THREE.UniformsUtils.clone(THREE.ShaderLib.lambert.uniforms), material.uniforms);
+        if (isMeshBasicMaterial) {
+            material.isMeshBasicMaterial = true;
+            material.vertexShader = options.vert[0][1] + options.vert[1] + THREE.ShaderLib.basic.vertexShader;
+            material.fragmentShader = options.frag[0][1] + options.frag[1] + THREE.ShaderLib.basic.fragmentShader;
+            material.uniforms = Object.assign({}, THREE.UniformsUtils.clone(THREE.ShaderLib.basic.uniforms), material.uniforms);
+            material.vertexShader = material.vertexShader.replace('\n\t#include <uv_vertex>\n\t#include <color_vertex>\n\t#include <morphcolor_vertex>\n\t#if defined ( USE_ENVMAP ) || defined ( USE_SKINNING )\n\t\t#include <beginnormal_vertex>\n\t\t#include <morphnormal_vertex>\n\t\t#include <skinbase_vertex>\n\t\t#include <skinnormal_vertex>\n\t\t#include <defaultnormal_vertex>\n\t#endif\n\t#include <begin_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <project_vertex>', options.vert[2]);
+            material.defines.FLAT_SHADED = true;
         }
         else {
-            material.isMeshPhongMaterial = true;
-            material.specular = specular;
-            material.shininess = shininess;
-            material.vertexShader = options.vert[0][1] + options.vert[1] + THREE.ShaderLib.phong.vertexShader;
-            material.fragmentShader = options.frag[0][1] + options.frag[1] + THREE.ShaderLib.phong.fragmentShader;
-            material.uniforms = Object.assign({}, THREE.UniformsUtils.clone(THREE.ShaderLib.phong.uniforms), material.uniforms);
+            if (!material.lights) {
+                console.warn(".lights() must be called for lambert/phong lighting to work");
+            }
+            if (isMeshLambertMaterial) {
+                material.isMeshLambertMaterial = true;
+                material.vertexShader = options.vert[0][1] + options.vert[1] + THREE.ShaderLib.lambert.vertexShader;
+                material.fragmentShader = options.frag[0][1] + options.frag[1] + THREE.ShaderLib.lambert.fragmentShader;
+                material.uniforms = Object.assign({}, THREE.UniformsUtils.clone(THREE.ShaderLib.lambert.uniforms), material.uniforms);
+            }
+            else {
+                material.isMeshPhongMaterial = true;
+                material.specular = specular;
+                material.shininess = shininess;
+                material.vertexShader = options.vert[0][1] + options.vert[1] + THREE.ShaderLib.phong.vertexShader;
+                material.fragmentShader = options.frag[0][1] + options.frag[1] + THREE.ShaderLib.phong.fragmentShader;
+                material.uniforms = Object.assign({}, THREE.UniformsUtils.clone(THREE.ShaderLib.phong.uniforms), material.uniforms);
+            }
+            material.vertexShader = material.vertexShader.replace('\n\t#include <uv_vertex>\n\t#include <color_vertex>\n\t#include <morphcolor_vertex>\n\t#include <beginnormal_vertex>\n\t#include <morphnormal_vertex>\n\t#include <skinbase_vertex>\n\t#include <skinnormal_vertex>\n\t#include <defaultnormal_vertex>\n\t#include <normal_vertex>\n\t#include <begin_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <displacementmap_vertex>\n\t#include <project_vertex>', options.vert[2]);
         }
-        material.vertexShader = material.vertexShader.replace('\n\t#include <uv_vertex>\n\t#include <color_vertex>\n\t#include <morphcolor_vertex>\n\t#include <beginnormal_vertex>\n\t#include <morphnormal_vertex>\n\t#include <skinbase_vertex>\n\t#include <skinnormal_vertex>\n\t#include <defaultnormal_vertex>\n\t#include <normal_vertex>\n\t#include <begin_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <displacementmap_vertex>\n\t#include <project_vertex>', options.vert[2]);
         material.fragmentShader = material.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', options.frag[2].replace('gl_FragColor', 'vec4 diffuseColor') + 'diffuseColor.a *= opacity;');
     }
     else {
