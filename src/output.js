@@ -90,7 +90,7 @@ Output.prototype.render = function (passes) {
     this.composer.passes[i].dispose();
   }
   this.composer.passes = [];
-  this.passes = passes;
+  this.obj = [];
   if (passes.length > 0) {
     for (let i=0; i<passes.length; i++) {
       let options = passes[i];
@@ -99,6 +99,7 @@ Output.prototype.render = function (passes) {
       if (options.geometry) {
         options.camera || (options.camera = this._camera);
         pass = new HydraRenderPass(options);
+        this.obj.push(pass.object);
       }
       else {
         pass = new HydraShaderPass(options);
