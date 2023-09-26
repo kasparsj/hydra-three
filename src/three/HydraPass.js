@@ -34,6 +34,9 @@ const createMaterial = (options) => {
         //transparent: true,
     }, props));
     if (isMeshLambertMaterial) {
+        if (!material.lights) {
+            console.warn("lights must be configured for lambert lighting to work");
+        }
         material.isMeshLambertMaterial = true;
         material.color = color;
         material.vertexShader = options.vert[0][1] + options.vert[1] + THREE.ShaderLib.lambert.vertexShader;
@@ -43,6 +46,9 @@ const createMaterial = (options) => {
         material.uniforms = THREE.UniformsUtils.merge([THREE.ShaderLib.lambert.uniforms, material.uniforms]);
     }
     else if (isMeshPhongMaterial) {
+        if (!material.lights) {
+            console.warn("lights must be configured for phong lighting to work");
+        }
         material.isMeshPhongMaterial = true;
         material.color = color;
         material.specular = specular;

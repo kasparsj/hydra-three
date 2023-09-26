@@ -206,7 +206,7 @@ GlslSource.compileVert = function(transform, shaderInfo, utils, options = {}) {
 }
 
 GlslSource.prototype.lights = function(lights) {
-  this._lights = lights;
+  this._lights = lights || {cam: true, amb: true, sun: true, hemi: true};
   return this;
 }
 
