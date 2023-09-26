@@ -270,7 +270,7 @@ class HydraRenderer {
     const options = {
       canvas: this.canvas,
       antialias: true,
-      // alpha: true,
+      alpha: true,
     };
 
     this.renderer = webgl === 1 ? new THREE.WebGL1Renderer( options ) : new THREE.WebGLRenderer( options);

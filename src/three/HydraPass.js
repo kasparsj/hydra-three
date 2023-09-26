@@ -6,7 +6,7 @@ const createMaterial = (options) => {
         prevBuffer: { value: null },
     }, getUniforms(options.uniforms, options.label));
     const properties = options.material;
-    const {isMeshLambertMaterial, isMeshPhongMaterial, blendMode, color, specular, shininess, ...props} = properties;
+    const {isMeshLambertMaterial, isMeshPhongMaterial, blendMode, color, specular, shininess, map, ...props} = properties;
     const material = new THREE.ShaderMaterial(Object.assign({
         glslVersion: options.version,
         //flatShading: !options.useNormal,
@@ -26,20 +26,16 @@ const createMaterial = (options) => {
         //   width: options.viewport.w * this.fbos[0].width,
         //   height: options.viewport.h * this.fbos[0].height,
         // } : {},
-        // todo: add support for side parameter
-        // cull: {
-        //   enable: !!options.geometry,
-        //   face: 'back'
-        // },
         // todo: not sure about this
-        //transparent: true,
+        // transparent: true,
     }, props));
     if (isMeshLambertMaterial) {
         if (!material.lights) {
-            console.warn("lights must be configured for lambert lighting to work");
+            console.warn(".lights() must be called for lambert lighting to work");
         }
         material.isMeshLambertMaterial = true;
         material.color = color;
+        material.map = map;
         material.vertexShader = options.vert[0][1] + options.vert[1] + THREE.ShaderLib.lambert.vertexShader;
         material.vertexShader = material.vertexShader.replace('\n\t#include <uv_vertex>\n\t#include <color_vertex>\n\t#include <morphcolor_vertex>\n\t#include <beginnormal_vertex>\n\t#include <morphnormal_vertex>\n\t#include <skinbase_vertex>\n\t#include <skinnormal_vertex>\n\t#include <defaultnormal_vertex>\n\t#include <normal_vertex>\n\t#include <begin_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <displacementmap_vertex>\n\t#include <project_vertex>', options.vert[2]);
         material.fragmentShader = options.frag[0][1] + options.frag[1] + THREE.ShaderLib.lambert.fragmentShader;
@@ -48,10 +44,11 @@ const createMaterial = (options) => {
     }
     else if (isMeshPhongMaterial) {
         if (!material.lights) {
-            console.warn("lights must be configured for phong lighting to work");
+            console.warn(".lights() must be called for phong lighting to work");
         }
         material.isMeshPhongMaterial = true;
         material.color = color;
+        material.map = map;
         material.specular = specular;
         material.shininess = shininess;
         material.vertexShader = options.vert[0][1] + options.vert[1] + THREE.ShaderLib.phong.vertexShader;
