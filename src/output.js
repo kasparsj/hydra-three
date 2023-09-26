@@ -2,7 +2,8 @@ import GlslSource from "./glsl-source.js";
 import * as THREE from "three";
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { ClearPass } from "three/examples/jsm/postprocessing/ClearPass.js";
-import { HydraUniform, HydraShaderPass, HydraRenderPass } from "./lib/three.js";
+import HydraUniform from "./three/HydraUniform.js";
+import { HydraShaderPass, HydraRenderPass } from "./three/HydraPass.js";
 
 var Output = function (index, synth) {
   this.id = index;
