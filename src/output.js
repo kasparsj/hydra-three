@@ -49,7 +49,11 @@ Output.prototype.getTexture = function () {
    return this.composer.readBuffer.texture;
 }
 
-Output.prototype.camera = function(eye = [0,0,1], target = [0,0,0], options = {}) {
+Output.prototype.camera = function(eye, target, options = {}) {
+  if (!Array.isArray(eye)) eye = eye ? [eye] : null;
+  else if (!eye.length) eye = null;
+  if (!Array.isArray(target)) target = target ? [target] : [0,0,0];
+  else if (!target.length) target = [0,0,0];
   options = Object.assign({
     fov: 50,
     aspect: 1,
@@ -63,11 +67,13 @@ Output.prototype.camera = function(eye = [0,0,1], target = [0,0,0], options = {}
   switch (options.type) {
     case 'perspective':
       this._camera = new THREE.PerspectiveCamera( options.fov, options.aspect, options.near, options.far);
+      eye || (eye = [0,0,3]);
       break;
     case 'ortho':
     case 'orthographic':
     default:
       this._camera = new THREE.OrthographicCamera(options.left, options.right, options.top, options.bottom, options.near, options.far);
+      eye || (eye = [0,0,1]);
       break;
   }
   this._camera.position.set(...eye);
