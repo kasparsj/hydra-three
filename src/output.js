@@ -79,6 +79,12 @@ Output.prototype.camera = function(eye, target, options = {}) {
   this._camera.position.set(...eye);
   this._camera.lookAt(...target);
   this._camera.updateProjectionMatrix();
+  for (let attr in options) {
+    if (this._camera.hasOwnProperty(attr)) {
+      this._camera[attr] = options[attr];
+      delete options[attr];
+    }
+  }
   if (options.controls) {
     options = Object.assign({
       domElement: document.body,
@@ -91,6 +97,7 @@ Output.prototype.camera = function(eye, target, options = {}) {
     for (let attr in options) {
       if (this._controls.hasOwnProperty(attr)) {
         this._controls[attr] = options[attr];
+        delete options[attr];
       }
     }
   }

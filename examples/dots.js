@@ -33,3 +33,8 @@ solid(1, 1, 1, 1).layer(dots([1], 0.5, 500, solid(1))).out()
 
 // grid
 dots([10,10], gradient(), 10).out()
+
+// noise flow
+solid(0,1,0).layer(
+    dots([300,300], gradient().add(noise().mult(0.1)), wnoise().map(0,1,5,10), solid(0, 0, 0, 0.9))
+).out();

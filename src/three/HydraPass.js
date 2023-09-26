@@ -19,6 +19,7 @@ const createMaterial = (options) => {
             FLAT_SHADED: !options.useNormal,
             USE_UV: options.useUV,
             USE_ALPHAHASH: true,
+            // USE_COLOR: !options.useUV, // vColor
         },
         uniforms,
         lights: !!options.lights,

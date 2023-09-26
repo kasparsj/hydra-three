@@ -266,6 +266,9 @@ class HydraRenderer {
 
   _initThree (webgl) {
     window.THREE = THREE;
+    window.color = (...args) => new THREE.Color(...args);
+    window.vec3 = (...args) => new THREE.Vector3(...args);
+    window.quat = (...args) => new THREE.Quaternion(...args);
 
     const options = {
       canvas: this.canvas,

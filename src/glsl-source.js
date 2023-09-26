@@ -264,6 +264,11 @@ GlslSource.prototype.lambert = function(options) {
   return this;
 }
 
+GlslSource.prototype.world = function() {
+  // todo: implement
+  return this;
+}
+
 GlslSource.prototype.viewport = function(x, y, w, h) {
   this._viewport = {x, y, w, h};
   return this;
