@@ -273,6 +273,7 @@ class HydraRenderer {
     this.renderer = webgl === 1 ? new THREE.WebGL1Renderer( options ) : new THREE.WebGLRenderer( options);
     this.renderer.clear();
     this.renderer.autoClear = false;
+    this.synth.renderer = this.renderer;
     this.composer = new EffectComposer(this.renderer);
 
     new HydraUniform('tex', null, () => this.output.getTexture(), 'hydra');

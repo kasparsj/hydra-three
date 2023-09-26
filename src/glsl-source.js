@@ -13,8 +13,9 @@ var GlslSource = function (obj) {
   this.type = 'GlslSource'
   this.defaultUniforms = obj.defaultUniforms
   this.utils = Object.assign({}, utilityGlsl, obj.utils)
-  this.blendMode = typeof(obj.transform.blendMode) !== 'undefined' ? obj.transform.blendMode : false
-  this.linewidth = obj.transform.linewidth || 1
+  this._geometry = null;
+  this._material = {};
+  this._lights = null;
   this._viewport = {}
   return this
 }
@@ -80,14 +81,11 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
         glslName: 'combine',
       }, shaderInfo, [], { precision, useCamera: false }),
       userArgs: transform.userArgs,
-      // todo: fix or delete
-      // blendMode: this.blendMode,
-      linewidth: this.linewidth,
       frag: GlslSource.compileFrag(transform.transform, shaderInfo, this.utils, {precision}),
       version: transform.version >= 300 ? THREE.GLSL3 : THREE.GLSL1,
       uniforms: Object.assign({}, this.defaultUniforms, uniforms),
       viewport: this._viewport,
-      clear: this.clear,
+      clear: this._autoClear,
     };
   }
 
@@ -101,23 +99,24 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
     vert: GlslSource.compileVert(this.transforms[0].transform, shaderInfo, this.utils, { precision, useCamera: true }),
     primitive: transform.transform.primitive,
     userArgs: transform.userArgs,
-    geometry: this.geometry,
-    blendMode: this.blendMode,
-    linewidth: this.linewidth,
+    geometry: this._geometry,
+    material: this._material,
+    lights: this._lights,
     frag: GlslSource.compileFrag(transform.transform, shaderInfo, this.utils, {precision}),
     version: transform.version >= 300 ? THREE.GLSL3 : THREE.GLSL1,
     uniforms: Object.assign({}, this.defaultUniforms, uniforms),
     viewport: this._viewport,
-    clear: this.clear,
+    clear: this._autoClear,
   }, options)
 }
 
 GlslSource.compileHeader = function(transform, uniforms = {}, utils = {}, options = {}) {
-  const vertex = options.vert;
+  const isVertex = options.vert
   return `
   #include <common>
-  ${vertex ? '#include <uv_pars_vertex>' : '#include <uv_pars_fragment>'}
-  ${vertex ? '#include <normal_pars_vertex>' : '#include <normal_pars_fragment>'}
+  ${!isVertex ? '#include <packing>' : ''}
+  ${isVertex ? '#include <uv_pars_vertex>' : '#include <uv_pars_fragment>'}
+  ${isVertex ? '#include <normal_pars_vertex>' : '#include <normal_pars_fragment>'}
   ${Object.values(uniforms).map((uniform) => {
     let type = uniform.type
     switch (uniform.type) {
@@ -131,7 +130,6 @@ GlslSource.compileHeader = function(transform, uniforms = {}, utils = {}, option
   uniform float time;
   uniform vec2 resolution;
   uniform sampler2D prevBuffer;
-  
   ${Object.values(utils).map((trans) => {
     return `
             ${trans[('glsl' + transform.version)] || trans.glsl}
@@ -141,22 +139,19 @@ GlslSource.compileHeader = function(transform, uniforms = {}, utils = {}, option
 }
 
 GlslSource.compileFrag = function(transform, shaderInfo, utils, options = {}) {
-  const header = this.compileHeader(transform, shaderInfo.uniforms, utils, options);
-  return header + `
-  
-  ${shaderInfo.glslFunctions.map((trans) => {
+  const header = this.compileHeader(transform, shaderInfo.uniforms, utils, options)
+  const fn = `
+    ${shaderInfo.glslFunctions.map((trans) => {
     return `
             ${trans.transform[('glsl' + transform.version)] || trans.transform.glsl}
           `
   }).join('')}
-
-  void main () {
-    vec4 c = vec4(1, 0, 0, 1);
-    //vec2 st = gl_FragCoord.xy/resolution.xy;
-    vec2 st = vUv;
-    gl_FragColor = ${shaderInfo.fragColor};
-  }
   `
+  const call = `
+  vec2 st = vUv;
+  gl_FragColor = ${shaderInfo.fragColor};
+  `
+  return [header, fn, call]
 }
 
 GlslSource.compileVert = function(transform, shaderInfo, utils, options = {}) {
@@ -164,19 +159,27 @@ GlslSource.compileVert = function(transform, shaderInfo, utils, options = {}) {
   #include <common>
   #include <uv_pars_vertex>
   #include <normal_pars_vertex>
-  varying vec3 vViewPosition;
   `
-  
-  let vertFn = `
-  void ${transform.glslName}() {
-    #include <begin_vertex>
-    ${options.useCamera ? '#include <project_vertex>' : 'gl_Position = vec4(position, 1.0);'}
-  } 
-  `
-  let vertCall = `${transform.glslName}();`;
+  let vertFn = ``
+  let vertCall = `
+  #include <uv_vertex>
+  #include <color_vertex>
+  #include <morphcolor_vertex>
+  #include <beginnormal_vertex>
+  #include <morphnormal_vertex>
+  #include <skinbase_vertex>
+  #include <skinnormal_vertex>
+  #include <defaultnormal_vertex>
+  #include <normal_vertex>
+  #include <begin_vertex>
+  #include <morphtarget_vertex>
+  #include <skinning_vertex>
+  #include <displacementmap_vertex>
+  ${options.useCamera ? '#include <project_vertex>' : 'gl_Position = vec4(position, 1.0);'}
+  `;
   if (transform.vert) {
-    vertHeader = this.compileHeader(transform, shaderInfo.uniforms, utils, Object.assign({vert: true}, options)) + `
-    
+    vertHeader = this.compileHeader(transform, shaderInfo.uniforms, utils, Object.assign({vert: true}, options))
+    vertFn = `
     ${shaderInfo.glslFunctions.map((trans) => {
       if (trans.transform.name !== transform.name) {
         return `
@@ -184,8 +187,8 @@ GlslSource.compileVert = function(transform, shaderInfo, utils, options = {}) {
           `
       }
     }).join('')}
-    `
-    vertFn = transform.vert;
+    ${transform.vert}
+    `;
     vertCall = `
     #if defined( USE_UV )
     vec2 st = uv;
@@ -196,35 +199,15 @@ GlslSource.compileVert = function(transform, shaderInfo, utils, options = {}) {
     gl_Position = projectionMatrix * modelViewMatrix * vec4(vPosition, 1.0);
     `;
   }
-
-  return vertHeader + `
-    
-  ${vertFn}
-
-  void main () {
-    #include <uv_vertex>
-    #include <beginnormal_vertex>
-    #include <defaultnormal_vertex>
-    #include <normal_vertex>
-    #include <begin_vertex>
-    #include <project_vertex>
-    vViewPosition = - mvPosition.xyz;
-    ${vertCall}
-  }`
+  return [vertHeader, vertFn, vertCall];
 }
 
-// todo: make hydra-synth function
-GlslSource.prototype.setBlend = function(blendMode = true) {
-  this.blendMode = blendMode;
+GlslSource.prototype.lights = function(lights) {
+  this._lights = lights;
   return this;
 }
 
-GlslSource.prototype.setLinewidth = function(linewidth) {
-  this.linewidth = linewidth;
-  return this;
-}
-
-GlslSource.prototype.setGeometry = function(input) {
+GlslSource.prototype.geometry = function(input) {
   const isGeometry = (v) => (v.isBufferGeometry || (v.positions && v.edges));
   const isClass = (v) => typeof v === 'function' && /^\s*class\s+/.test(v.toString());
   if (!input) input = [];
@@ -248,7 +231,22 @@ GlslSource.prototype.setGeometry = function(input) {
       input = (vertTransform.transform.geometry)(...input);
     }
   }
-  this.geometry = input;
+  this._geometry = input;
+}
+
+GlslSource.prototype.material = function(options) {
+  this._material = options;
+  return this;
+}
+
+GlslSource.prototype.phong = function(options) {
+  this.material(Object.assign({
+    isMeshPhongMaterial: true,
+    color: new THREE.Color( 0xffffff ),
+    specular: new THREE.Color( 0x111111 ),
+    shininess: 30,
+  }, options));
+  return this;
 }
 
 GlslSource.prototype.viewport = function(x, y, w, h) {
@@ -256,8 +254,8 @@ GlslSource.prototype.viewport = function(x, y, w, h) {
   return this;
 }
 
-GlslSource.prototype.setAutoClear = function(amount = 1.0, options = {}) {
-  this.clear = {
+GlslSource.prototype.autoClear = function(amount = 1.0, options = {}) {
+  this._autoClear = {
     amount,
     ...options,
   };

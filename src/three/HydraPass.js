@@ -2,20 +2,22 @@ import * as THREE from "three";
 import {Pass, FullScreenQuad} from "three/examples/jsm/postprocessing/Pass.js";
 import HydraUniform from "./HydraUniform.js";
 const createMaterial = (options) => {
-    const uniforms = Object.assign({
+    const uniforms = Object.assign({}, {
         prevBuffer: { value: null },
     }, getUniforms(options.uniforms, options.label));
-    const blending = getBlend(options.blendMode);
-    const depthTest = typeof(options.depthTest) !== 'undefined' ? options.depthTest : options.useNormal;
-    return new THREE.ShaderMaterial({
-        fragmentShader: options.frag,
-        vertexShader: options.vert,
+    const properties = options.material;
+    const {isMeshLamberMaterial, isMeshPhongMaterial, blendMode, color, specular, shininess, ...props} = properties;
+    const material = new THREE.ShaderMaterial(Object.assign({
         glslVersion: options.version,
         //flatShading: !options.useNormal,
         defines: {
             FLAT_SHADED: !options.useNormal,
             USE_UV: options.useUV,
         },
+        uniforms,
+        lights: !!options.lights,
+        blending: getBlend(blendMode),
+        depthTest: options.useNormal,
         // todo: add support for viewport?
         // viewport: typeof(options.viewport.x) !== 'undefined' ? {
         //   x: options.viewport.x * this.fbos[0].width,
@@ -28,13 +30,48 @@ const createMaterial = (options) => {
         //   enable: !!options.geometry,
         //   face: 'back'
         // },
-        uniforms,
-        blending,
-        linewidth: options.linewidth,
         // todo: not sure about this
         //transparent: true,
-        depthTest,
-    });
+    }, props));
+    if (isMeshLamberMaterial) {
+        material.isMeshLamberMaterial = true;
+        material.color = color;
+        material.specular = specular;
+        material.shininess = shininess;
+        material.vertexShader = THREE.ShaderLib.lambert.vertexShader = options.vert[1] + THREE.ShaderLib.lambert.vertexShader;
+        material.vertexShader = THREE.ShaderLib.lambert.vertexShader.replace('\n\t#include <uv_vertex>\n\t#include <color_vertex>\n\t#include <morphcolor_vertex>\n\t#include <beginnormal_vertex>\n\t#include <morphnormal_vertex>\n\t#include <skinbase_vertex>\n\t#include <skinnormal_vertex>\n\t#include <defaultnormal_vertex>\n\t#include <normal_vertex>\n\t#include <begin_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <displacementmap_vertex>\n\t#include <project_vertex>', options.vert[2]);
+        material.fragmentShader = THREE.ShaderLib.lambert.fragmentShader = options.frag[1] + THREE.ShaderLib.lambert.fragmentShader;
+        material.fragmentShader = THREE.ShaderLib.lambert.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', options.frag[2].replace('gl_FragColor', 'vec4 diffuseColor') + 'diffuseColor.a *= opacity;');
+        material.uniforms = THREE.UniformsUtils.merge([THREE.ShaderLib.lambert.uniforms, material.uniforms]);
+    }
+    else if (isMeshPhongMaterial) {
+        material.isMeshPhongMaterial = true;
+        material.color = color;
+        material.specular = specular;
+        material.shininess = shininess;
+        material.vertexShader = THREE.ShaderLib.phong.vertexShader = options.vert[1] + THREE.ShaderLib.phong.vertexShader;
+        material.vertexShader = THREE.ShaderLib.phong.vertexShader.replace('\n\t#include <uv_vertex>\n\t#include <color_vertex>\n\t#include <morphcolor_vertex>\n\t#include <beginnormal_vertex>\n\t#include <morphnormal_vertex>\n\t#include <skinbase_vertex>\n\t#include <skinnormal_vertex>\n\t#include <defaultnormal_vertex>\n\t#include <normal_vertex>\n\t#include <begin_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <displacementmap_vertex>\n\t#include <project_vertex>', options.vert[2]);
+        material.fragmentShader = THREE.ShaderLib.phong.fragmentShader = options.frag[1] + THREE.ShaderLib.phong.fragmentShader;
+        material.fragmentShader = THREE.ShaderLib.phong.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', options.frag[2].replace('gl_FragColor', 'vec4 diffuseColor') + 'diffuseColor.a *= opacity;');
+        material.uniforms = THREE.UniformsUtils.merge([THREE.ShaderLib.phong.uniforms, material.uniforms]);
+    }
+    else {
+        material.vertexShader = `
+          ${options.vert[0]}
+          ${options.vert[1]}
+          void main() {
+            ${options.vert[2]}
+          }
+        `;
+        material.fragmentShader = `
+          ${options.frag[0]}
+          ${options.frag[1]}
+          void main() {
+            ${options.frag[2]}
+          }
+        `;
+    }
+    return material;
 }
 
 const getUniforms = (uniforms, group) => {
@@ -75,6 +112,101 @@ const getBlend = (blendMode) => {
     }
 }
 
+const createLights = (scene, camera, options) => {
+    options = Object.assign({
+        intensityMul: 1,
+    }, options);
+    if (options.hasOwnProperty('camera') || options.hasOwnProperty("cam")) {
+        const camOptions = Object.assign({
+            color: options.camColor || 0xFFFFFF,
+            intensity: options.camIntensity || 0.5,
+        }, typeof options.camera === 'object' ? options.camera : {});
+        camOptions.intensity = camOptions.intensity * options.intensityMul;
+        createCamLight(scene, camera, camOptions);
+    }
+    if (options.hasOwnProperty('sun')) {
+        const sunOptions = Object.assign({
+            color: options.sunColor || 0xFFFFFF,
+            intensity: options.sunIntensity || 0.7,
+            elevation: options.sunEle || 45,
+            azimuth: options.sunAzi || 90,
+        }, typeof options.sun === 'object' ? options.sun : {});
+        sunOptions.intensity = sunOptions.intensity * options.intensityMul;
+        createSunLight(scene, camera, sunOptions);
+    }
+    if (options.hasOwnProperty('ambient') || options.hasOwnProperty("amb")) {
+        const ambOptions = Object.assign({
+            color: options.ambColor || 0x404040,
+            intensity: options.ambIntensity || 0.1,
+        }, typeof options.ambient === 'object' ? options.ambient : {});
+        ambOptions.intensity = ambOptions.intensity * options.intensityMul;
+        createAmbientLight(scene, ambOptions);
+    }
+    if (options.hasOwnProperty('hemisphere') || options.hasOwnProperty("hemi")) {
+        const hemiOptions = Object.assign({
+            color: options.hemiColor || 0xFFFFFF,
+            intensity: options.hemiIntensity || 0.5,
+        }, typeof options.hemisphere === 'object' ? options.hemisphere : {});
+        hemiOptions.intensity = hemiOptions.intensity * options.intensityMul;
+        createHemiLight(scene, hemiOptions);
+    }
+}
+
+const createCamLight = (scene, camera, options) => {
+    const camLight = new THREE.PointLight( options.color, options.intensity);
+    if (options.hasOwnProperty('visible')) {
+        camLight.visible = options.visible;
+    }
+    camera.add(camLight);
+    scene.add(camera);
+}
+
+const createSunLight = (scene, camera, options) => {
+    const sunLight = new THREE.DirectionalLight(options.color, options.intensity);
+    if (options.hasOwnProperty('visible')) {
+        sunLight.visible = options.visible;
+    }
+    const sunPos = posFromEleAzi(options.elevation, options.azimuth, camera.far/2);
+    sunLight.position.copy(sunPos);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 512;
+    sunLight.shadow.mapSize.height = 512;
+    sunLight.shadow.camera.near = camera.near; // default
+    sunLight.shadow.camera.far = camera.far; // default
+    sunLight.shadow.camera.left = -512;
+    sunLight.shadow.camera.right = 512;
+    sunLight.shadow.camera.top = 512;
+    sunLight.shadow.camera.bottom = -512;
+    sunLight.target.position.set(0, 0, 0);
+    scene.add(sunLight);
+    scene.add(sunLight.target);
+}
+
+const posFromEleAzi = (elevation, azimuth, radius = 1) => {
+    const phi = THREE.MathUtils.degToRad( 90 - elevation );
+    const theta = THREE.MathUtils.degToRad(azimuth);
+    const pos = new THREE.Vector3();
+    pos.setFromSphericalCoords( radius, phi, theta );
+    return pos;
+}
+
+const createAmbientLight = (scene, options) => {
+    const ambLight = new THREE.AmbientLight( options.color, options.intensity );
+    if (options.hasOwnProperty('visible')) {
+        ambLight.visible = options.visible;
+    }
+    scene.add(ambLight);
+}
+
+const createHemiLight = (scene, options) => {
+    const hemiLight = new THREE.HemisphereLight( options.skyColor, options.groundColor, options.intensity );
+    if (options.hasOwnProperty('visible')) {
+        hemiLight.visible = options.visible;
+    }
+    hemiLight.position.set( 0, 50, 0 );
+    scene.add(hemiLight);
+}
+
 class HydraPass extends Pass {
 
     constructor(options) {
@@ -96,9 +228,8 @@ class HydraShaderPass extends HydraPass {
 
         super(options);
 
-        this.material = createMaterial(Object.assign({
-            depthTest: false,
-        }, options));
+        options.material.depthTest = false;
+        this.material = createMaterial(options);
 
         this.fsQuad = new FullScreenQuad( this.material );
     }
@@ -144,8 +275,16 @@ class HydraRenderPass extends HydraPass {
 
         super(options);
 
-        this.scene = new THREE.Scene();
+        this.material = createMaterial(options);
+        this.object = this.createObject(options.primitive, options.geometry, this.material);
         this.camera = options.camera;
+
+        this.scene = new THREE.Scene()
+        this.scene.add(this.object);
+
+        if (options.lights) {
+            createLights(this.scene, this.camera, options.lights);
+        }
 
         this.overrideMaterial = options.overrideMaterial || null;
 
@@ -154,10 +293,6 @@ class HydraRenderPass extends HydraPass {
 
         this.clearDepth = false;
         this._oldClearColor = new THREE.Color();
-
-        this.material = createMaterial(options);
-        this.object = this.createObject(options.primitive, options.geometry, this.material);
-        this.scene.add(this.object);
 
     }
 
