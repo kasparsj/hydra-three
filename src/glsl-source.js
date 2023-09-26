@@ -112,11 +112,13 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
 
 GlslSource.compileHeader = function(transform, uniforms = {}, utils = {}, options = {}) {
   const isVertex = options.vert
-  return `
+  const head1 = `
   #include <common>
   ${!isVertex ? '#include <packing>' : ''}
   ${isVertex ? '#include <uv_pars_vertex>' : '#include <uv_pars_fragment>'}
   ${isVertex ? '#include <normal_pars_vertex>' : '#include <normal_pars_fragment>'}
+  `
+  const head2 = `
   ${Object.values(uniforms).map((uniform) => {
     let type = uniform.type
     switch (uniform.type) {
@@ -136,6 +138,7 @@ GlslSource.compileHeader = function(transform, uniforms = {}, utils = {}, option
           `
   }).join('')}
   `
+  return [head1, head2];
 }
 
 GlslSource.compileFrag = function(transform, shaderInfo, utils, options = {}) {

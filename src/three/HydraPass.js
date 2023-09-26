@@ -36,9 +36,9 @@ const createMaterial = (options) => {
     if (isMeshLambertMaterial) {
         material.isMeshLambertMaterial = true;
         material.color = color;
-        material.vertexShader = options.vert[1] + THREE.ShaderLib.lambert.vertexShader;
+        material.vertexShader = options.vert[0][1] + options.vert[1] + THREE.ShaderLib.lambert.vertexShader;
         material.vertexShader = material.vertexShader.replace('\n\t#include <uv_vertex>\n\t#include <color_vertex>\n\t#include <morphcolor_vertex>\n\t#include <beginnormal_vertex>\n\t#include <morphnormal_vertex>\n\t#include <skinbase_vertex>\n\t#include <skinnormal_vertex>\n\t#include <defaultnormal_vertex>\n\t#include <normal_vertex>\n\t#include <begin_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <displacementmap_vertex>\n\t#include <project_vertex>', options.vert[2]);
-        material.fragmentShader = options.frag[1] + THREE.ShaderLib.lambert.fragmentShader;
+        material.fragmentShader = options.frag[0][1] + options.frag[1] + THREE.ShaderLib.lambert.fragmentShader;
         material.fragmentShader = material.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', options.frag[2].replace('gl_FragColor', 'vec4 diffuseColor') + 'diffuseColor.a *= opacity;');
         material.uniforms = THREE.UniformsUtils.merge([THREE.ShaderLib.lambert.uniforms, material.uniforms]);
     }
@@ -47,22 +47,22 @@ const createMaterial = (options) => {
         material.color = color;
         material.specular = specular;
         material.shininess = shininess;
-        material.vertexShader = options.vert[1] + THREE.ShaderLib.phong.vertexShader;
+        material.vertexShader = options.vert[0][1] + options.vert[1] + THREE.ShaderLib.phong.vertexShader;
         material.vertexShader = material.vertexShader.replace('\n\t#include <uv_vertex>\n\t#include <color_vertex>\n\t#include <morphcolor_vertex>\n\t#include <beginnormal_vertex>\n\t#include <morphnormal_vertex>\n\t#include <skinbase_vertex>\n\t#include <skinnormal_vertex>\n\t#include <defaultnormal_vertex>\n\t#include <normal_vertex>\n\t#include <begin_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <displacementmap_vertex>\n\t#include <project_vertex>', options.vert[2]);
-        material.fragmentShader = options.frag[1] + THREE.ShaderLib.phong.fragmentShader;
+        material.fragmentShader = options.frag[0][1] + options.frag[1] + THREE.ShaderLib.phong.fragmentShader;
         material.fragmentShader = material.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', options.frag[2].replace('gl_FragColor', 'vec4 diffuseColor') + 'diffuseColor.a *= opacity;');
         material.uniforms = THREE.UniformsUtils.merge([THREE.ShaderLib.phong.uniforms, material.uniforms]);
     }
     else {
         material.vertexShader = `
-          ${options.vert[0]}
+          ${Array.isArray(options.vert[0]) ? options.vert[0].join("\n") : options.vert[0]}
           ${options.vert[1]}
           void main() {
             ${options.vert[2]}
           }
         `;
         material.fragmentShader = `
-          ${options.frag[0]}
+          ${options.frag[0].join("\n")}
           ${options.frag[1]}
           void main() {
             ${options.frag[2]}
