@@ -5,15 +5,11 @@ lines(
     cnoise(1000).saturate(8)
 )
 .autoClear(0.1)
-.setLineWidth(1)
 .out()
 
 // layering
 lines([100]).add(noise(10).add(shape(3))).out()
 
-// todo: does not work when clearing before
-// lines(100]).add(noise(10).add(shape(3))).out()
-
-// lines(10], gradient()).out()
+// lines([10], gradient()).out()
 
 // lines().out()

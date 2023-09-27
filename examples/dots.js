@@ -2,7 +2,7 @@ await loadScript("/hy/index.js");
 await loadScript("/dt/index.js");
 
 // noise
-dots([50,50], solid(noise(0.4, 0.03).map(-1,1,-0.1,1.1), noise(0.6, 0.03).map(-1,1,-0.1,1.1)), noise(0.4).mult(10), cnoise(1000))
+dots([50,50], solid(noise(0.4, 0.03).map(-1,1,-0.1,1.1), noise(0.6, 0.03).map(-1,1,-0.1,1.1)), noise(0.4).map(-1,1,1,10), cnoise(1000))
     .autoClear(0.05)
     .out()
 
@@ -18,11 +18,11 @@ dots([800, 800], solid(noise(1, 0.01).map(-1,1,-0.2,1.2).scrollX(0, 0.01), noise
 // storm
 solid(0)
     .layer(
-        dots([20, 20], solid(noise(100).map(-1,1,0,1), tex(arr.random(50, 50, {max: 255}))), noise().mult(10), cnoise(1000, 0.1)
+        dots([20, 20], solid(noise(100).map(-1,1,0,1), tx.data(arr.random(50, 50, {max: 255}))), noise().mult(10), cnoise(1000, 0.1)
             .brightness())
             .autoClear()
     )
-    .scrollY(0, 0.1)
+    .st(scrollY(0, -0.1))
     .out();
 
 // circle

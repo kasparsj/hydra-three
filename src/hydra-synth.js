@@ -12,6 +12,7 @@ import {GeneratorFactory, processFunction} from './generator-factory.js'
 import regl from 'regl'
 // import regl from 'regl/dist/regl.unchecked.js'
 import webgl2Compat from "./regl-webgl2-compat.js";
+import * as tx from "./lib/tx.js";
 // const window = global.window
 
 
@@ -66,6 +67,7 @@ class HydraRenderer {
       hush: this.hush.bind(this),
       tick: this.tick.bind(this),
       mesh: this.mesh.bind(this),
+      tx,
     }
 
     if (makeGlobal) {
