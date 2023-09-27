@@ -5,7 +5,7 @@ await loadScript("/dt/index.js");
 solid(0)
     .layer(
         squares([500], solid(tex(arr.random(500, 500, {max: 255})), tex(arr.random(500, 500, {max: 255}))), noise().mult(10))
-            .setAutoClear()
+            .autoClear()
     )
     .scrollY(0, 0.1)
     .out();

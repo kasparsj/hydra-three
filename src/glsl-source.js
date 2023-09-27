@@ -12,8 +12,9 @@ var GlslSource = function (obj) {
   this.type = 'GlslSource'
   this.defaultUniforms = obj.defaultUniforms
   this.utils = Object.assign({}, utilityGlsl, obj.utils);
-  this.blendMode = typeof(obj.transform.blendMode) !== 'undefined' ? obj.transform.blendMode : false;
-  this.lineWidth = obj.transform.lineWidth || 1;
+  this._geometry = null;
+  this._blendMode = typeof(obj.transform.blendMode) !== 'undefined' ? obj.transform.blendMode : false;
+  this._linewidth = obj.transform._linewidth || 1;
   this._viewport = {};
   return this
 }
@@ -80,12 +81,12 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
       }, shaderInfo, [], { precision, useCamera: false }),
       userArgs: this.transforms[0].userArgs,
       // todo: fix or delete
-      // blendMode: this.blendMode,
-      lineWidth: this.lineWidth,
+      // blendMode: this._blendMode,
+      linewidth: this._linewidth,
       frag: GlslSource.compileFrag(this.transforms[0].transform, shaderInfo, this.utils, {precision}),
       uniforms: Object.assign({}, this.defaultUniforms, uniforms),
       viewport: this._viewport,
-      clear: this.clear,
+      clear: this._autoClear,
     };
   }
 
@@ -93,13 +94,13 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
     vert: GlslSource.compileVert(this.transforms[0].transform, shaderInfo, this.utils, { precision, useCamera: true }),
     primitive: this.transforms[0].transform.primitive,
     userArgs: this.transforms[0].userArgs,
-    geometry: this.geometry,
-    blendMode: this.blendMode,
-    lineWidth: this.lineWidth,
+    geometry: this._geometry,
+    blendMode: this._blendMode,
+    linewidth: this._linewidth,
     frag: GlslSource.compileFrag(this.transforms[0].transform, shaderInfo, this.utils, {precision}),
     uniforms: Object.assign({}, this.defaultUniforms, uniforms),
     viewport: this._viewport,
-    clear: this.clear,
+    clear: this._autoClear,
   }, options)
 }
 
@@ -228,17 +229,17 @@ GlslSource.compileVert = function(transform, shaderInfo, utils, options = {}) {
 }
 
 // todo: make hydra-synth function
-GlslSource.prototype.setBlend = function(blendMode = true) {
-  this.blendMode = blendMode;
+GlslSource.prototype.blendMode = function(blendMode = true) {
+  this._blendMode = blendMode;
   return this;
 }
 
-GlslSource.prototype.setLineWidth = function(lineWidth) {
-  this.lineWidth = lineWidth;
+GlslSource.prototype.linewidth = function(linewidth) {
+  this._linewidth = linewidth;
   return this;
 }
 
-GlslSource.prototype.setGeometry = function(input) {
+GlslSource.prototype.geometry = function(input) {
   const isGeometry = (v) => (v.isBufferGeometry || (v.positions && v.edges));
   const isClass = (v) => typeof v === 'function' && /^\s*class\s+/.test(v.toString());
   if (!input) input = [];
@@ -251,7 +252,7 @@ GlslSource.prototype.setGeometry = function(input) {
       input = new (this.transforms[0].transform.geometry)(...input);
     }
     else {
-      if (vertTransform.transform.geometry === vectorizeText && input.length === 1) {
+      if (this.transforms[0].transform.geometry === vectorizeText && input.length === 1) {
         input.push({
           textAlign: 'center',
           textBaseline: 'middle',
@@ -259,10 +260,10 @@ GlslSource.prototype.setGeometry = function(input) {
           // triangles: true, // todo: make it work
         });
       }
-      input = (vertTransform.transform.geometry)(...input);
+      input = (this.transforms[0].transform.geometry)(...input);
     }
   }
-  this.geometry = input;
+  this._geometry = input;
 }
 
 GlslSource.prototype.viewport = function(x, y, w, h) {
@@ -270,8 +271,8 @@ GlslSource.prototype.viewport = function(x, y, w, h) {
   return this;
 }
 
-GlslSource.prototype.setAutoClear = function(amount = 1.0, options = {}) {
-  this.clear = {
+GlslSource.prototype.autoClear = function(amount = 1.0, options = {}) {
+  this._autoClear = {
     amount,
     ...options,
   };

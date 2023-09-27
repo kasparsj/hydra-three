@@ -47,8 +47,8 @@ function generateGlsl (source, transforms, shaderParams) {
       fragColor = () => transform.userArgs[0];
       return;
     }
-    if (transform.transform.type === 'vert' && !source.geometry) {
-      source.setGeometry(transform.userArgs[0]);
+    if (transform.transform.type === 'vert' && !source._geometry) {
+      source.geometry(transform.userArgs[0]);
       transform.userArgs = transform.userArgs.slice(1);
     }
     var inputs = formatArguments(transform, shaderParams.uniforms.length)
@@ -72,7 +72,9 @@ function generateGlsl (source, transforms, shaderParams) {
       fragColor = (uv, returnType, alpha) =>  `${shaderString(`${f0(uv, 'vec4')}`, transform, inputs, shaderParams, returnType, alpha)}`
     } else if (transform.transform.type === 'combine') {
       // combining two generated shader strings (i.e. for blend, mult, add funtions)
-      if (source.transforms[0].transform.vert || (inputs[0].value && inputs[0].value.transforms && inputs[0].value.transforms[0].transform.vert)) {
+      const sourceVert = source.transforms[0].transform.vert || source.transforms[0].transform.type === 'vert';
+      const input0Vert = inputs[0].value && inputs[0].value.transforms && (inputs[0].value.transforms[0].transform.vert || inputs[0].value.transforms[0].transform.type === 'vert');
+      if (sourceVert || input0Vert) {
         const params = Object.assign({}, shaderParams, {
           fragColor: fragColor('st', 'vec4', 1.0) || 'vec4(0)',
         });
@@ -87,7 +89,7 @@ function generateGlsl (source, transforms, shaderParams) {
       }
       var f1;
       if (inputs[0].value && inputs[0].value.transforms) {
-        if (inputs[0].value.transforms[0].transform.vert || source.transforms[0].transform.vert) {
+        if (input0Vert || sourceVert) {
           inputs[0].value.output = source.output;
           source.passes.unshift(...inputs[0].value.compile({framebuffer: source.output.temp[1]}));
           const temp1 = src(source.output.temp[1]);
