@@ -73,17 +73,17 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
   const uniforms = {}
   shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value });
   const precision = this.defaultOutput.precision;
-
+  const transform = this.transforms[0];
   if (shaderInfo.combine) {
     return {
       vert: GlslSource.compileVert({
         glslName: 'combine',
       }, shaderInfo, [], { precision, useCamera: false }),
-      userArgs: this.transforms[0].userArgs,
+      userArgs: transform.userArgs,
       // todo: fix or delete
       // blendMode: this._blendMode,
       linewidth: this._linewidth,
-      frag: GlslSource.compileFrag(this.transforms[0].transform, shaderInfo, this.utils, {precision}),
+      frag: GlslSource.compileFrag(transform.transform, shaderInfo, this.utils, {precision}),
       uniforms: Object.assign({}, this.defaultUniforms, uniforms),
       viewport: this._viewport,
       clear: this._autoClear,
@@ -91,13 +91,13 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
   }
 
   return Object.assign({
-    vert: GlslSource.compileVert(this.transforms[0].transform, shaderInfo, this.utils, { precision, useCamera: true }),
-    primitive: this.transforms[0].transform.primitive,
-    userArgs: this.transforms[0].userArgs,
+    vert: GlslSource.compileVert(transform.transform, shaderInfo, this.utils, { precision, useCamera: true }),
+    primitive: transform.transform.primitive,
+    userArgs: transform.userArgs,
     geometry: this._geometry,
     blendMode: this._blendMode,
     linewidth: this._linewidth,
-    frag: GlslSource.compileFrag(this.transforms[0].transform, shaderInfo, this.utils, {precision}),
+    frag: GlslSource.compileFrag(transform.transform, shaderInfo, this.utils, {precision}),
     uniforms: Object.assign({}, this.defaultUniforms, uniforms),
     viewport: this._viewport,
     clear: this._autoClear,
