@@ -296,7 +296,7 @@ class HydraRenderPass extends HydraPass {
         super(options);
 
         this.material = createMaterial(options);
-        this.object = this.createObject(options.primitive, options.geometry, this.material);
+        this.object = this.createObject(options.primitive, options.geometry, this.material, options.instanced);
         this.camera = options.camera;
 
         this.scene = new THREE.Scene()
@@ -316,7 +316,7 @@ class HydraRenderPass extends HydraPass {
 
     }
 
-    createObject(primitive, geometry, material) {
+    createObject(primitive, geometry, material, instanced) {
         // todo: add support vectorizeText?
         // if (geometry.positions && (geometry.edges || geometry.cells)) {
         //   attributes.position = []; // todo: should be Float32Array
@@ -336,12 +336,17 @@ class HydraRenderPass extends HydraPass {
             case 'lines':
                 return new THREE.LineSegments(geometry, material);
             default:
-                const quad = new FullScreenQuad(material);
-                if (geometry) {
-                    quad._mesh.geometry.dispose();
-                    quad._mesh.geometry = geometry;
+                if (instanced) {
+                    return new THREE.InstancedMesh(geometry, material, instanced);
                 }
-                return quad._mesh;
+                else {
+                    const quad = new FullScreenQuad(material);
+                    if (geometry) {
+                        quad._mesh.geometry.dispose();
+                        quad._mesh.geometry = geometry;
+                    }
+                    return quad._mesh;
+                }
         }
     }
 

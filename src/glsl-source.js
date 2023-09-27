@@ -14,6 +14,7 @@ var GlslSource = function (obj) {
   this.defaultUniforms = obj.defaultUniforms
   this.utils = Object.assign({}, utilityGlsl, obj.utils)
   this._geometry = null;
+  this._instanced = 0;
   this._material = {};
   this._lights = null;
   this._viewport = {}
@@ -100,6 +101,7 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
     primitive: transform.transform.primitive,
     userArgs: transform.userArgs,
     geometry: this._geometry,
+    instanced: this._instanced,
     material: this._material,
     lights: this._lights,
     frag: GlslSource.compileFrag(transform.transform, shaderInfo, this.utils, {precision}),
@@ -269,6 +271,11 @@ GlslSource.prototype.lambert = function(options) {
     isMeshLambertMaterial: true,
     color: new THREE.Color( 0xffffff ),
   }, options));
+  return this;
+}
+
+GlslSource.prototype.instanced = function(count) {
+  this._instanced = count;
   return this;
 }
 

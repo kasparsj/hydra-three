@@ -272,6 +272,7 @@ class HydraRenderer {
     window.color = (...args) => new THREE.Color(...args);
     window.vec3 = (...args) => new THREE.Vector3(...args);
     window.quat = (...args) => new THREE.Quaternion(...args);
+    window.mat4 = (...args) => new THREE.Matrix4(...args);
 
     const options = {
       canvas: this.canvas,
