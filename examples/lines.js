@@ -6,8 +6,7 @@ lines(
     solid(noise(1, 0.03).map(-1,1,-0.1,1.1), noise(2, 0.03).map(-1,1,-0.1,1.1)),
     colornoise(1000).saturate(8)
 )
-.setAutoClear(0.1)
-.setLinewidth(1)
+.autoClear(0.1)
 .out()
 
 // layering
