@@ -1,6 +1,5 @@
 import * as THREE from "three";
 
-const renderer = hydraSynth.renderer;
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
 const types = {
@@ -127,6 +126,7 @@ const mirror1 = (texture, x = 2, y = 2, options = {}) => {
     }, matOptions)));
     const plane = scene.children[0];
 
+    const renderer = hydraSynth.renderer;
     renderer.autoClear = false;
     renderer.setRenderTarget(renderTarget);
     renderer.setViewport(0, 0, texWidth, texHeight);
@@ -182,6 +182,7 @@ const pointsym = (texture, options = {}) => {
     // const scene = createQuadScene(src(texture).rotate(90).tex());
     // const plane = scene.children[0];
     //
+    // const renderer = hydraSynth.renderer;
     // renderer.autoClear = false;
     // renderer.setRenderTarget(renderTarget);
     // renderer.setViewport(0, texHeight, texWidth, texHeight);
@@ -222,6 +223,7 @@ const atlas = (textures) => {
     const scene = createQuadScene(new THREE.MeshBasicMaterial());
     const plane = scene.children[0];
 
+    const renderer = hydraSynth.renderer;
     renderer.autoClear = false;
     renderer.setRenderTarget(renderTarget);
     textures.forEach((texture, index) => {
@@ -244,6 +246,7 @@ const atlas = (textures) => {
 
 const createSceneTexture = (scene, options = {}) => {
     const renderTarget = createRenderTarget(options);
+    const renderer = hydraSynth.renderer;
     renderer.setRenderTarget(renderTarget);
     renderer.render(scene, camera);
     renderer.setRenderTarget(null);

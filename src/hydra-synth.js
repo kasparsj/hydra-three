@@ -14,6 +14,7 @@ import HydraUniform from "./three/HydraUniform.js"
 import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
 import {ShaderPass} from "three/examples/jsm/postprocessing/ShaderPass.js";
 import * as tx from "./three/tx.js";
+import * as gm from "./three/gm.js";
 
 
 const Mouse = MouseTools()
@@ -67,6 +68,7 @@ class HydraRenderer {
       tick: this.tick.bind(this),
       mesh: this.mesh.bind(this),
       tx,
+      gm,
     }
 
     if (makeGlobal) {
