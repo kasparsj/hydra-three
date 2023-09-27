@@ -8,7 +8,7 @@ nse.init();
 const w = 0.02;
 const h = 0.02;
 const d = 0.02;
-const count = 25000;
+const count = 10000;
 
 solid(1,1,0).layer(mesh(
     // gm.edges(gm.box(w, h, d)),
