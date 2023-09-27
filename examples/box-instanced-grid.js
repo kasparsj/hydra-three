@@ -15,7 +15,9 @@ solid(1,1,0).layer(mesh(
     gm.box(w, h, d),
     // mt.lineBasic({ color: th.color(0, 0, 0), side: THREE.DoubleSide })
     solid(0.5,0.5,0.5)
-).instanced(count).lambert({ color: color(127, 127, 127) }).lights().phong().autoClear()).out();
+).instanced(count)
+    .lambert().lights()
+    .autoClear()).out();
 
 let matrixSet = false;
 update = () => {

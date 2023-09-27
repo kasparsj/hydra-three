@@ -164,15 +164,16 @@ Output.prototype.fade = function(options) {
   }
   // todo: do we need to fade also temp buffers?
   const passOptions = {
-    frag: `
-          varying vec2 vuv;
-          uniform sampler2D prevBuffer;
-          void main() {
-            vec4 color = mix(texture2D(prevBuffer, vuv), vec4(0), ${amount});
-            gl_FragColor = color;
-          }
-        `,
-    vert: GlslSource.compileVert(this.precision, camera, { glslName: 'clear' }),
+    // todo: create class/struct
+    frag: [['', `
+      varying vec2 vUv;
+      uniform sampler2D prevBuffer;
+    `], '', `
+      vec4 color = mix(texture2D(prevBuffer, vUv), vec4(0), ${amount});
+      gl_FragColor = color;
+    `],
+    version: THREE.GLSL1,
+    vert: GlslSource.compileVert({ glslName: 'clear' }, null, null, {useCamera: camera}),
     uniforms: this.uniforms,
   };
   const shaderPass = new HydraShaderPass(passOptions);
