@@ -5,6 +5,6 @@ varying vec4 vColor;
 vec4 lines(vec2 _st, vec3 pos, vec4 color) {
     vPos = pos;
     vColor = color;
-    return vec4(vPos * 2.0 - 1.0, 1.0);
+    return vec4(vPos.xy * 2.0 - 1.0, vPos.z, 1.0);
 }
 

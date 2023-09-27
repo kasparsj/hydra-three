@@ -7,6 +7,6 @@ vec4 linestrip(vec2 _st, vec3 pos, vec4 color) {
     vColor = color;
     vColor.a = vColor.a * ceil(1.0 - _st.x);
     vColor.a = vColor.a * ceil(_st.x);
-    return vec4(vPos * 2.0 - 1.0, 1.0);
+    return vec4(vPos.xy * 2.0 - 1.0, vPos.z, 1.0);
 }
 
