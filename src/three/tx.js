@@ -1,5 +1,6 @@
 import * as THREE from "three";
 
+const textures = {};
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
 const types = {
@@ -13,6 +14,12 @@ const filters = {
     'linear': THREE.LinearFilter,
     'mipmap': THREE.LinearMipmapLinearFilter,
 };
+
+const get = (id) => textures[id];
+
+const set = (id, tex) => {
+    textures[id] = tex;
+}
 
 const data = (data, options = {}) => {
     const minFilter = options.minFilter || (filters[options.min] || THREE.NearestFilter);
@@ -46,6 +53,9 @@ const data = (data, options = {}) => {
     tex.wrapS = options.wrapS;
     tex.wrapT = options.wrapT;
     tex.needsUpdate = true;
+    if (options.id) {
+        set(options.id, tex);
+    }
     return tex;
 }
 
@@ -241,6 +251,9 @@ const atlas = (textures) => {
     tex.userData.width = width;
     tex.userData.height = height;
     tex.userData.depth = textures.length;
+    if (options.id) {
+        set(options.id, tex);
+    }
     return tex;
 }
 
@@ -283,6 +296,7 @@ const createRenderTarget = (options = {}) => {
 }
 
 export {
+    get, set,
     data, load, save,
     wrap, repeat, mirror, mirror1, pointsym,
     atlas,
