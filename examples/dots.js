@@ -1,4 +1,3 @@
-await loadScript("/hy/index.js");
 await loadScript("/dt/index.js");
 
 // noise

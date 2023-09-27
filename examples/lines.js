@@ -1,10 +1,8 @@
-await loadScript("/extra-shaders-for-hydra/lib-noise.js");
-
 // todo: fix - some strange disconnected part
 lines(
     [0,400],
     solid(noise(1, 0.03).map(-1,1,-0.1,1.1), noise(2, 0.03).map(-1,1,-0.1,1.1)),
-    colornoise(1000).saturate(8)
+    cnoise(1000).saturate(8)
 )
 .autoClear(0.1)
 .out()
