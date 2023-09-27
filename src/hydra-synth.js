@@ -8,7 +8,7 @@ import VidRecorder from './lib/video-recorder.js'
 import ArrayUtils from './lib/array-utils.js'
 // import strudel from './lib/strudel.js'
 import Sandbox from './eval-sandbox.js'
-import Generator from './generator-factory.js'
+import {GeneratorFactory, processFunction} from './generator-factory.js'
 import regl from 'regl'
 // import regl from 'regl/dist/regl.unchecked.js'
 import webgl2Compat from "./regl-webgl2-compat.js";
@@ -64,7 +64,8 @@ class HydraRenderer {
       setResolution: this.setResolution.bind(this),
       update: (dt) => {},// user defined update function
       hush: this.hush.bind(this),
-      tick: this.tick.bind(this)
+      tick: this.tick.bind(this),
+      mesh: this.mesh.bind(this),
     }
 
     if (makeGlobal) {
@@ -185,7 +186,7 @@ class HydraRenderer {
  }
 
   setResolution(width, height) {
-  //  console.log(width, height)
+    console.log("setResolution", width, height)
     this.canvas.width = width
     this.canvas.height = height
     this.width = width // is this necessary?
@@ -199,7 +200,6 @@ class HydraRenderer {
       source.resize(width, height)
     })
     this.regl._refresh()
-     console.log(this.canvas.width)
   }
 
   canvasToImage (callback) {
@@ -415,7 +415,7 @@ class HydraRenderer {
 
   _generateGlslTransforms () {
     var self = this
-    this.generator = new Generator({
+    this.generator = new GeneratorFactory({
       defaultOutput: this.o[0],
       defaultUniforms: this.o[0].uniforms,
       extendTransforms: this.extendTransforms,
@@ -494,6 +494,20 @@ class HydraRenderer {
       this.saveFrame = false
     }
   //  this.regl.poll()
+  }
+
+  mesh(...args) {
+    const name = 'mesh' + (this.i++);
+    return this.generator.createSource(name, processFunction({
+      name,
+      type: 'vert',
+      inputs: [
+        {name: 'color', type: 'vec4', default: 1},
+      ],
+      glsl: `return color;`,
+      primitive: 'triangles',
+      geometry: args[0],
+    }), args)
   }
 
 

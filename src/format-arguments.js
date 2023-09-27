@@ -39,8 +39,8 @@ export default function formatArguments(transform, startIndex, synthContext) {
   return defaultArgs.map((input, index) => {
     const typedArg = {
       value: input.default,
-      type: input.type, //
-      isUniform: false,
+      type: input.type,
+      isUniform: !!input.isUniform,
       name: input.name,
       vecLen: 0
       //  generateGlsl: null // function for creating glsl
