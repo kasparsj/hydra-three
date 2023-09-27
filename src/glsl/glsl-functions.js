@@ -1,3 +1,8 @@
+import glsl from 'glslify'
+
+const pnoiseFrag = glsl("./shaders/pnoise.frag");
+const snoiseFrag = glsl("./shaders/snoise.frag");
+
 /*
 Format for adding functions to hydra. For each entry in this file, hydra automatically generates a glsl function and javascript function with the same name. You can also ass functions dynamically using setFunction(object).
 
@@ -86,6 +91,81 @@ export default () => [
   ],
   glsl:
 `   return vec4(vec3(_noise(vec3(_st*scale, offset*time))), 1.0);`
+},
+{
+    name: 'snoise',
+    type: 'src',
+    inputs: [
+        {name: 'scale', type: 'float', default: 10.0},
+        {name: 'offset', type: 'vec3', default: 0.0},
+    ],
+    glsl: snoiseFrag
+},
+{
+    name: 'pnoise',
+    type: 'src',
+    inputs: [
+        {name: 'scale', type: 'float', default: 10.0},
+        {name: 'offset', type: 'vec3', default: 0.0},
+        {name: 'rep', type: 'vec4', default: 0.0},
+        {name: 'uv', type: 'float', default: 1.0},
+    ],
+    glsl: pnoiseFrag,
+},
+{
+    name: 'wnoise', // whitenoise
+    type: 'src',
+    inputs: [
+        {name: 'size',    type: 'float', default: 10.0},
+        {name: 'offset', type: 'vec2', default:  0.0},
+    ],
+    glsl: `
+  // see: http://byteblacksmith.com/improvements-to-the-canonical-one-liner-glsl-rand-for-opengl-es-2-0/
+  const highp float a = 12.9898;
+  const highp float b = 78.233;
+  const highp float c = 43758.5453;
+  highp float dt = dot(floor((_st * resolution) / size), offset + vec2(a ,b));
+  highp float sn = mod(dt, 3.141592653589793);
+  highp float d = fract(sin(sn) * c);
+  return vec4(d, d, d, 1);`
+},
+{
+    name: 'cnoise', // colornoise
+    type: 'src',
+    inputs: [
+        {name: 'size',    type: 'float', default: 10.0},
+        {name: 'offset', type: 'vec2', default:  0.0},
+    ],
+    glsl: `
+  highp float rr;
+  highp float gg;
+  highp float bb;
+  // see: http://byteblacksmith.com/improvements-to-the-canonical-one-liner-glsl-rand-for-opengl-es-2-0/
+  {
+  const highp float a = 12.9898;
+  const highp float b = 78.233;
+  const highp float c = 43758.5453;
+  highp float dt = dot(floor((_st * resolution) / size), offset + vec2(a ,b));
+  highp float sn= mod(dt, 3.141592653589793);
+  rr = fract(sin(sn) * c);
+  }
+  {
+  const highp float a = 12.9898;
+  const highp float b = 78.233;
+  const highp float c = 43758.5453;
+  highp float dt = dot(floor((_st * resolution) / size) + vec2(0.123, 0.567), offset + vec2(a ,b));
+  highp float sn = mod(dt, 3.141592653589793);
+  gg = fract(sin(sn) * c);
+  }
+  {
+  const highp float a = 12.9898;
+  const highp float b = 78.233;
+  const highp float c = 43758.5453;
+  highp float dt = dot(floor((_st * resolution) / size) + vec2(0.543, 0.905), offset + vec2(a ,b));
+  highp float sn = mod(dt, 3.141592653589793);
+  bb = fract(sin(sn) * c);
+  }
+  return vec4(rr, gg, bb, 1);`
 },
 {
   name: 'voronoi',
