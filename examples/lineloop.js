@@ -21,8 +21,8 @@ lineloop([200], solid(sin(1).add(sin(7)).mult(0.5).add(0.5), cos(1).add(cos(7)).
 
 // additive animation
 lineloop([300], solid(
-    sin(1).add(sin([()=>time/2%1000)]).mult(0.5).add(0.5),
-    cos(1).add(cos([()=>time/2%1000)]).mult(0.5).add(0.5)
+    sin(1).add(sin([()=>time/2%1000])).mult(0.5).add(0.5),
+    cos(1).add(cos([()=>time/2%1000])).mult(0.5).add(0.5)
 )).autoClear().out();
 
 // dancing thread

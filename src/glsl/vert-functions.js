@@ -1,11 +1,13 @@
 import glsl from 'glslify'
 import {GridGeometry} from "./geometries/GridGeometry.js";
+import {PlaneGeometry} from "three/src/geometries/PlaneGeometry";
 import vectorizeText from "vectorize-text";
 
 const pointsVert = glsl("./shaders/points.vert");
 const linesVert = glsl("./shaders/lines.vert");
 const linestripVert = glsl("./shaders/linestrip.vert");
 const lineloopVert = glsl("./shaders/lineloop.vert");
+const planeVert = glsl("./shaders/plane.vert");
 
 const dotsFrag = glsl("./shaders/dots.frag");
 const squaresFrag = glsl("./shaders/squares.frag");
@@ -37,7 +39,7 @@ export default (hy) => [
         type: 'vert',
         inputs: [
             {name: 'pos', type: 'vec3', default: hy.gradient()},
-            {name: 'size', type: 'float', default: 1},
+            {name: 'size', type: 'float', default: 10},
             {name: 'color', type: 'vec4', default: 1},
             {name: 'fade', type: 'float', default: 0.025},
         ],
@@ -93,5 +95,17 @@ export default (hy) => [
         geometry: vectorizeText,
         useUV: false,
         useNormal: false,
+    },
+    {
+        name: 'plane',
+        type: 'vert',
+        inputs: [
+            {name: 'pos', type: 'vec3', default: hy.gradient()},
+            {name: 'color', type: 'vec4', default: 1},
+        ],
+        glsl: `return color;`,
+        vert: planeVert,
+        primitive: 'triangles',
+        geometry: PlaneGeometry,
     },
 ];
