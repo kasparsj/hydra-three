@@ -3,16 +3,22 @@ import utilityGlsl from './glsl/utility-functions.js'
 import vectorizeText from 'vectorize-text'
 import {replaceGenType} from "./types.js"
 import * as THREE from "three"
+import {HydraFragmentShader, HydraVertexShader} from "./lib/HydraShader.js";
 
-var GlslSource = function (obj) {
+var GlslSource = function (obj, options) {
+  this.scene = null;
   this.transforms = []
-  this.transforms.push(obj)
-  this.defaultOutput = obj.defaultOutput
+  if (obj.scene) {
+    this.scene = obj;
+  }
+  else if (obj) {
+    this.transforms.push(obj)
+  }
+  this.defaultOutput = options.defaultOutput
   this.output = null
-  this.synth = obj.synth
   this.type = 'GlslSource'
-  this.defaultUniforms = obj.defaultUniforms
-  this.utils = Object.assign({}, utilityGlsl, obj.utils)
+  this.defaultUniforms = options.defaultUniforms
+  this.utils = Object.assign({}, utilityGlsl, options.utils)
   this._geometry = null;
   this._instanced = 0;
   this._material = {};
@@ -29,7 +35,6 @@ GlslSource.prototype.out = function (_output) {
   var output = _output || this.defaultOutput
   this.output = output;
   var glsl = this.compile()
-  this.synth.currentFunctions = []
   if(output) try{
     output.render(glsl)
   } catch (error) {
@@ -51,164 +56,43 @@ GlslSource.prototype.compile = function (options = {}) {
   return this.passes
 }
 
-GlslSource.prototype.getInfo = function () {
-  if (this.transforms.length > 0) {
-    var shaderInfo = generateGlsl(this)
-    var uniforms = {}
-    shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value })
-    return {
-      shaderInfo,
-      utilityGlsl: this.utils,
-      // todo: add support for generated vertex shader
-      vert: this.transforms[0].transform.vert,
-      // todo: differs from compile
-      attributes: this.transforms[0].transform.attributes,
-      // todo: differs from compile
-      attributesCount: this.transforms[0].transform.attributesCount,
-      primitive: this.transforms[0].transform.primitive,
-      uniforms: Object.assign({}, this.defaultUniforms, uniforms)
-    };
-  }
-}
-
 GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
   const uniforms = {}
   shaderInfo.uniforms.forEach((uniform) => { uniforms[uniform.name] = uniform.value });
+
   const precision = this.defaultOutput.precision;
   const transform = this.transforms[0];
   if (shaderInfo.combine) {
-    return {
-      vert: GlslSource.compileVert({
+    if (transform) {
+      Object.assign(options, {
+        frag: new HydraFragmentShader(transform.transform, shaderInfo, this.utils, {precision}),
+        userArgs: transform.userArgs,
+      });
+    }
+    return Object.assign({
+      vert: new HydraVertexShader({
         glslName: 'combine',
       }, shaderInfo, [], { precision, useCamera: false }),
-      userArgs: transform.userArgs,
-      frag: GlslSource.compileFrag(transform.transform, shaderInfo, this.utils, {precision}),
-      version: transform.version >= 300 ? THREE.GLSL3 : THREE.GLSL1,
       uniforms: Object.assign({}, this.defaultUniforms, uniforms),
       viewport: this._viewport,
       clear: this._autoClear,
-    };
+    }, options);
   }
 
+  if (transform) {
+    Object.assign(options, {
+      frag: new HydraFragmentShader(transform.transform, shaderInfo, this.utils, {precision}),
+      vert: new HydraVertexShader(transform.transform, shaderInfo, this.utils, { precision, useCamera: true }),
+      primitive: transform.transform.primitive,
+      userArgs: transform.userArgs,
+    });
+  }
   return Object.assign({
-    useUV: typeof(transform.transform.useUV) !== 'undefined'
-        ? transform.transform.useUV
-        : (!transform.transform.primitive || ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.transform.primitive) === -1),
-    useNormal: typeof(transform.transform.useNormal) !== 'undefined'
-        ? transform.transform.useNormal
-        : transform.transform.type === 'vert' && (!transform.transform.primitive || ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.transform.primitive) === -1),
-    vert: GlslSource.compileVert(this.transforms[0].transform, shaderInfo, this.utils, { precision, useCamera: true }),
-    primitive: transform.transform.primitive,
-    userArgs: transform.userArgs,
-    geometry: this._geometry,
-    instanced: this._instanced,
-    material: this._material,
-    lights: this._lights,
-    frag: GlslSource.compileFrag(transform.transform, shaderInfo, this.utils, {precision}),
-    version: transform.version >= 300 ? THREE.GLSL3 : THREE.GLSL1,
+    scene: this.scene,
     uniforms: Object.assign({}, this.defaultUniforms, uniforms),
     viewport: this._viewport,
     clear: this._autoClear,
   }, options)
-}
-
-GlslSource.compileHeader = function(transform, uniforms = {}, utils = {}, options = {}) {
-  const isVertex = options.vert
-  const head1 = `
-  #include <common>
-  ${!isVertex ? '#include <packing>' : ''}
-  ${isVertex ? '#include <uv_pars_vertex>' : '#include <uv_pars_fragment>'}
-  ${isVertex ? '#include <normal_pars_vertex>' : '#include <normal_pars_fragment>'}
-  `
-  const head2 = `
-  ${Object.values(uniforms).map((uniform) => {
-    let type = uniform.type
-    switch (uniform.type) {
-      case 'texture':
-        type = 'sampler2D'
-        break
-    }
-    return `
-      uniform ${type} ${uniform.name};`
-  }).join('')}
-  uniform float time;
-  uniform vec2 resolution;
-  uniform sampler2D prevBuffer;
-  ${Object.values(utils).map((trans) => {
-    return `
-            ${trans[('glsl' + transform.version)] || trans.glsl}
-          `
-  }).join('')}
-  `
-  return [head1, head2];
-}
-
-GlslSource.compileFrag = function(transform, shaderInfo, utils, options = {}) {
-  const header = this.compileHeader(transform, shaderInfo.uniforms, utils, options)
-  const fn = `
-    ${shaderInfo.glslFunctions.map((trans) => {
-    return `
-            ${trans.transform[('glsl' + transform.version)] || trans.transform.glsl}
-          `
-  }).join('')}
-  `
-  const call = `
-  #if defined( USE_UV )
-  vec2 st = vUv;
-  #else
-  vec2 st = vPosition.xy;
-  #endif
-  gl_FragColor = ${shaderInfo.fragColor};
-  `
-  return [header, fn, call]
-}
-
-GlslSource.compileVert = function(transform, shaderInfo, utils, options = {}) {
-  let vertHeader = `
-  #include <common>
-  #include <uv_pars_vertex>
-  #include <normal_pars_vertex>
-  `
-  let vertFn = ``
-  let vertCall = `
-  #include <uv_vertex>
-  #include <color_vertex>
-  #include <morphcolor_vertex>
-  #include <beginnormal_vertex>
-  #include <morphnormal_vertex>
-  #include <skinbase_vertex>
-  #include <skinnormal_vertex>
-  #include <defaultnormal_vertex>
-  #include <normal_vertex>
-  #include <begin_vertex>
-  #include <morphtarget_vertex>
-  #include <skinning_vertex>
-  #include <displacementmap_vertex>
-  ${options.useCamera ? '#include <project_vertex>' : 'gl_Position = vec4(position, 1.0);'}
-  `;
-  if (transform.vert) {
-    vertHeader = this.compileHeader(transform, shaderInfo.uniforms, utils, Object.assign({vert: true}, options))
-    vertFn = `
-    ${shaderInfo.glslFunctions.map((trans) => {
-      if (trans.transform.name !== transform.name) {
-        return `
-            ${trans.transform[('glsl' + transform.version)] || trans.transform.glsl}
-          `
-      }
-    }).join('')}
-    ${transform.vert}
-    `;
-    vertCall = `
-    #if defined( USE_UV )
-    vec2 st = uv;
-    #else
-    vec2 st = position.xy;
-    #endif
-    vPosition = ${shaderInfo.position}.xyz;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(vPosition, 1.0);
-    `;
-  }
-  return [vertHeader, vertFn, vertCall];
 }
 
 GlslSource.prototype.lights = function(lights) {
@@ -279,8 +163,9 @@ GlslSource.prototype.instanced = function(count) {
   return this;
 }
 
-GlslSource.prototype.world = function() {
-  // todo: implement
+GlslSource.prototype.world = function(options) {
+  // todo: set near, far from camera
+  // this.scene.world(options);
   return this;
 }
 

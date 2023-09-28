@@ -13,13 +13,13 @@ const createMaterial = (options) => {
         ...props
     } = properties;
     const material = new THREE.ShaderMaterial(Object.assign({
-        glslVersion: options.version,
-        //flatShading: !options.useNormal,
+        glslVersion: options.frag.version,
+        //flatShading: !options.frag.useNormal,
         defines: {
-            FLAT_SHADED: !options.useNormal,
-            USE_UV: options.useUV,
+            FLAT_SHADED: !options.frag.useNormal,
+            USE_UV: options.frag.useUV,
             USE_ALPHAHASH: true,
-            // USE_COLOR: !options.useUV, // vColor
+            // USE_COLOR: !options.frag.useUV, // vColor
         },
         uniforms,
         lights: !!options.lights,
@@ -42,10 +42,10 @@ const createMaterial = (options) => {
         material.displacementScale = displacementScale;
         if (isMeshBasicMaterial) {
             material.isMeshBasicMaterial = true;
-            material.vertexShader = options.vert[0][1] + options.vert[1] + THREE.ShaderLib.basic.vertexShader;
-            material.fragmentShader = options.frag[0][1] + options.frag[1] + THREE.ShaderLib.basic.fragmentShader;
+            material.vertexShader = options.vert.header[1] + options.vert.funcs + THREE.ShaderLib.basic.vertexShader;
+            material.fragmentShader = options.frag.header[1] + options.frag.funcs + THREE.ShaderLib.basic.fragmentShader;
             material.uniforms = Object.assign({}, THREE.UniformsUtils.clone(THREE.ShaderLib.basic.uniforms), material.uniforms);
-            material.vertexShader = material.vertexShader.replace('\n\t#include <uv_vertex>\n\t#include <color_vertex>\n\t#include <morphcolor_vertex>\n\t#if defined ( USE_ENVMAP ) || defined ( USE_SKINNING )\n\t\t#include <beginnormal_vertex>\n\t\t#include <morphnormal_vertex>\n\t\t#include <skinbase_vertex>\n\t\t#include <skinnormal_vertex>\n\t\t#include <defaultnormal_vertex>\n\t#endif\n\t#include <begin_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <project_vertex>', options.vert[2]);
+            material.vertexShader = material.vertexShader.replace('\n\t#include <uv_vertex>\n\t#include <color_vertex>\n\t#include <morphcolor_vertex>\n\t#if defined ( USE_ENVMAP ) || defined ( USE_SKINNING )\n\t\t#include <beginnormal_vertex>\n\t\t#include <morphnormal_vertex>\n\t\t#include <skinbase_vertex>\n\t\t#include <skinnormal_vertex>\n\t\t#include <defaultnormal_vertex>\n\t#endif\n\t#include <begin_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <project_vertex>', options.vert.main);
             material.defines.FLAT_SHADED = true;
         }
         else {
@@ -54,35 +54,35 @@ const createMaterial = (options) => {
             }
             if (isMeshLambertMaterial) {
                 material.isMeshLambertMaterial = true;
-                material.vertexShader = options.vert[0][1] + options.vert[1] + THREE.ShaderLib.lambert.vertexShader;
-                material.fragmentShader = options.frag[0][1] + options.frag[1] + THREE.ShaderLib.lambert.fragmentShader;
+                material.vertexShader = options.vert.header[1] + options.vert.funcs + THREE.ShaderLib.lambert.vertexShader;
+                material.fragmentShader = options.frag.header[1] + options.frag.funcs + THREE.ShaderLib.lambert.fragmentShader;
                 material.uniforms = Object.assign({}, THREE.UniformsUtils.clone(THREE.ShaderLib.lambert.uniforms), material.uniforms);
             }
             else {
                 material.isMeshPhongMaterial = true;
                 material.specular = specular;
                 material.shininess = shininess;
-                material.vertexShader = options.vert[0][1] + options.vert[1] + THREE.ShaderLib.phong.vertexShader;
-                material.fragmentShader = options.frag[0][1] + options.frag[1] + THREE.ShaderLib.phong.fragmentShader;
+                material.vertexShader = options.vert.header[1] + options.vert.funcs + THREE.ShaderLib.phong.vertexShader;
+                material.fragmentShader = options.frag.header[1] + options.frag.funcs + THREE.ShaderLib.phong.fragmentShader;
                 material.uniforms = Object.assign({}, THREE.UniformsUtils.clone(THREE.ShaderLib.phong.uniforms), material.uniforms);
             }
-            material.vertexShader = material.vertexShader.replace('\n\t#include <uv_vertex>\n\t#include <color_vertex>\n\t#include <morphcolor_vertex>\n\t#include <beginnormal_vertex>\n\t#include <morphnormal_vertex>\n\t#include <skinbase_vertex>\n\t#include <skinnormal_vertex>\n\t#include <defaultnormal_vertex>\n\t#include <normal_vertex>\n\t#include <begin_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <displacementmap_vertex>\n\t#include <project_vertex>', options.vert[2]);
+            material.vertexShader = material.vertexShader.replace('\n\t#include <uv_vertex>\n\t#include <color_vertex>\n\t#include <morphcolor_vertex>\n\t#include <beginnormal_vertex>\n\t#include <morphnormal_vertex>\n\t#include <skinbase_vertex>\n\t#include <skinnormal_vertex>\n\t#include <defaultnormal_vertex>\n\t#include <normal_vertex>\n\t#include <begin_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <displacementmap_vertex>\n\t#include <project_vertex>', options.vert.main);
         }
-        material.fragmentShader = material.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', options.frag[2].replace('gl_FragColor', 'vec4 diffuseColor') + 'diffuseColor.a *= opacity;');
+        material.fragmentShader = material.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', options.frag.main.replace('gl_FragColor', 'vec4 diffuseColor') + 'diffuseColor.a *= opacity;');
     }
     else {
         material.vertexShader = `
-          ${Array.isArray(options.vert[0]) ? options.vert[0].join("\n") : options.vert[0]}
-          ${options.vert[1]}
+          ${Array.isArray(options.vert.header) ? options.vert.header.join("\n") : options.vert.header}
+          ${options.vert.funcs}
           void main() {
-            ${options.vert[2]}
+            ${options.vert.main}
           }
         `;
         material.fragmentShader = `
-          ${options.frag[0].join("\n")}
-          ${options.frag[1]}
+          ${options.frag.header.join("\n")}
+          ${options.frag.funcs}
           void main() {
-            ${options.frag[2]}
+            ${options.frag.main}
           }
         `;
     }

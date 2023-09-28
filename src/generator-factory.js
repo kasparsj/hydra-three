@@ -46,19 +46,19 @@ class GeneratorFactory {
     functions2.map((transform) => this.setFunction(transform))
  }
 
-  createSource(method, transform, args) {
-    if (!this.glslTransforms[method]) {
-      this.glslTransforms[method] = transform
-    }
-    return new this.sourceClass({
-      name: method,
-      transform: transform,
-      userArgs: args,
+  createSource(method, source, args) {
+    const options = {
       defaultOutput: this.defaultOutput,
       defaultUniforms: this.defaultUniforms,
-      synth: this,
       utils: this.utils,
-    })
+    };
+    if (source.scene) {
+        return new this.sourceClass(source, options);
+    }
+    if (!this.glslTransforms[method]) {
+      this.glslTransforms[method] = source
+    }
+    return new this.sourceClass({name: method, transform: source, userArgs: args, synth: this}, options)
   }
 
  _addMethod (method, transform) {

@@ -1,10 +1,10 @@
-import GlslSource from "./glsl-source.js";
 import * as THREE from "three";
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { ClearPass } from "three/examples/jsm/postprocessing/ClearPass.js";
 import HydraUniform from "./three/HydraUniform.js";
 import { HydraShaderPass, HydraRenderPass } from "./three/HydraPass.js";
 import {HydraOrbitControls} from "./three/HydraOrbitControls.js";
+import {HydraVertexShader} from "./lib/HydraShader.js";
 
 var Output = function (index, synth) {
   this.id = index;
@@ -173,7 +173,7 @@ Output.prototype.fade = function(options) {
       gl_FragColor = color;
     `],
     version: THREE.GLSL1,
-    vert: GlslSource.compileVert({ glslName: 'clear' }, null, null, {useCamera: camera}),
+    vert: new HydraVertexShader({ glslName: 'clear' }, null, null, {useCamera: camera}),
     uniforms: this.uniforms,
   };
   const shaderPass = new HydraShaderPass(passOptions);

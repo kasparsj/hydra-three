@@ -15,6 +15,7 @@ import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
 import {ShaderPass} from "three/examples/jsm/postprocessing/ShaderPass.js";
 import * as tx from "./three/tx.js";
 import * as gm from "./three/gm.js";
+import * as scene from "./three/scene.js";
 
 
 const Mouse = MouseTools()
@@ -66,6 +67,7 @@ class HydraRenderer {
       update: (dt) => {},// user defined update function
       hush: this.hush.bind(this),
       tick: this.tick.bind(this),
+      scene: this.scene.bind(this),
       mesh: this.mesh.bind(this),
       tx,
       gm,
@@ -270,7 +272,14 @@ class HydraRenderer {
   _initThree (webgl) {
     window.THREE = THREE;
     window.color = (...args) => new THREE.Color(...args);
-    window.vec3 = (...args) => new THREE.Vector3(...args);
+    window.vec2 = (x, y) => {
+      return new THREE.Vector2(x, y || x);
+    }
+    window.vec3 = (x, y, z) => {
+      return new THREE.Vector3(x, y || (y = x), z || y);
+    }
+    window.vec4 = (...args) => new THREE.Vector4(...args);
+    window.box3 = (min, max) => new THREE.Box3(min, max);
     window.quat = (...args) => new THREE.Quaternion(...args);
     window.mat4 = (...args) => new THREE.Matrix4(...args);
 
@@ -464,8 +473,13 @@ class HydraRenderer {
   //  this.regl.poll()
   }
 
+  scene(...args) {
+    const name = 'scene' + (this.i++);
+    return this.generator.createSource(name, scene.getOrCreateScene(...args))
+  }
+
   mesh(...args) {
-    const name = 'msh' + (this.i++);
+    const name = 'mesh' + (this.i++);
     return this.generator.createSource(name, processFunction({
       name,
       type: 'vert',
