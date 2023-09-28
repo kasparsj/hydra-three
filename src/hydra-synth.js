@@ -16,6 +16,7 @@ import {ShaderPass} from "three/examples/jsm/postprocessing/ShaderPass.js";
 import * as tx from "./three/tx.js";
 import * as gm from "./three/gm.js";
 import * as scene from "./three/scene.js";
+import * as cm from "./three/cm.js";
 
 
 const Mouse = MouseTools()
@@ -71,6 +72,7 @@ class HydraRenderer {
       mesh: this.mesh.bind(this),
       tx,
       gm,
+      cm,
     }
 
     if (makeGlobal) {

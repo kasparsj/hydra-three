@@ -101,8 +101,9 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
   }, options)
 }
 
-GlslSource.prototype.lights = function(lights) {
-  this._lights = lights || {cam: true, amb: true, sun: true, hemi: true};
+GlslSource.prototype.lights = function(options) {
+  const camera = this._camera || (options.out || this.defaultOutput)._camera;
+  this.scene.lights(camera, options || {cam: true, amb: true, sun: true, hemi: true});
   return this;
 }
 
@@ -112,14 +113,15 @@ GlslSource.prototype.geometry = function(input) {
   if (!input) input = [];
   if (!isGeometry(input)) {
     if (!Array.isArray(input)) input = [input];
-    if (isClass(this.transforms[0].transform.geometry)) {
-      if (this.transforms[0].transform.geometry === GridGeometry && this.transforms[0].transform.primitive && typeof(input[0]) !== 'string') {
-        input.unshift(this.transforms[0].transform.primitive);
+    const transform = this.transforms[0];
+    if (isClass(transform.transform.geometry)) {
+      if (transform.transform.geometry === GridGeometry && transform.transform.primitive && typeof(input[0]) !== 'string') {
+        input.unshift(transform.transform.primitive);
       }
-      input = new (this.transforms[0].transform.geometry)(...input);
+      input = new (transform.transform.geometry)(...input);
     }
-    else if (typeof this.transforms[0].transform.geometry === 'function') {
-      if (this.transforms[0].transform.geometry === vectorizeText && input.length === 1) {
+    else if (typeof transform.transform.geometry === 'function') {
+      if (transform.transform.geometry === vectorizeText && input.length === 1) {
         input.push({
           textAlign: 'center',
           textBaseline: 'middle',
@@ -127,7 +129,7 @@ GlslSource.prototype.geometry = function(input) {
           // triangles: true, // todo: make it work
         });
       }
-      input = (this.transforms[0].transform.geometry)(...input);
+      input = (transform.transform.geometry)(...input);
     }
   }
   this._geometry = input;
@@ -170,8 +172,14 @@ GlslSource.prototype.instanced = function(count) {
 }
 
 GlslSource.prototype.world = function(options) {
-  // todo: set near, far from camera
-  // this.scene.world(options);
+  if (!options.near || !options.far) {
+    const camera = this._camera || (options.out || this.defaultOutput)._camera;
+    options = Object.assign({
+      near: camera.near,
+      far: camera.far,
+    }, options);
+  }
+  this.scene.world(options);
   return this;
 }
 
