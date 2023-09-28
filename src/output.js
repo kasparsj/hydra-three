@@ -3,7 +3,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { ClearPass } from "three/examples/jsm/postprocessing/ClearPass.js";
 import HydraUniform from "./three/HydraUniform.js";
 import { HydraShaderPass, HydraRenderPass } from "./three/HydraPass.js";
-import {HydraVertexShader} from "./lib/HydraShader.js";
+import {HydraVertexShader, HydraShader} from "./lib/HydraShader.js";
 import * as cameraProto from "./lib/camera-proto.js";
 
 var Output = function (index, synth) {
@@ -96,16 +96,17 @@ Output.prototype.fade = function(options) {
   // todo: do we need to fade also temp buffers?
   const passOptions = {
     // todo: create class/struct
-    frag: [['', `
+    frag: new HydraShader(THREE.GLSL1, ['', `
       varying vec2 vUv;
       uniform sampler2D prevBuffer;
     `], '', `
       vec4 color = mix(texture2D(prevBuffer, vUv), vec4(0), ${amount});
       gl_FragColor = color;
-    `],
-    version: THREE.GLSL1,
+    `),
     vert: new HydraVertexShader({ glslName: 'clear' }, null, null, {useCamera: camera}),
-    uniforms: this.uniforms,
+    uniforms: Object.assign({
+      prevBuffer: { value: null }
+    }, this.uniforms),
   };
   const shaderPass = new HydraShaderPass(passOptions);
   shaderPass.needsSwap = false;

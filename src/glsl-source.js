@@ -70,7 +70,9 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
     shaderInfo.uniforms.forEach((uniform) => { shaderUni[uniform.name] = uniform.value });
     options.uniforms = Object.assign({}, this.defaultUniforms, shaderUni);
   }
-  const group = this.output ? (this.output.label + this.passes.length) : ('temp_' + Math.random(10000));
+  // todo: fix (maybe set a limit of 50 uniform groups per output)
+  // const group = this.output ? (this.output.label + this.passes.length) : ('temp_' + Math.random(10000));
+  const group = 'temp_' + Math.random(10000)
   options.uniforms = Object.assign({}, {
     prevBuffer: { value: null },
   }, HydraUniform.wrapUniforms(options.uniforms, group));

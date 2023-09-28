@@ -220,7 +220,7 @@ const pointsym = (texture, options = {}) => {
     // return renderTarget.texture;
 }
 
-const atlas = (textures) => {
+const atlas = (textures, options = {}) => {
     const width = textures[0].image.width;
     const height = textures[0].image.height;
     const renderTarget = createRenderTarget({
