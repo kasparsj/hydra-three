@@ -1,6 +1,4 @@
-import * as geoms from "./gm";
-
-let camLight, sunLight, ambLight, hemiLight;
+import * as THREE from "three";
 
 const init = (scene, camera, options = {}) => {
     options = Object.assign({
@@ -43,7 +41,7 @@ const init = (scene, camera, options = {}) => {
 }
 
 const initCam = (scene, camera, options) => {
-    camLight || (camLight = new THREE.PointLight( options.color, options.intensity));
+    const camLight = scene.camLight || (scene.camLight = new THREE.PointLight( options.color, options.intensity));
     if (options.hasOwnProperty('visible')) {
         camLight.visible = options.visible;
     }
@@ -52,11 +50,11 @@ const initCam = (scene, camera, options) => {
 }
 
 const initSun = (scene, camera, options) => {
-    sunLight = new THREE.DirectionalLight(options.color, options.intensity);
+    const sunLight = scene.sunLight || (scene.sunLight = new THREE.DirectionalLight(options.color, options.intensity));
     if (options.hasOwnProperty('visible')) {
         sunLight.visible = options.visible;
     }
-    const sunPos = geoms.posFromEleAzi(options.elevation, options.azimuth, camera.far/2);
+    const sunPos = posFromEleAzi(options.elevation, options.azimuth, camera.far/2);
     sunLight.position.copy(sunPos);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 512;
@@ -72,8 +70,16 @@ const initSun = (scene, camera, options) => {
     scene.add(sunLight.target);
 }
 
+const posFromEleAzi = (elevation, azimuth, radius = 1) => {
+    const phi = THREE.MathUtils.degToRad( 90 - elevation );
+    const theta = THREE.MathUtils.degToRad(azimuth);
+    const pos = new THREE.Vector3();
+    pos.setFromSphericalCoords( radius, phi, theta );
+    return pos;
+}
+
 const initAmbient = (scene, options) => {
-    ambLight = new THREE.AmbientLight( options.color, options.intensity );
+    const ambLight = scene.ambLight || (scene.ambLight = new THREE.AmbientLight( options.color, options.intensity ));
     if (options.hasOwnProperty('visible')) {
         ambLight.visible = options.visible;
     }
@@ -81,7 +87,7 @@ const initAmbient = (scene, options) => {
 }
 
 const initHemi = (scene, options) => {
-    hemiLight = new THREE.HemisphereLight( options.skyColor, options.groundColor, options.intensity );
+    const hemiLight = scene.hemiLight || (scene.hemiLight = new THREE.HemisphereLight( options.skyColor, options.groundColor, options.intensity ));
     if (options.hasOwnProperty('visible')) {
         hemiLight.visible = options.visible;
     }
@@ -90,6 +96,5 @@ const initHemi = (scene, options) => {
 }
 
 export {
-    camLight, sunLight, ambLight, hemiLight,
     init, initAmbient, initSun, initCam, initHemi,
 }

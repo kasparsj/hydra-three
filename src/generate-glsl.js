@@ -47,10 +47,6 @@ function generateGlsl (source, transforms, shaderParams) {
       fragColor = () => transform.userArgs[0];
       return;
     }
-    if (transform.transform.type === 'vert' && !source._geometry) {
-      source.geometry(transform.userArgs[0]);
-      transform.userArgs = transform.userArgs.slice(1);
-    }
     var inputs = formatArguments(transform, shaderParams.uniforms.length)
 
     inputs.forEach((input) => {

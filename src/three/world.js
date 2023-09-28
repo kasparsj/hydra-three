@@ -106,9 +106,9 @@ const createGround = (scene, options) => {
         }
     }
     const mat = mats.meshLambert({
-        color: options.groundColor,
+        color: options.groundColor || 0xffffff,
         wireframe: options.groundWireframe || false,
-        map: options.groundMap,
+        map: options.groundMap || null,
     }, {});
     ground = new THREE.Mesh( geom, mat );
     ground.visible = options.ground;

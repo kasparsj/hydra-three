@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import Output from "../output.js";
 
 export default class HydraUniform extends THREE.Uniform
 {
@@ -37,5 +38,28 @@ export default class HydraUniform extends THREE.Uniform
 
     update() {
         this.value = this.cb.call(this);
+    }
+
+    static wrapUniforms(uniforms, group) {
+        HydraUniform.destroyGroup(group);
+        const props = () => {
+            return {
+                time: HydraUniform.get('time', 'hydra').value,
+                bpm: HydraUniform.get('bpm', 'hydra').value,
+            };
+        };
+        return Object.keys(uniforms).reduce((acc, key) => {
+            acc[key] = typeof(uniforms[key]) === 'string' ? parseFloat(uniforms[key]) : uniforms[key];
+            if (typeof acc[key] === 'function') {
+                const func = acc[key];
+                acc[key] = new HydraUniform(key, null, ()=>func(null, props()), group);
+            }
+            else if (acc[key] instanceof Output) {
+                const o = acc[key];
+                acc[key] = new HydraUniform(key, null, ()=>o.getTexture(), group);
+            }
+            else if (typeof acc[key].value === 'undefined') acc[key] = { value: acc[key] }
+            return acc;
+        }, {});
     }
 }

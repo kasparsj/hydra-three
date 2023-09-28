@@ -35,7 +35,7 @@ function createScene() {
     const api = {};
     Object.assign(api, {
         scene,
-        add: (children) => add(scene, children),
+        add: (...children) => add(scene, ...children),
         group: (attributes = {}) => getOrCreateGroup(attributes.group || scene, attributes),
         mesh: (attributes = {}) => getOrCreateMesh(attributes.group || scene, attributes),
         instancedMesh: (attributes = {}) => getOrCreateInstancedMesh(attributes.group || scene, attributes),
@@ -77,6 +77,9 @@ function createScene() {
         lights_: () => {
             return lights;
         },
+        hasLights: () => {
+            return !!(scene.camLight || scene.sunLight || scene.ambLight || scene.hemiLight);
+        },
         world: (options) => {
             world.init(scene, options);
             return api;
@@ -88,6 +91,7 @@ function createScene() {
             scene.add(new THREE.AxesHelper(size || (window.innerHeight / 2)));
             return api;
         },
+        child: (index = 0) => scene.children[index],
     });
     return api;
 }
@@ -195,9 +199,9 @@ const addChild = (scene, child) => {
     }
 }
 
-const add = (scene, children) => {
-    scene.add(children);
-    return children;
+const add = (scene, ...children) => {
+    scene.add(...children);
+    return children.length === 1 ? children[0] : children;
 }
 
 const setObject3DAttrs = (object, attributes) => {

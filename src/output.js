@@ -54,17 +54,13 @@ Output.prototype.render = function (passes) {
     this.composer.passes[i].dispose();
   }
   this.composer.passes = [];
-  this.obj = [];
   if (passes.length > 0) {
     for (let i=0; i<passes.length; i++) {
       let options = passes[i];
-      // todo: quickfix
-      options.label = this.label + i;
       let pass;
-      if (options.geometry) {
+      if (options.scene && options.scene.child()) {
         options.camera || (options.camera = this._camera);
         pass = new HydraRenderPass(options);
-        this.obj.push(pass.object);
       }
       else {
         pass = new HydraShaderPass(options);
@@ -121,6 +117,9 @@ Output.prototype.fade = function(options) {
 }
 
 Output.prototype.tick = function () {
+  if (this._controls) {
+    this._controls.update();
+  }
   this.composer.render();
 }
 
