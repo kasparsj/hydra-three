@@ -4,6 +4,7 @@ import vectorizeText from 'vectorize-text'
 import {replaceGenType} from "./types.js"
 import * as THREE from "three"
 import {HydraFragmentShader, HydraVertexShader} from "./lib/HydraShader.js";
+import * as cameraProto from "./lib/camera-proto.js";
 
 var GlslSource = function (obj, options) {
   this.scene = null;
@@ -90,6 +91,11 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
   return Object.assign({
     scene: this.scene,
     uniforms: Object.assign({}, this.defaultUniforms, uniforms),
+    camera: this._camera,
+    geometry: this._geometry,
+    instanced: this._instanced,
+    material: this._material,
+    lights: this._lights,
     viewport: this._viewport,
     clear: this._autoClear,
   }, options)
@@ -202,5 +208,7 @@ glslProps.map((prop) => {
     }
   });
 });
+
+Object.assign(GlslSource.prototype, cameraProto);
 
 export default GlslSource

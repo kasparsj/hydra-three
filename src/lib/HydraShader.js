@@ -26,13 +26,13 @@ class HydraShader {
                     break
             }
             return `uniform ${type} ${uniform.name};`
-        }).join('')}
+        }).join('\n\t')}
         uniform float time;
         uniform vec2 resolution;
         uniform sampler2D prevBuffer;
         ${Object.values(utils).map((trans) => {
-            return `${trans[('glsl' + transform.version)] || trans.glsl}`
-        }).join('')}
+            return `${trans[('glsl' + transform.version)] || trans.glsl}\n\t`
+        }).join('\n\t')}
   `
         return [head1, head2];
     }
@@ -47,7 +47,7 @@ class HydraFragmentShader extends HydraShader {
         const fn = `
         ${shaderInfo.glslFunctions.map((trans) => {
             return `${trans.transform[('glsl' + transform.version)] || trans.transform.glsl}`
-        }).join('')}
+        }).join('\n\t')}
   `
         const call = `
         #if defined( USE_UV )
@@ -103,7 +103,7 @@ class HydraVertexShader extends HydraShader {
                 if (trans.transform.name !== transform.name) {
                     return `${trans.transform[('glsl' + transform.version)] || trans.transform.glsl}`
                 }
-            }).join('')}
+            }).join('\n\t')}
             ${transform.vert}
             `;
             call = `

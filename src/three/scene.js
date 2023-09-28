@@ -2,7 +2,6 @@ import * as THREE from "three";
 import * as lights from "./lights";
 import * as world from "./world";
 import * as geoms from "./gm";
-import * as physics from "./physics";
 
 const scenes = {}
 const groups = {};
@@ -119,9 +118,6 @@ const getOrCreateMesh = (scene, attributes = {}) => {
     }
     addChild(scene, mesh);
     setMeshAttrs(mesh, attributes);
-    if (attributes.physics) {
-        mesh.userData.physics = physics.add(mesh, attributes.physics);
-    }
     if (mesh.name) {
         namedMeshes[mesh.name] = mesh;
     }

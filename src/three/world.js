@@ -2,7 +2,6 @@ import * as THREE from "three";
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import * as geoms from "./gm";
 import * as mats from "./mt";
-import * as rnd from "dt/src/rnd";
 
 let sky, sun, ground;
 
@@ -101,7 +100,7 @@ const createGround = (scene, options) => {
     let relief;
     if (options.groundRelief) {
         const vertices = geom.attributes.position.array;
-        relief = generateRelief(segments, segments, options.groundNoise, options.groundNoiseF);
+        relief = generateRelief(segments, segments, options.groundNoise, options.groundNoiseF, options.groundNoiseZ);
         for ( let i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
             vertices[j + 1] = relief[i] * options.groundRelief;
         }
@@ -118,13 +117,12 @@ const createGround = (scene, options) => {
     scene.add(ground);
 }
 
-function generateRelief(width, height, noiseType, noiseF) {
+function generateRelief(width, height, noiseType, noiseF, noiseZ) {
     const size = width * height, data = new Float32Array( size );
-    const z = rnd.int(0, 1000);
     for ( let i = 0; i < size; i++) {
         const x = i % width, y = ~~(i / width);
         // todo: check dt is loaded
-        data[i] = nse.get3(noiseType, x * noiseF, y * noiseF, z);
+        data[i] = nse.get3(noiseType, x * noiseF, y * noiseF, noiseZ);
     }
     return data;
 }
