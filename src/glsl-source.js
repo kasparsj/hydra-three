@@ -80,10 +80,15 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
   if (shaderInfo.combine) {
     if (transform) {
       Object.assign(options, {
-        frag: new HydraFragmentShader(transform.transform, shaderInfo, this.utils),
+        frag: new HydraFragmentShader(Object.assign({}, transform.transform, {
+          // todo: quickfix
+          useUV: true,
+        }), shaderInfo, this.utils),
         userArgs: transform.userArgs,
       });
     }
+    // todo: quickfix
+    delete options.renderTarget;
     return Object.assign({
       vert: new HydraVertexShader({
         glslName: 'combine',
