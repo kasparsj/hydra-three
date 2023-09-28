@@ -1,5 +1,5 @@
 import * as mat4 from "gl-mat4";
-import GlslSource from "./glsl-source.js";
+import HydraShader from "./lib/HydraShader.js";
 
 var Output = function (index, synth) {
   this.id = index;
@@ -289,7 +289,7 @@ Output.prototype.fade = function(options) {
             gl_FragColor = color;
           }
         `,
-    vert: GlslSource.compileVert(this.precision, camera, { glslName: 'clear' }),
+    vert: HydraShader.compileVert(this.precision, camera, { glslName: 'clear' }),
     attributes: self.attributes,
     primitive: 'triangles',
     uniforms: Object.assign({}, {
