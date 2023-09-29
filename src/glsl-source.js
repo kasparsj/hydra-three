@@ -77,6 +77,7 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
     camera: this._camera,
     viewport: this._viewport,
     clear: this._autoClear,
+    fx: this._fx,
   }, options);
 }
 

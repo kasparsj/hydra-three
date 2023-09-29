@@ -1,4 +1,3 @@
-import {RenderPass} from "three/examples/jsm/postprocessing/RenderPass";
 import {ShaderPass} from "three/examples/jsm/postprocessing/ShaderPass";
 import {HorizontalBlurShader} from "three/examples/jsm/shaders/HorizontalBlurShader";
 import {VerticalBlurShader} from "three/examples/jsm/shaders/VerticalBlurShader";
@@ -17,6 +16,7 @@ import { SSAARenderPass } from 'three/examples/jsm/postprocessing/SSAARenderPass
 import { SAOPass } from 'three/examples/jsm/postprocessing/SAOPass.js';
 //import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import glsl from "glslify";
+import HydraUniform from "./HydraUniform.js";
 
 const filmFrag = glsl("../shaders/film.frag");
 
@@ -59,6 +59,11 @@ const add = (options) => {
                 case 'output':
                     addPass(prop, options);
                     break;
+                default:
+                    if (options[prop] instanceof ShaderPass) {
+                        composer.addPass(options[prop]);
+                    }
+                    break;
             }
         }
     }
@@ -66,6 +71,7 @@ const add = (options) => {
 
 const addPass = (type, options) => {
     const { scene, composer, camera } = options;
+    const resolution = HydraUniform.get('resolution', 'hydra');
     let pass;
     switch (type) {
         case 'hBlur':
@@ -92,7 +98,7 @@ const addPass = (type, options) => {
             pass.enabled = !!options.film;
             if (options.noiseType === 'glsl-film-grain') {
                 pass.material.fragmentShader = filmFrag;
-                pass.material.uniforms.uResolution = uResolution;
+                pass.material.uniforms.uResolution = resolution;
                 pass.material.uniforms.uGrainSize = { value: options.grainSize };
                 pass.material.isFilmGrainMaterial = true;
             }
@@ -115,7 +121,7 @@ const addPass = (type, options) => {
             pass.enabled = options.bloom > 0;
             break;
         case 'unrealBloom':
-            pass = new UnrealBloomPass(uResolution.value, options.unrealBloom, options.bloomRadius || 0.4, options.bloomThresh || 0);
+            pass = new UnrealBloomPass(resolution.value, options.unrealBloom, options.bloomRadius || 0.4, options.bloomThresh || 0);
             pass.enabled = options.unrealBloom > 0;
             break;
         case 'bleach':

@@ -6,6 +6,7 @@ import { HydraShaderPass, HydraRenderPass } from "./three/HydraPass.js";
 import {HydraVertexShader, HydraShader} from "./lib/HydraShader.js";
 import {cameraMixin} from "./lib/mixins.js";
 import * as fx from "./three/fx.js";
+import * as layers from "./three/layers.js";
 
 var Output = function (index, synth) {
   this.id = index;
@@ -52,21 +53,21 @@ Output.prototype.getTexture = function () {
    return this.composer.readBuffer.texture;
 }
 
-Output.prototype.render = function (passes, effects) {
+Output.prototype.render = function (passes) {
   for (let i=0; i<this.composer.passes.length; i++) {
     this.composer.passes[i].dispose();
   }
   this.composer.passes = [];
-  let scene, camera;
   if (passes.length > 0) {
     for (let i=0; i<passes.length; i++) {
       let options = passes[i];
-      let pass;
+      let pass, fxScene, fxCamera;
       if (options.scene && !options.scene.empty()) {
         options.camera || (options.camera = this._camera);
         pass = new HydraRenderPass(options);
-        scene = options.scene;
-        camera = options.camera;
+        fxScene = options.scene;
+        fxCamera = options.camera;
+        this.layers = options.layers;
       }
       else {
         pass = new HydraShaderPass(options);
@@ -80,13 +81,13 @@ Output.prototype.render = function (passes, effects) {
         }
       }
       this.composer.addPass(pass);
-    }
-    if (effects) {
-      fx.add(Object.assign(effects, {
-        composer: this.composer,
-        scene,
-        camera,
-      }));
+      if (options.fx) {
+        fx.add(Object.assign({}, options.fx, {
+          composer: this.composer,
+          scene: fxScene,
+          camera: fxCamera,
+        }));
+      }
     }
   }
 }
@@ -133,6 +134,9 @@ Output.prototype.fade = function(options) {
 Output.prototype.tick = function () {
   if (this._controls) {
     this._controls.update();
+  }
+  if (this.layers && this.layers.length > 0) {
+    layers.render(this.layers);
   }
   this.composer.render();
 }

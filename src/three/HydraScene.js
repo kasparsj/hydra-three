@@ -5,6 +5,7 @@ import GlslSource from "../glsl-source.js";
 import * as scene from "./scene.js";
 import {FullScreenQuad} from "three/examples/jsm/postprocessing/Pass.js";
 import {cameraMixin, sourceMixin, mixClass} from "../lib/mixins.js";
+import * as layers from "./layers.js";
 
 class HydraGroup {
     constructor(scene, group) {
@@ -139,6 +140,7 @@ class HydraScene extends HydraGroup {
         super(scene.getOrCreateScene(attributes));
 
         this.init(options);
+        this._layers = [];
     }
 
     createShaderInfo() {
@@ -152,6 +154,8 @@ class HydraScene extends HydraGroup {
             // todo: viewport
             viewport: this._viewport,
             clear: this._autoClear,
+            layers: this._layers,
+            fx: this._fx,
         }, options);
     }
 
@@ -171,6 +175,12 @@ class HydraScene extends HydraGroup {
         }
         this.scene.world(options);
         return this;
+    }
+
+    layer(id, options = {}) {
+        const layer = layers.create(id, this.scene.scene, (this.output || this.defaultOutput).synth.renderer, options);
+        this._layers.push(layer);
+        return layer;
     }
 
 }
