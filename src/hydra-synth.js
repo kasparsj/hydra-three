@@ -70,7 +70,6 @@ class HydraRenderer {
       hush: this.hush.bind(this),
       tick: this.tick.bind(this),
       scene: this.scene.bind(this),
-      mesh: this.mesh.bind(this),
       tx,
       gm,
       cm,
@@ -480,20 +479,6 @@ class HydraRenderer {
   scene(...args) {
     const name = 'scene' + (this.i++);
     return this.generator.createSource(name, scene.getOrCreateScene(...args))
-  }
-
-  mesh(...args) {
-    const name = 'mesh' + (this.i++);
-    return this.generator.createSource(name, processFunction({
-      name,
-      type: 'vert',
-      inputs: [
-        {name: 'color', type: 'vec4', default: 1},
-      ],
-      glsl: `return color;`,
-      primitive: 'triangles',
-      geometry: args[0],
-    }), args)
   }
 
 }

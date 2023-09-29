@@ -1,4 +1,8 @@
 import * as THREE from "three";
+import {GridGeometry} from "../lib/GridGeometry.js";
+import vectorizeText from "vectorize-text";
+
+window.GridGeometry = GridGeometry;
 
 const box = (width = 1, height = 1, depth = 1, widthSegments = 1, heightSegments = 1, depthSegments = 1) => new THREE.BoxGeometry(width, height, depth, widthSegments, heightSegments, depthSegments);
 const capsule = (radius = 1, length = 1, capSegments = 4, radialSegments = 8) => new THREE.CapsuleGeometry(radius, length, capSegments, radialSegments);
@@ -38,8 +42,27 @@ const points = (num) => {
 
 const line = (points) => new THREE.BufferGeometry().setFromPoints(points);
 
+const grid = (...args) => new GridGeometry(...args);
+
+const text = (text, options = {}) => {
+    options = Object.assign({
+        textAlign: 'center',
+        textBaseline: 'middle',
+        // font: 'arial',
+        // triangles: true, // todo: make it work
+    }, options);
+    const info = vectorizeText(text, options);
+    const geom = new THREE.BufferGeometry();
+    // todo: add support vectorizeText?
+    //   attributes.position = []; // todo: should be Float32Array
+    //   geometry.positions.map((v, k) => attributes.position.push(v[0], v[1], 0));
+    //   elements = geometry.edges ? geometry.edges : geometry.cells;
+    //   primitive = geometry.edges ? 'lines' : 'triangles';
+    return geom;
+}
+
 export {
     box, capsule, circle, cone, cylinder, dodecahedron, edges, extrude,
     icosahedron, lathe, octahedron, plane, polyhedron, ring, shape, sphere,
-    tetrahedron, torus, torusKnot, tube, wireframe, line, points,
+    tetrahedron, torus, torusKnot, tube, wireframe, points, line, grid, text,
 };

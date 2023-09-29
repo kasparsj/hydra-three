@@ -71,10 +71,12 @@ function createScene() {
             return api;
         },
         lights: (camera, options) => {
-            lights.init(scene, camera, options);
+            // todo: does not remove lights
+            lights.init(getOrCreateGroup(scene, {name: '__lights'}), camera, options);
             return api;
         },
         lights_: () => {
+            // todo: why return lights api, maybe better group?
             return lights;
         },
         hasLights: () => {
@@ -91,7 +93,9 @@ function createScene() {
             scene.add(new THREE.AxesHelper(size || (window.innerHeight / 2)));
             return api;
         },
-        child: (index = 0) => scene.children[index],
+        // todo: does having just lights count as empty?
+        empty: () => scene.children.length === 0,
+        at: (index = 0) => scene.children.filter((o) => o.name !== '__lights')[index],
     });
     return api;
 }

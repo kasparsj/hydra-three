@@ -39,7 +39,7 @@ export default function formatArguments(transform, startIndex, synthContext) {
   const { src } = generators // depends on synth having src() function
   return defaultArgs.map((input, index) => {
     const typedArg = {
-      value: input.default,
+      value: typeof input.default === 'function' ? input.default() : input.default,
       type: input.type,
       isUniform: !!input.isUniform,
       name: input.name,
@@ -47,7 +47,7 @@ export default function formatArguments(transform, startIndex, synthContext) {
       //  generateGlsl: null // function for creating glsl
     }
 
-    if (typedArg.type === 'float') typedArg.value = ensure_decimal_dot(input.default)
+    if (typedArg.type === 'float') typedArg.value = ensure_decimal_dot(typedArg.value)
     if (input.type.startsWith('vec')) {
       try {
         typedArg.vecLen = Number.parseInt(input.type.substr(3))
@@ -71,7 +71,7 @@ export default function formatArguments(transform, startIndex, synthContext) {
 
     if (startIndex < 0) {
     } else {
-      if (typedArg.value && typedArg.value.transforms) {
+      if (typedArg.value && typedArg.value.transforms && typedArg.value.transforms.length > 0) {
         const final_transform = typedArg.value.transforms[typedArg.value.transforms.length - 1]
 
         if (final_transform.transform.glsl_return_type !== input.type) {

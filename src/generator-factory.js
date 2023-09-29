@@ -1,6 +1,5 @@
 import GlslSource from './glsl-source.js'
 import glslFunctions from './glsl/glsl-functions.js'
-import vertFunctions from './glsl/vert-functions.js'
 import {typeLookup, processGlsl} from "./types.js";
 
 class GeneratorFactory {
@@ -40,10 +39,6 @@ class GeneratorFactory {
     }
 
     functions.map((transform) => this.setFunction(transform))
-
-    // sandbox is not ready at this moment yet
-    const functions2 = vertFunctions(this.generators);
-    functions2.map((transform) => this.setFunction(transform))
  }
 
   createSource(method, source, args) {

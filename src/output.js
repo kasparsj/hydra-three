@@ -58,7 +58,7 @@ Output.prototype.render = function (passes) {
     for (let i=0; i<passes.length; i++) {
       let options = passes[i];
       let pass;
-      if (options.scene && options.scene.child()) {
+      if (options.scene && !options.scene.empty()) {
         options.camera || (options.camera = this._camera);
         pass = new HydraRenderPass(options);
       }

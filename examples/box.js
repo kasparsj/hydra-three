@@ -1,14 +1,12 @@
 o0.perspective([2,2,3], [0,0,0], {controls: true});
 
-// different texture rotation on every face
-mesh(gm.box(), osc().rotate(snoise(0.1).mult(45)))
+const sc = scene().lights()
+    .mesh(gm.box(), osc().rotate(snoise(1).mult(45)).phong())
     .autoClear()
-    .lights()
-    .phong()
     .out();
 
 update = () => {
-    const box = o0.obj[0];
+    const box = sc.scene.at(0);
 //     box.rotation.x += 0.01;
     box.rotation.y += 0.01;
 }

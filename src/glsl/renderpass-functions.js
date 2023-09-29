@@ -20,6 +20,6 @@ export default {
         default: 0.0
       }
     ],
-    frag: glsl('./shaders/gaussian.frag')
+    frag: glsl('../shaders/gaussian.frag')
   }
 }

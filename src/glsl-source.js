@@ -4,27 +4,23 @@ import {replaceGenType} from "./types.js"
 import * as THREE from "three"
 import {HydraFragmentShader, HydraVertexShader} from "./lib/HydraShader.js";
 import * as cameraProto from "./lib/camera-proto.js";
-import {HydraThree} from "./three/HydraThree.js";
 import HydraUniform from "./three/HydraUniform.js";
 import * as scene from "./three/scene.js";
 import * as mt from "./three/mt.js";
+import {GridGeometry} from "./lib/GridGeometry.js";
 
 var GlslSource = function (obj, options) {
   this.scene = null;
   this.transforms = [];
-  this._geometry = null;
-  this._instanced = 0;
   this._material = {};
-  if (obj.scene) {
-    this.scene = obj;
-  }
-  else if (obj) {
-    this.scene = scene.createScene();
-    if (obj.transform.type === 'vert') {
-      this._geometry = obj.userArgs[0];
-      obj.userArgs = obj.userArgs.slice(1);
+  if (obj) {
+    if (obj.scene) {
+      this.scene = obj;
     }
-    this.transforms.push(obj);
+    else {
+      this.scene = scene.createScene();
+      this.transforms.push(obj);
+    }
   }
   this.defaultOutput = options.defaultOutput;
   this.output = null;
@@ -105,14 +101,7 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
       primitive: transform.transform.primitive,
       userArgs: transform.userArgs,
     });
-    if (this._geometry) {
-      const geometry = HydraThree.geometry(transform.transform, this._geometry);
-      const material = mt.hydra(Object.assign({
-        lights: this.scene.hasLights(),
-      }, options), this._material);
-      this.scene.add(HydraThree.object(transform.transform.primitive, geometry, material, this._instanced));
-    }
-    else if (this._material) {
+    if (this._material) {
       Object.assign(options, {
         material: Object.assign({lights: !!(this._material.isMeshLambertMaterial || this._material.isMeshPhongMaterial)}, this._material),
       });
@@ -124,6 +113,92 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
     viewport: this._viewport,
     clear: this._autoClear,
   }, options);
+}
+
+GlslSource.prototype.obj = function(...args) {
+  let object;
+  if (args[0] instanceof THREE.Object3D) {
+    object = args[0];
+  }
+  else {
+    let [geometry, material, options] = args;
+    if (material instanceof GlslSource) {
+      material = mt.hydra(material, options.material);
+    }
+    if (!geometry) geometry = [];
+    if (!geometry.isBufferGeometry) {
+      if (!Array.isArray(geometry)) geometry = [geometry];
+      if (typeof(geometry[0]) !== 'string') {
+        geometry.unshift(options.primitive);
+      }
+      geometry = new GridGeometry(...geometry);
+    }
+    switch (options.primitive) {
+      case 'points':
+      case 'line loop':
+      case 'lineloop':
+      case 'line strip':
+      case 'linestrip':
+      case 'lines':
+        switch (options.primitive) {
+          case 'points':
+            object = new THREE.Points(geometry, material);
+            break;
+          case 'line loop':
+          case 'lineloop':
+            object = new THREE.LineLoop(geometry, material);
+            break;
+          case 'line strip':
+          case 'linestrip':
+            object = new THREE.Line(geometry, material);
+            break;
+          case 'lines':
+            object = new THREE.LineSegments(geometry, material);
+            break;
+        }
+        break;
+      default:
+        // todo: text
+        // todo: plane
+        if (typeof material === 'undefined' || !(material instanceof THREE.Material)) {
+          material = mt.mesh(material);
+        }
+        if (options.instanced) {
+          object = new THREE.InstancedMesh(geometry, material, options.instanced);
+        }
+        else {
+          object = new THREE.Mesh(geometry, material);
+        }
+        break;
+    }
+  }
+  this.scene.add(object);
+  return this;
+}
+
+GlslSource.prototype.mesh = function(...args) {
+  args[2] = Object.assign(args[2] || {}, { primitive: 'triangles' });
+  return this.obj(...args);
+}
+
+GlslSource.prototype.points = function(...args) {
+  args[2] = Object.assign(args[2] || {}, { primitive: 'points' });
+  return this.obj(...args);
+}
+
+GlslSource.prototype.linestrip = function(...args) {
+  args[2] = Object.assign(args[2] || {}, { primitive: 'linestrip' });
+  return this.obj(...args);
+}
+
+GlslSource.prototype.lines = function(...args) {
+  args[2] = Object.assign(args[2] || {}, { primitive: 'lines' });
+  return this.obj(...args);
+}
+
+GlslSource.prototype.lineloop = function(...args) {
+  args[2] = Object.assign(args[2] || {}, { primitive: 'lineloop' });
+  return this.obj(...args);
 }
 
 GlslSource.prototype.lights = function(options) {

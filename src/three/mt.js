@@ -1,9 +1,23 @@
 import * as THREE from "three";
 import glsl from "glslify";
 import GlslSource from "../glsl-source.js";
+import {processFunction} from "../generator-factory.js";
 
-const worldPosVert = glsl("./shaders/worldPos.vert");
-const worldPosGradientYFrag = glsl("./shaders/worldPosGradientY.frag");
+const worldPosVert = glsl("../shaders/worldPos.vert");
+const worldPosGradientYFrag = glsl("../shaders/worldPosGradientY.frag");
+
+const pointsVert = glsl("../shaders/points.vert");
+const linesVert = glsl("../shaders/lines.vert");
+const linestripVert = glsl("../shaders/linestrip.vert");
+const lineloopVert = glsl("../shaders/lineloop.vert");
+const planeVert = glsl("../shaders/plane.vert");
+
+const dotsFrag = glsl("../shaders/dots.frag");
+const squaresFrag = glsl("../shaders/squares.frag");
+const linesFrag = glsl("../shaders/lines.frag");
+const linestripFrag = glsl("../shaders/linestrip.frag");
+const lineloopFrag = glsl("../shaders/lineloop.frag");
+
 const meshBasic = (options) => new THREE.MeshBasicMaterial(options);
 const meshPhong = (options) => new THREE.MeshPhongMaterial(options);
 const meshStandard = (options) => new THREE.MeshStandardMaterial(options);
@@ -28,11 +42,6 @@ const worldPosGradientY = (options, uniOptions) => {
 const hydra = (source, properties = {}) => {
     let options = source;
     if (source instanceof GlslSource) {
-        if (source._geometry) {
-            console.warn("mt.hydra does not support vert/geometry transforms");
-            // this prevents it from calling mt.hydra inside
-            source._geometry = null;
-        }
         // todo: compile only single pass?
         options = source.compile()[0];
         properties = options.material;
@@ -52,7 +61,7 @@ const hydra = (source, properties = {}) => {
             // USE_COLOR: !options.frag.useUV, // vColor
         },
         uniforms: options.uniforms,
-        lights: !!options.lights,
+        lights: typeof options.lights !== 'undefined' ? !!options.lights : !!(isMeshLambertMaterial || isMeshPhongMaterial),
         depthTest: options.frag.useNormal,
         blending: getBlend(blendMode),
         // todo: add support for viewport?
@@ -78,9 +87,6 @@ const hydra = (source, properties = {}) => {
             material.defines.FLAT_SHADED = true;
         }
         else {
-            if (!material.lights) {
-                console.warn(".lights() must be called for lambert/phong lighting to work");
-            }
             if (isMeshLambertMaterial) {
                 material.isMeshLambertMaterial = true;
                 material.vertexShader = THREE.ShaderLib.lambert.vertexShader;
@@ -104,7 +110,7 @@ const hydra = (source, properties = {}) => {
         else {
             material.vertexShader = material.vertexShader.replace('\n\t#include <uv_vertex>\n\t#include <color_vertex>\n\t#include <morphcolor_vertex>\n\t#include <beginnormal_vertex>\n\t#include <morphnormal_vertex>\n\t#include <skinbase_vertex>\n\t#include <skinnormal_vertex>\n\t#include <defaultnormal_vertex>\n\t#include <normal_vertex>\n\t#include <begin_vertex>\n\t#include <morphtarget_vertex>\n\t#include <skinning_vertex>\n\t#include <displacementmap_vertex>\n\t#include <project_vertex>', options.vert.main);
         }
-        material.fragmentShader = material.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', options.frag.main.replace('gl_FragColor', 'vec4 diffuseColor') + 'diffuseColor.a *= opacity;');
+        material.fragmentShader = material.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );', options.frag.main.replace('gl_FragColor', 'vec4 diffuseColor') + 'diffuseColor *= vec4( diffuse, opacity );');
     }
     else {
         material.vertexShader = `
@@ -123,6 +129,129 @@ const hydra = (source, properties = {}) => {
             `;
     }
     return material;
+}
+
+const dotsFunc = processFunction({
+    name: 'dots',
+    type: 'vert',
+    inputs: [
+        {name: 'pos', type: 'vec3', default: () => gradient()},
+        {name: 'size', type: 'float', default: 10},
+        {name: 'color', type: 'vec4', default: 1},
+        {name: 'fade', type: 'float', default: 0.025},
+    ],
+    glsl: dotsFrag,
+    vert: pointsVert,
+    primitive: 'points',
+    blendMode: true,
+});
+const dots = (pos, size = 10, color = 0xffffff, fade = 0.025, options = {}) => {
+    return hydra(hydraSynth.generator.createSource('dots', dotsFunc, [pos, size, color, fade]), options);
+}
+
+const squaresFunc = processFunction({
+    name: 'squares',
+    type: 'vert',
+    inputs: [
+        {name: 'pos', type: 'vec3', default: () => gradient()},
+        {name: 'size', type: 'float', default: 10},
+        {name: 'color', type: 'vec4', default: 1},
+        {name: 'fade', type: 'float', default: 0.025},
+    ],
+    glsl: squaresFrag,
+    vert: pointsVert,
+    primitive: 'points',
+    blendMode: true,
+});
+const squares = (pos, size = 10, color = 0xffffff, fade = 0.025, options = {}) => {
+    return hydra(hydraSynth.generator.createSource('squares', squaresFunc, [pos, size, color, fade]), options);
+}
+
+const linesFunc = processFunction({
+    name: 'lines',
+    type: 'vert',
+    inputs: [
+        {name: 'pos', type: 'vec3', default: () => gradient()},
+        {name: 'color', type: 'vec4', default: 1},
+    ],
+    glsl: linesFrag,
+    vert: linesVert,
+    primitive: 'lines',
+});
+const lines = (pos, color = 0xffffff, options = {}) => {
+    return hydra(hydraSynth.generator.createSource('lines', linesFunc, [pos, color]), options);
+}
+
+const linestripFunc = processFunction({
+    name: 'linestrip',
+    type: 'vert',
+    inputs: [
+        {name: 'pos', type: 'vec3', default: () => solid(noise(1).x, noise(2).y, noise(3).z).map(-1,1,0,1)},
+        {name: 'color', type: 'vec4', default: 1},
+    ],
+    glsl: linestripFrag,
+    vert: linestripVert,
+    primitive: 'line strip',
+});
+const linestrip = (pos, color = 0xffffff, options = {}) => {
+    return hydra(hydraSynth.generator.createSource('linestrip', linestripFunc, [pos, color]), options);
+}
+
+const lineloopFunc = processFunction({
+    name: 'lineloop',
+    type: 'vert',
+    inputs: [
+        {name: 'pos', type: 'vec3', default: () => solid(noise(1).x, noise(2).y, noise(3).z).map(-1,1,0,1)},
+        {name: 'color', type: 'vec4', default: 1},
+    ],
+    glsl: lineloopFrag,
+    vert: lineloopVert,
+    primitive: 'line loop',
+});
+const lineloop = (pos, color = 0xffffff, options = {}) => {
+    return hydra(hydraSynth.generator.createSource('lineloop', lineloopFunc, [pos, color]), options);
+}
+
+const textFunc = processFunction({
+    name: 'text',
+    type: 'vert',
+    inputs: [
+        {name: 'color', type: 'vec4', default: 1},
+    ],
+    glsl: `return color;`,
+    useUV: false,
+    useNormal: false,
+});
+const text = (color = 0xffffff, options = {}) => {
+    return hydra(hydraSynth.generator.createSource('text', textFunc, [color]), options);
+}
+
+const planeFunc = processFunction({
+    name: 'plane',
+    type: 'vert',
+    inputs: [
+        {name: 'pos', type: 'vec3', default: () => gradient()},
+        {name: 'color', type: 'vec4', default: 1},
+    ],
+    glsl: `return color;`,
+    vert: planeVert,
+    primitive: 'triangles',
+});
+const plane = (pos, color = 0xffffff, options = {}) => {
+    return hydra(hydraSynth.generator.createSource('plane', planeFunc, [pos, color]), options);
+}
+
+const meshFunc = processFunction({
+    name: 'mesh',
+    type: 'vert',
+    inputs: [
+        {name: 'color', type: 'vec4', default: 1},
+    ],
+    glsl: `return color;`,
+    primitive: 'triangles',
+});
+const mesh = (color = 0xffffff, options = {}) => {
+    return hydra(hydraSynth.generator.createSource('mesh', meshFunc, [color]), options);
 }
 
 const getBlend = (blendMode) => {
@@ -149,5 +278,6 @@ export {
     lineBasic,
     worldPosGradientY,
     hydra,
+    dots, squares, lines, linestrip, lineloop, text, plane, mesh,
     getBlend,
 };
