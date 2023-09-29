@@ -95,6 +95,12 @@ function createScene() {
         // todo: does having just lights count as empty?
         empty: () => scene.children.length === 0,
         at: (index = 0) => scene.children.filter((o) => o.name !== '__lights')[index],
+        find: (filter = {isMesh: true}) => {
+            const props = Object.keys(filter);
+            return scene.children.filter((o) => {
+                return props.find((p) => o[p] !== filter[p]) === undefined;
+            });
+        }
     });
     return api;
 }
