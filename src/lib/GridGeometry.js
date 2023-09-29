@@ -70,6 +70,7 @@ class GridGeometry extends BufferGeometry {
                 });
                 break;
             }
+            case 'linestrip':
             case 'line strip': {
                 width || (width = 10);
                 height || (height = 1);
@@ -89,6 +90,7 @@ class GridGeometry extends BufferGeometry {
                 });
                 break;
             }
+            case 'lineloop':
             case 'line loop': {
                 width || (width = 10);
                 height || (height = 1);

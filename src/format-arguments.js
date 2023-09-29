@@ -57,7 +57,7 @@ export default function formatArguments(transform, startIndex, synthContext) {
     }
 
     // if user has input something for this argument
-    if (userArgs.length > index) {
+    if (userArgs.length > index && typeof userArgs[index] !== 'undefined') {
       typedArg.value = userArgs[index];
       if (typeof typedArg.value === 'function') {
         typedArg.value = getFunctionValue(typedArg.value, input);

@@ -42,18 +42,14 @@ class GeneratorFactory {
  }
 
   createSource(method, source, args) {
-    const options = {
-      defaultOutput: this.defaultOutput,
-      defaultUniforms: this.defaultUniforms,
-      utils: this.utils,
-    };
-    if (source.scene) {
-        return new this.sourceClass(source, options);
-    }
     if (!this.glslTransforms[method]) {
       this.glslTransforms[method] = source
     }
-    return new this.sourceClass({name: method, transform: source, userArgs: args, synth: this}, options)
+    return new this.sourceClass({name: method, transform: source, userArgs: args, synth: this}, {
+        defaultOutput: this.defaultOutput,
+        defaultUniforms: this.defaultUniforms,
+        utils: this.utils,
+    })
   }
 
  _addMethod (method, transform) {
@@ -67,7 +63,7 @@ class GeneratorFactory {
     }
     const self = this
     this.sourceClass.prototype[method] = function (...args) {
-      if (transform.type !== 'src' && transform.type !== 'vert') {
+      if (this.transforms.length === 0 || (transform.type !== 'src' && transform.type !== 'vert')) {
         this.transforms.push({name: method, transform: transform, userArgs: args, synth: self})
       }
       else {

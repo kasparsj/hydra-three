@@ -1,15 +1,14 @@
-// todo: fix - some strange disconnected part
-lines(
+scene().lines(
     [0,400],
-    solid(noise(1, 0.03).map(-1,1,-0.1,1.1), noise(2, 0.03).map(-1,1,-0.1,1.1)),
-    cnoise(1000).saturate(8)
+    mt.lines(solid(noise(1, 0.03).map(-1,1,-0.1,1.1), noise(2, 0.03).map(-1,1,-0.1,1.1)),
+        cnoise(1000).saturate(8))
 )
-.autoClear(0.1)
-.out()
+    .autoClear(0.5)
+    .out()
 
 // layering
-lines([100]).add(noise(10).add(shape(3))).out()
+// noise(10).add(shape(3)).add(scene().lines([100])).out()
 
-// lines([10], gradient()).out()
+// scene().lines([10]).out()
 
-// lines().out()
+// scene().lines().out()

@@ -145,7 +145,7 @@ const dotsFunc = processFunction({
     primitive: 'points',
     blendMode: true,
 });
-const dots = (pos, size = 10, color = 0xffffff, fade = 0.025, options = {}) => {
+const dots = (pos, size, color, fade, options = {}) => {
     return hydra(hydraSynth.generator.createSource('dots', dotsFunc, [pos, size, color, fade]), options);
 }
 
@@ -163,7 +163,7 @@ const squaresFunc = processFunction({
     primitive: 'points',
     blendMode: true,
 });
-const squares = (pos, size = 10, color = 0xffffff, fade = 0.025, options = {}) => {
+const squares = (pos, size, color, fade, options = {}) => {
     return hydra(hydraSynth.generator.createSource('squares', squaresFunc, [pos, size, color, fade]), options);
 }
 
@@ -178,7 +178,7 @@ const linesFunc = processFunction({
     vert: linesVert,
     primitive: 'lines',
 });
-const lines = (pos, color = 0xffffff, options = {}) => {
+const lines = (pos, color, options = {}) => {
     return hydra(hydraSynth.generator.createSource('lines', linesFunc, [pos, color]), options);
 }
 
@@ -193,7 +193,7 @@ const linestripFunc = processFunction({
     vert: linestripVert,
     primitive: 'line strip',
 });
-const linestrip = (pos, color = 0xffffff, options = {}) => {
+const linestrip = (pos, color, options = {}) => {
     return hydra(hydraSynth.generator.createSource('linestrip', linestripFunc, [pos, color]), options);
 }
 
@@ -208,7 +208,7 @@ const lineloopFunc = processFunction({
     vert: lineloopVert,
     primitive: 'line loop',
 });
-const lineloop = (pos, color = 0xffffff, options = {}) => {
+const lineloop = (pos, color, options = {}) => {
     return hydra(hydraSynth.generator.createSource('lineloop', lineloopFunc, [pos, color]), options);
 }
 
@@ -222,7 +222,7 @@ const textFunc = processFunction({
     useUV: false,
     useNormal: false,
 });
-const text = (color = 0xffffff, options = {}) => {
+const text = (color, options = {}) => {
     return hydra(hydraSynth.generator.createSource('text', textFunc, [color]), options);
 }
 
@@ -237,7 +237,7 @@ const planeFunc = processFunction({
     vert: planeVert,
     primitive: 'triangles',
 });
-const plane = (pos, color = 0xffffff, options = {}) => {
+const plane = (pos, color, options = {}) => {
     return hydra(hydraSynth.generator.createSource('plane', planeFunc, [pos, color]), options);
 }
 
@@ -250,7 +250,7 @@ const meshFunc = processFunction({
     glsl: `return color;`,
     primitive: 'triangles',
 });
-const mesh = (color = 0xffffff, options = {}) => {
+const mesh = (color, options = {}) => {
     return hydra(hydraSynth.generator.createSource('mesh', meshFunc, [color]), options);
 }
 

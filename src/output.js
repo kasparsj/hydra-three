@@ -4,7 +4,7 @@ import { ClearPass } from "three/examples/jsm/postprocessing/ClearPass.js";
 import HydraUniform from "./three/HydraUniform.js";
 import { HydraShaderPass, HydraRenderPass } from "./three/HydraPass.js";
 import {HydraVertexShader, HydraShader} from "./lib/HydraShader.js";
-import * as cameraProto from "./lib/camera-proto.js";
+import {cameraMixin} from "./lib/mixins.js";
 
 var Output = function (index, synth) {
   this.id = index;
@@ -16,6 +16,8 @@ var Output = function (index, synth) {
 
   this.init()
 }
+
+Object.assign(Output.prototype, cameraMixin);
 
 Output.prototype.init = function () {
   this.composer = new EffectComposer(this.synth.renderer);
@@ -140,7 +142,5 @@ Output.prototype.renderTexture = function(options = {}) {
   }
   return texComposer.readBuffer.texture;
 }
-
-Object.assign(Output.prototype, cameraProto);
 
 export default Output

@@ -1,6 +1,7 @@
 import formatArguments from './format-arguments.js'
 import {typeLookup, getLookup, getTypeLookup, castType, replaceGenType} from "./types.js";
 import GlslSource from "./glsl-source.js";
+import {HydraScene} from "./three/HydraScene.js";
 
 // converts a tree of javascript functions to a shader
 export default function(source) {
@@ -69,8 +70,8 @@ function generateGlsl (source, transforms, shaderParams) {
       fragColor = (uv, returnType, alpha) =>  `${shaderString(`${f0(uv, 'vec4')}`, transform, inputs, shaderParams, returnType, alpha)}`
     } else if (transform.transform.type === 'combine') {
       // combining two generated shader strings (i.e. for blend, mult, add funtions)
-      const sourceVert = source.transforms.length > 0 && (source.transforms[0].transform.vert || source.transforms[0].transform.type === 'vert') || !source.scene.empty();
-      const input0Vert = inputs[0].value instanceof GlslSource && (inputs[0].value.transforms.length > 0 && (inputs[0].value.transforms[0].transform.vert || inputs[0].value.transforms[0].transform.type === 'vert') || !inputs[0].value.scene.empty());
+      const sourceVert = source instanceof GlslSource && (source.transforms[0].transform.vert || source.transforms[0].transform.type === 'vert') || source instanceof HydraScene;
+      const input0Vert = inputs[0].value instanceof GlslSource && (inputs[0].value.transforms[0].transform.vert || inputs[0].value.transforms[0].transform.type === 'vert') || inputs[0].value instanceof HydraScene;
       if (sourceVert || input0Vert) {
         const params = Object.assign({}, shaderParams, {
           fragColor: fragColor('st', 'vec4', 1.0) || 'vec4(0)',
@@ -85,7 +86,7 @@ function generateGlsl (source, transforms, shaderParams) {
         f0 = (uv, returnType, alpha) => `${generateGlsl(temp0, temp0.transforms, shaderParams)(uv, returnType, alpha)}`
       }
       var f1;
-      if (inputs[0].value && inputs[0].value.transforms) {
+      if (typeof inputs[0].value.compile === 'function') {
         if (input0Vert || sourceVert) {
           inputs[0].value.output = source.output;
           source.passes.unshift(...inputs[0].value.compile({renderTarget: source.output.temp1}));

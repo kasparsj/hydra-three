@@ -10,18 +10,20 @@ const h = 0.02;
 const d = 0.02;
 const count = 10000;
 
-solid(1,1,0).layer(mesh(
-    // gm.edges(gm.box(w, h, d)),
-    gm.box(w, h, d),
-    // mt.lineBasic({ color: th.color(0, 0, 0), side: THREE.DoubleSide })
-    solid(0.5,0.5,0.5)
-).instanced(count)
-    .lambert().lights()
-    .autoClear()).out();
+const sc = scene({background: color(1,1,0)})
+    .mesh(
+//         gm.edges(gm.box(w, h, d)),
+// 	    mt.lineBasic({ color: color(0, 0, 0), side: THREE.DoubleSide }),
+        gm.box(w, h, d),
+        solid(0.5,0.5,0.5).lambert(),
+        {instanced: count}
+    )
+    .lights()
+    .autoClear().out();
 
 let matrixSet = false;
 update = () => {
-    const box = o0.obj[0];
+    const box = sc.scene.at(0);
     if (box && !matrixSet) {
         matrixSet = true;
         const matrix = mat4();

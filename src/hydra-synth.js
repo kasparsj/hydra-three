@@ -18,6 +18,7 @@ import * as gm from "./three/gm.js";
 import * as scene from "./three/scene.js";
 import * as cm from "./three/cm.js";
 import * as mt from "./three/mt.js";
+import {HydraScene} from "./three/HydraScene.js";
 
 
 const Mouse = MouseTools()
@@ -476,9 +477,12 @@ class HydraRenderer {
   //  this.regl.poll()
   }
 
-  scene(...args) {
-    const name = 'scene' + (this.i++);
-    return this.generator.createSource(name, scene.getOrCreateScene(...args))
+  scene(attributes) {
+    return new HydraScene({
+      defaultOutput: this.generator.defaultOutput,
+      defaultUniforms: this.generator.defaultUniforms,
+      utils: this.generator.utils,
+    }, attributes);
   }
 
 }

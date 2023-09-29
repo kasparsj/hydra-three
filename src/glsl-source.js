@@ -3,61 +3,27 @@ import utilityGlsl from './glsl/utility-functions.js'
 import {replaceGenType} from "./types.js"
 import * as THREE from "three"
 import {HydraFragmentShader, HydraVertexShader} from "./lib/HydraShader.js";
-import * as cameraProto from "./lib/camera-proto.js";
 import HydraUniform from "./three/HydraUniform.js";
-import * as scene from "./three/scene.js";
-import * as mt from "./three/mt.js";
-import {GridGeometry} from "./lib/GridGeometry.js";
+import {cameraMixin, sourceMixin} from "./lib/mixins.js";
 
 var GlslSource = function (obj, options) {
-  this.scene = null;
-  this.transforms = [];
-  this._material = {};
-  if (obj) {
-    if (obj.scene) {
-      this.scene = obj;
-    }
-    else {
-      this.scene = scene.createScene();
-      this.transforms.push(obj);
-    }
-  }
-  this.defaultOutput = options.defaultOutput;
-  this.output = null;
+  this.init(options);
+  this.transforms = [obj];
   this.type = 'GlslSource';
   this.defaultUniforms = options.defaultUniforms;
   this.utils = Object.assign({}, utilityGlsl, options.utils);
-  this._viewport = {};
+  this._material = {};
   return this;
 }
+
+Object.assign(GlslSource.prototype, cameraMixin, sourceMixin);
 
 GlslSource.prototype.addTransform = function (obj)  {
   this.transforms.push(obj)
 }
 
-GlslSource.prototype.out = function (_output) {
-  var output = _output || this.defaultOutput
-  this.output = output;
-  var glsl = this.compile()
-  if(output) try{
-    output.render(glsl)
-  } catch (error) {
-    console.log('shader could not compile', error)
-  }
-  return this;
-}
-
-GlslSource.prototype.tex = function(_output, options = {}) {
-  if (!this.output) {
-    this.out(_output);
-  }
-  return this.output.renderTexture(options);
-}
-
-GlslSource.prototype.compile = function (options = {}) {
-  this.passes = []
-  this.passes.push(this.createPass(generateGlsl(this), options))
-  return this.passes
+GlslSource.prototype.createShaderInfo = function() {
+  return generateGlsl(this);
 }
 
 GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
@@ -108,103 +74,10 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
     }
   }
   return Object.assign({
-    scene: this.scene,
     camera: this._camera,
     viewport: this._viewport,
     clear: this._autoClear,
   }, options);
-}
-
-GlslSource.prototype.obj = function(...args) {
-  let object;
-  if (args[0] instanceof THREE.Object3D) {
-    object = args[0];
-  }
-  else {
-    let [geometry, material, options] = args;
-    if (material instanceof GlslSource) {
-      material = mt.hydra(material, options.material);
-    }
-    if (!geometry) geometry = [];
-    if (!geometry.isBufferGeometry) {
-      if (!Array.isArray(geometry)) geometry = [geometry];
-      if (typeof(geometry[0]) !== 'string') {
-        geometry.unshift(options.primitive);
-      }
-      geometry = new GridGeometry(...geometry);
-    }
-    switch (options.primitive) {
-      case 'points':
-      case 'line loop':
-      case 'lineloop':
-      case 'line strip':
-      case 'linestrip':
-      case 'lines':
-        switch (options.primitive) {
-          case 'points':
-            object = new THREE.Points(geometry, material);
-            break;
-          case 'line loop':
-          case 'lineloop':
-            object = new THREE.LineLoop(geometry, material);
-            break;
-          case 'line strip':
-          case 'linestrip':
-            object = new THREE.Line(geometry, material);
-            break;
-          case 'lines':
-            object = new THREE.LineSegments(geometry, material);
-            break;
-        }
-        break;
-      default:
-        // todo: text
-        // todo: plane
-        if (typeof material === 'undefined' || !(material instanceof THREE.Material)) {
-          material = mt.mesh(material);
-        }
-        if (options.instanced) {
-          object = new THREE.InstancedMesh(geometry, material, options.instanced);
-        }
-        else {
-          object = new THREE.Mesh(geometry, material);
-        }
-        break;
-    }
-  }
-  this.scene.add(object);
-  return this;
-}
-
-GlslSource.prototype.mesh = function(...args) {
-  args[2] = Object.assign(args[2] || {}, { primitive: 'triangles' });
-  return this.obj(...args);
-}
-
-GlslSource.prototype.points = function(...args) {
-  args[2] = Object.assign(args[2] || {}, { primitive: 'points' });
-  return this.obj(...args);
-}
-
-GlslSource.prototype.linestrip = function(...args) {
-  args[2] = Object.assign(args[2] || {}, { primitive: 'linestrip' });
-  return this.obj(...args);
-}
-
-GlslSource.prototype.lines = function(...args) {
-  args[2] = Object.assign(args[2] || {}, { primitive: 'lines' });
-  return this.obj(...args);
-}
-
-GlslSource.prototype.lineloop = function(...args) {
-  args[2] = Object.assign(args[2] || {}, { primitive: 'lineloop' });
-  return this.obj(...args);
-}
-
-GlslSource.prototype.lights = function(options) {
-  const camera = this._camera || (options && options.out || this.defaultOutput)._camera;
-  this.scene.lights(camera, options || {cam: true, amb: true, sun: true, hemi: true});
-  return this;
 }
 
 GlslSource.prototype.material = function(options) {
@@ -238,36 +111,6 @@ GlslSource.prototype.lambert = function(options = {}) {
   return this;
 }
 
-GlslSource.prototype.instanced = function(count) {
-  this._instanced = count;
-  return this;
-}
-
-GlslSource.prototype.world = function(options = {}) {
-  if (!options.near || !options.far) {
-    const camera = this._camera || (options.out || this.defaultOutput)._camera;
-    options = Object.assign({
-      near: camera.near,
-      far: camera.far,
-    }, options);
-  }
-  this.scene.world(options);
-  return this;
-}
-
-GlslSource.prototype.viewport = function(x, y, w, h) {
-  this._viewport = {x, y, w, h};
-  return this;
-}
-
-GlslSource.prototype.autoClear = function(amount = 1.0, options = {}) {
-  this._autoClear = {
-    amount,
-    ...options,
-  };
-  return this;
-}
-
 GlslSource.prototype.st = function(source) {
   const self = this;
   source.transforms.map((transform) => {
@@ -288,7 +131,5 @@ glslProps.map((prop) => {
     }
   });
 });
-
-Object.assign(GlslSource.prototype, cameraProto);
 
 export default GlslSource
