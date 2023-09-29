@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import * as lights from "./lights";
 import * as world from "./world";
-import * as geoms from "./gm";
 
 const scenes = {}
 const groups = {};
@@ -229,9 +228,6 @@ const setMeshAttrs = (mesh, attributes) => {
         if (attributes.lineMat || attributes.lineWidth || attributes.lineColor) {
             createMeshEdges(mesh, attributes);
         }
-        if (mesh.geometry instanceof geoms.ConvexGeometryCompat && !mesh.geometry.parameters.boxUV) {
-            applyBoxUV(mesh);
-        }
     }
 }
 
@@ -246,12 +242,6 @@ const createMeshEdges = (mesh, attributes) => {
         })),
     });
     mesh.add(line);
-}
-
-const applyBoxUV = (mesh) => {
-    const transformMatrix = mesh.matrix.clone().invert();
-    geoms.applyBoxUV(mesh.geometry, transformMatrix);
-    mesh.geometry.parameters.boxUV = true;
 }
 
 export {

@@ -76,7 +76,7 @@ class HydraGroup {
         // todo: text
         // todo: plane
         let mesh;
-        if (typeof material === 'undefined' || !(material instanceof THREE.Material)) {
+        if (typeof material === 'undefined' || !material.isMaterial) {
             material = mt.mesh(material);
         }
         if (options.type === 'quad') {
