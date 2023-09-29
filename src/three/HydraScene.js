@@ -4,34 +4,12 @@ import {GridGeometry} from "../lib/GridGeometry.js";
 import GlslSource from "../glsl-source.js";
 import * as scene from "./scene.js";
 import {FullScreenQuad} from "three/examples/jsm/postprocessing/Pass.js";
-import {cameraMixin, sourceMixin} from "../lib/mixins.js";
+import {cameraMixin, sourceMixin, mixClass} from "../lib/mixins.js";
 
-class SourceMixins {
-
-}
-Object.assign(SourceMixins.prototype, cameraMixin, sourceMixin);
-
-class HydraScene extends SourceMixins {
-
-    constructor(options, attributes = {}) {
-        super();
-
-        this.init(options);
-        this.scene = scene.getOrCreateScene(attributes);
-    }
-
-    createShaderInfo() {
-        return null;
-    }
-
-    createPass(shaderInfo, options = {}) {
-        return Object.assign({
-            scene: this.scene,
-            camera: this._camera,
-            // todo: viewport
-            viewport: this._viewport,
-            clear: this._autoClear,
-        }, options);
+class HydraGroup {
+    constructor(scene, group) {
+        this.scene = scene;
+        this._group = group;
     }
 
     add(...args) {
@@ -87,7 +65,10 @@ class HydraScene extends SourceMixins {
                     break;
             }
         }
-        this.scene.add(object);
+        // todo: get rid of this check
+        if (!object.parent) {
+            (this._group || this.scene).add(object);
+        }
         return this;
     }
 
@@ -103,10 +84,10 @@ class HydraScene extends SourceMixins {
             mesh = quad._mesh;
         }
         else if (options.instanced) {
-            mesh = new THREE.InstancedMesh(geometry, material, options.instanced);
+            mesh = this.scene.instancedMesh(Object.assign({geometry, material, count: options.instanced, group: this._group}, options));
         }
         else {
-            mesh = new THREE.Mesh(geometry, material);
+            mesh = this.scene.mesh(Object.assign({geometry, material, group: this._group}, options));
         }
         return mesh;
     }
@@ -147,6 +128,33 @@ class HydraScene extends SourceMixins {
         return this.add(...args);
     }
 
+    group(attributes = {}) {
+        return new HydraGroup(this.scene, this.scene.group(attributes));
+    }
+}
+
+class HydraScene extends HydraGroup {
+
+    constructor(options, attributes = {}) {
+        super(scene.getOrCreateScene(attributes));
+
+        this.init(options);
+    }
+
+    createShaderInfo() {
+        return null;
+    }
+
+    createPass(shaderInfo, options = {}) {
+        return Object.assign({
+            scene: this.scene,
+            camera: this._camera,
+            // todo: viewport
+            viewport: this._viewport,
+            clear: this._autoClear,
+        }, options);
+    }
+
     lights(options) {
         const camera = this._camera || (options && options.out || this.defaultOutput)._camera;
         this.scene.lights(camera, options || {cam: true, amb: true, sun: true, hemi: true});
@@ -167,4 +175,6 @@ class HydraScene extends SourceMixins {
 
 }
 
-export {HydraScene}
+mixClass(HydraScene, cameraMixin, sourceMixin);
+
+export {HydraScene, HydraGroup}

@@ -1,8 +1,5 @@
 import * as THREE from "three";
 import {HydraOrbitControls} from "../three/HydraOrbitControls.js";
-import GlslSource from "../glsl-source.js";
-import generateGlsl from "../generate-glsl.js";
-import Output from "../output.js";
 
 const cameraMixin = {
     camera(eye, target, options = {}) {
@@ -127,4 +124,13 @@ const sourceMixin = {
 
 };
 
-export { cameraMixin, sourceMixin }
+const mixClass = (clazz, ...mixins) => {
+    const mixedMixins = Object.assign({}, ...mixins);
+    for (const method of Object.getOwnPropertyNames(mixedMixins)) {
+        if (!clazz.prototype.hasOwnProperty(method)) {
+            clazz.prototype[method] = mixedMixins[method];
+        }
+    }
+}
+
+export { cameraMixin, sourceMixin, mixClass }
