@@ -73,6 +73,7 @@ const sourceMixin = {
     init(options) {
         this.defaultOutput = options.defaultOutput;
         this.output = null;
+        this._fx = {};
         this._viewport = {};
     },
 
@@ -81,7 +82,7 @@ const sourceMixin = {
         this.output = output;
         var glsl = this.compile()
         if(output) try{
-            output.render(glsl)
+            output.render(glsl, this._fx)
         } catch (error) {
             console.log('shader could not compile', error)
         }
@@ -114,6 +115,11 @@ const sourceMixin = {
             amount,
             ...options,
         };
+        return this;
+    },
+
+    fx(options) {
+        this._fx = options;
         return this;
     },
 

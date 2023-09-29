@@ -5,6 +5,7 @@ import HydraUniform from "./three/HydraUniform.js";
 import { HydraShaderPass, HydraRenderPass } from "./three/HydraPass.js";
 import {HydraVertexShader, HydraShader} from "./lib/HydraShader.js";
 import {cameraMixin} from "./lib/mixins.js";
+import * as fx from "./three/fx.js";
 
 var Output = function (index, synth) {
   this.id = index;
@@ -51,11 +52,12 @@ Output.prototype.getTexture = function () {
    return this.composer.readBuffer.texture;
 }
 
-Output.prototype.render = function (passes) {
+Output.prototype.render = function (passes, effects) {
   for (let i=0; i<this.composer.passes.length; i++) {
     this.composer.passes[i].dispose();
   }
   this.composer.passes = [];
+  let scene, camera;
   if (passes.length > 0) {
     for (let i=0; i<passes.length; i++) {
       let options = passes[i];
@@ -63,6 +65,8 @@ Output.prototype.render = function (passes) {
       if (options.scene && !options.scene.empty()) {
         options.camera || (options.camera = this._camera);
         pass = new HydraRenderPass(options);
+        scene = options.scene;
+        camera = options.camera;
       }
       else {
         pass = new HydraShaderPass(options);
@@ -76,6 +80,13 @@ Output.prototype.render = function (passes) {
         }
       }
       this.composer.addPass(pass);
+    }
+    if (effects) {
+      fx.add(Object.assign(effects, {
+        composer: this.composer,
+        scene,
+        camera,
+      }));
     }
   }
 }
