@@ -65,7 +65,18 @@ const dataArray = (data, options = {}) => {
         height: data.height,
         depth: data.depth,
     }, options);
-    return new THREE.DataArrayTexture(data, options.width, options.height, options.depth);
+    if (!options.format) {
+        if (!options.numChannels) {
+            options.numChannels = options.width && options.height && options.depth ? data.length / (options.width * options.height * data.depth) : 1;
+        }
+        // THREE.LuminanceFormat not working
+        const formats = [THREE.RedFormat, THREE.RGFormat, THREE.RGBAFormat, THREE.RGBAFormat];
+        options.format = formats[(options.numChannels-1)];
+    }
+    const tex = new THREE.DataArrayTexture(data, options.width, options.height, options.depth);
+    tex.format = options.format;
+    tex.needsUpdate = true;
+    return tex;
 }
 
 const load = (url) => {
