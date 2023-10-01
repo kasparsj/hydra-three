@@ -3,7 +3,7 @@ import utilityGlsl from './glsl/utility-functions.js'
 import {replaceGenType} from "./types.js"
 import * as THREE from "three"
 import {HydraFragmentShader, HydraVertexShader} from "./lib/HydraShader.js";
-import HydraUniform from "./three/HydraUniform.js";
+import {HydraUniform} from "./three/HydraUniform.js";
 import {cameraMixin, sourceMixin} from "./lib/mixins.js";
 
 var GlslSource = function (obj, options) {

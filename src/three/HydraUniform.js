@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import Output from "../output.js";
 
-export default class HydraUniform extends THREE.Uniform
+class HydraUniform
 {
     static all = {};
 
@@ -63,3 +63,4 @@ export default class HydraUniform extends THREE.Uniform
         }, {});
     }
 }
+export { HydraUniform, HydraArrayTextureUniform }

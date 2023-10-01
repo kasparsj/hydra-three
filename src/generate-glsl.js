@@ -49,11 +49,14 @@ function generateGlsl (source, transforms, shaderParams) {
       fragColor = () => transform.userArgs[0];
       return;
     }
-    var inputs = formatArguments(transform, shaderParams.uniforms.length)
-
-    inputs.forEach((input) => {
-      if(input.isUniform) shaderParams.uniforms.push(input)
-    })
+    var inputs = transform._cachedInputs;
+    if (!inputs) {
+      inputs = formatArguments(transform, shaderParams.uniforms.length);
+      transform._cachedInputs = inputs;
+      inputs.forEach((input) => {
+        if(input.isUniform) shaderParams.uniforms.push(input)
+      })
+    }
 
     // add new glsl function to running list of functions
     if(!contains(transform, shaderParams.glslFunctions)) shaderParams.glslFunctions.push(transform)

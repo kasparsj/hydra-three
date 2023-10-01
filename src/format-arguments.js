@@ -32,7 +32,7 @@ const ensure_decimal_dot = (val) => {
 
 
 
-export default function formatArguments(transform, startIndex, synthContext) {
+export default function formatArguments(transform, startIndex) {
   const defaultArgs = transform.transform.inputs
   const userArgs = transform.userArgs
   const { generators } = transform.synth

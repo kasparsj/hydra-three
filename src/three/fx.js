@@ -17,7 +17,7 @@ import { SSAARenderPass } from 'three/examples/jsm/postprocessing/SSAARenderPass
 import { SAOPass } from 'three/examples/jsm/postprocessing/SAOPass.js';
 //import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import glsl from "glslify";
-import HydraUniform from "./HydraUniform.js";
+import {HydraUniform} from "./HydraUniform.js";
 import {ShaderMaterial} from "three";
 
 const uvVert = glsl("../shaders/uv.vert");

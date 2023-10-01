@@ -10,7 +10,7 @@ import ArrayUtils from './lib/array-utils.js'
 import Sandbox from './eval-sandbox.js'
 import {GeneratorFactory, processFunction} from './generator-factory.js'
 import * as THREE from "three";
-import HydraUniform from "./three/HydraUniform.js"
+import {HydraUniform} from "./three/HydraUniform.js"
 import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
 import {ShaderPass} from "three/examples/jsm/postprocessing/ShaderPass.js";
 import * as tx from "./three/tx.js";

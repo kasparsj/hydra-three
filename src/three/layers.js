@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
 import * as fx from "./fx.js";
-import HydraUniform from "./HydraUniform.js";
+import {HydraUniform} from "./HydraUniform.js";
 import {HydraShaderPass, HydraRenderPass} from "./HydraPass.js";
 
 const darkMaterial = new THREE.MeshBasicMaterial( { color: 'black' } );
