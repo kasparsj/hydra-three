@@ -3,10 +3,16 @@ import * as THREE from "three";
 const textures = {};
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-const types = {
+const strTypes = {
     'half float': THREE.HalfFloatType,
     'float': THREE.FloatType,
     'uint8': THREE.UnsignedByteType,
+};
+
+const types = {
+    'Uint16Array': THREE.HalfFloatType,
+    'Float32Array': THREE.FloatType,
+    'Uint8Array': THREE.UnsignedByteType,
 };
 
 const filters = {
@@ -26,7 +32,7 @@ const parseOptions = (data, options, defaults = {}) => {
     const magFilter = options.magFilter || (filters[options.mag || options.filter] || THREE.NearestFilter);
     const type = typeof options.type === 'number'
         ? options.type
-        : types[options.type] || (data instanceof Float32Array ? THREE.FloatType : THREE.UnsignedByteType);
+        : strTypes[options.type] || types[data.constructor.name] || THREE.UnsignedByteType;
     options = Object.assign({
         width: data.width,
         height: data.height,
