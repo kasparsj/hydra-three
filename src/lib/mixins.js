@@ -104,7 +104,7 @@ const sourceMixin = {
         if (params.isMeshPhongMaterial) {
             material = new THREE.MeshPhongMaterial(Object.assign(params, {map: tex}));
         }
-        else if (material.isMeshLambertMaterial) {
+        else if (params.isMeshLambertMaterial) {
             material = new THREE.MeshLambertMaterial(Object.assign(params, {map: tex}));
         }
         else {

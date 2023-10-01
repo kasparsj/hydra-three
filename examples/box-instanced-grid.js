@@ -8,14 +8,22 @@ nse.init();
 const w = 0.02;
 const h = 0.02;
 const d = 0.02;
-const count = 10000;
+const count = 50000;
+const drawLines = true;
+let geom, mat;
+if (drawLines) {
+    geom = gm.edges(gm.box(w, h, d));
+    mat = mt.lineBasic({ color: color(0, 0, 0) });
+}
+else {
+    geom = gm.box(w, h, d);
+    mat = solid(0.5,0.5,0.5).lambert().texMat(o1);
+}
 
 const sc = scene({background: color(1,1,0)})
     .mesh(
-//         gm.edges(gm.box(w, h, d)),
-// 	    mt.lineBasic({ color: color(0, 0, 0), side: THREE.DoubleSide }),
-        gm.box(w, h, d),
-        solid(0.5,0.5,0.5).lambert(),
+        geom,
+        mat,
         {instanced: count}
     )
     .lights()
@@ -24,6 +32,11 @@ const sc = scene({background: color(1,1,0)})
 let matrixSet = false;
 update = () => {
     const box = sc.scene.at(0);
+    if (drawLines) {
+        box.isMesh = false;
+        box.isLine = true;
+        box.isLineSegments = true;
+    }
     if (box && !matrixSet) {
         matrixSet = true;
         const matrix = mat4();
