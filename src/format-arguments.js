@@ -99,7 +99,7 @@ export default function formatArguments(transform, startIndex, synthContext) {
           const arr = Array(length).fill(typedArg.value);
           typedArg.value = `${typedArg.type}(${arr.map(ensure_decimal_dot).join(', ')})`
         }
-      } else if (input.type === 'sampler2D') {
+      } else if (input.type === 'sampler2D' || input.type === 'sampler2DArray') {
         // typedArg.tex = typedArg.value
         var x = typedArg.value
         typedArg.value = x.isRenderTarget ? x.texture : x

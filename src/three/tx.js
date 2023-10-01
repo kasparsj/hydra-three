@@ -59,6 +59,15 @@ const data = (data, options = {}) => {
     return tex;
 }
 
+const dataArray = (data, options = {}) => {
+    options = Object.assign({
+        width: data.width,
+        height: data.height,
+        depth: data.depth,
+    }, options);
+    return new THREE.DataArrayTexture(data, options.width, options.height, options.depth);
+}
+
 const load = (url) => {
     return (new THREE.TextureLoader()).load(url);
 }
@@ -297,7 +306,7 @@ const createRenderTarget = (options = {}) => {
 
 export {
     get, set,
-    data, load, save,
+    data, dataArray, load, save,
     wrap, repeat, mirror, mirror1, pointsym,
     atlas,
     createSceneTexture, createQuadScene, createRenderTarget,
