@@ -44,7 +44,7 @@
     "meyda": "^5.5.1",
     "raf-loop": "^1.1.3",
     "regl": "github:kasparsj/regl",
-    "three": "^0.156.1",
+    "three": "^0.157.0",
     "vectorize-text": "^3.2.2"
   },
   "devDependencies": {
