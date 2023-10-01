@@ -65,7 +65,8 @@ class HydraFragmentShader extends HydraShader {
 
         this.useNormal = typeof(transform.useNormal) !== 'undefined'
             ? transform.useNormal
-            : transform.type === 'vert' && (!transform.primitive || ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.primitive) === -1);
+            // todo: potentially detect flat shading when FullScreenQuad is used
+            : (!transform.primitive || ['points', 'lines', 'line strip', 'line loop'].indexOf(transform.primitive) === -1);
     }
 
 }
