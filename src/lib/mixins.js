@@ -96,6 +96,24 @@ const sourceMixin = {
         return this.output.renderTexture(options);
     },
 
+    texMat(_output, options = {}) {
+        const params = this._material;
+        this._material = {};
+        const tex = this.tex(_output, options);
+        let material;
+        if (params.isMeshPhongMaterial) {
+            material = new THREE.MeshPhongMaterial(Object.assign(params, {map: tex}));
+        }
+        else if (material.isMeshLambertMaterial) {
+            material = new THREE.MeshLambertMaterial(Object.assign(params, {map: tex}));
+        }
+        else {
+            material = new THREE.MeshBasicMaterial(Object.assign(params, {map: tex}));
+        }
+        this._material = params;
+        return material;
+    },
+
     compile(options = {}) {
         this.passes = []
         this.passes.push(this.createPass(this.createShaderInfo(), options))
