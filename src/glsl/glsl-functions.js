@@ -96,8 +96,8 @@ export default () => [
     name: 'snoise',
     type: 'src',
     inputs: [
-        {name: 'scale', type: 'float', default: 10.0},
-        {name: 'offset', type: 'vec3', default: 0.0},
+        {name: 'scale', type: 'float', default: 10},
+        {name: 'offset', type: 'vec3', default: 0},
     ],
     glsl: snoiseFrag
 },
@@ -105,10 +105,10 @@ export default () => [
     name: 'pnoise',
     type: 'src',
     inputs: [
-        {name: 'scale', type: 'float', default: 10.0},
-        {name: 'offset', type: 'vec3', default: 0.0},
-        {name: 'rep', type: 'vec4', default: 0.0},
-        {name: 'uv', type: 'float', default: 1.0},
+        {name: 'scale', type: 'float', default: 10},
+        {name: 'offset', type: 'vec3', default: 0},
+        {name: 'rep', type: 'vec4', default: 1},
+        {name: 'uv', type: 'float', default: 1},
     ],
     glsl: pnoiseFrag,
 },
