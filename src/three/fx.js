@@ -18,7 +18,9 @@ import { SAOPass } from 'three/examples/jsm/postprocessing/SAOPass.js';
 //import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import glsl from "glslify";
 import HydraUniform from "./HydraUniform.js";
+import {ShaderMaterial} from "three";
 
+const uvVert = glsl("../shaders/uv.vert");
 const filmFrag = glsl("../shaders/film.frag");
 
 const add = (options) => {
@@ -29,19 +31,20 @@ const add = (options) => {
     else {
         for (let prop in options) {
             switch (prop) {
-                case 'dotScale':
-                    addPass('dotScreen', options);
-                    break;
-                case 'noiseType':
-                case 'noiseIntensity':
-                case 'scanlinesIntensity':
-                case 'scanlinesCount':
-                case 'grayscale':
-                case 'grainSize':
-                    addPass('film', options);
-                    break;
+                // case 'dotScale':
+                //     addPass('dotScreen', options);
+                //     break;
+                // case 'noiseType':
+                // case 'noiseIntensity':
+                // case 'scanlinesIntensity':
+                // case 'scanlinesCount':
+                // case 'grayscale':
+                // case 'grainSize':
+                //     addPass('film', options);
+                //     break;
                 case 'dotScreen':
                 case 'film':
+                case 'filmGrain':
                 case 'hBlur':
                 case 'vBlur':
                 case 'rgbShift':
@@ -69,6 +72,7 @@ const add = (options) => {
 
 const addPass = (type, options) => {
     const { scene, composer, camera } = options;
+    const time = HydraUniform.get('time', 'hydra');
     const resolution = HydraUniform.get('resolution', 'hydra');
     let pass;
     switch (type) {
@@ -92,14 +96,27 @@ const addPass = (type, options) => {
             pass.uniforms.amount.value = options.rgbShift;
             break;
         case 'film':
-            pass = new FilmPass(options.noiseIntensity, options.scanlinesIntensity, options.scanlinesCount, options.grayscale);
+            pass = new FilmPass(options.filmIntensity, options.grayscale);
             pass.enabled = !!options.film;
-            if (options.noiseType === 'glsl-film-grain') {
-                pass.material.fragmentShader = filmFrag;
-                pass.material.uniforms.uResolution = resolution;
-                pass.material.uniforms.uGrainSize = { value: options.grainSize };
-                pass.material.isFilmGrainMaterial = true;
-            }
+            break;
+        case 'filmGrain':
+            const material = new ShaderMaterial( {
+                name: 'filmGrain',
+                uniforms: {
+                    uResolution: resolution,
+                    nIntensity: { value: options.noiseIntensity },
+                    sIntensity: { value: options.scanlinesIntensity },
+                    sCount: { value: options.scanlinesCount },
+                    grayscale: { value: options.grayscale },
+                    time: time,
+                    uGrainSize: { value: options.grainSize || 1 },
+                    tDiffuse: { value: null },
+                },
+                fragmentShader: filmFrag,
+                vertexShader: uvVert,
+            } );
+            pass = new ShaderPass(material);
+            pass.enabled = !!options.filmGrain;
             break;
         case 'sepia':
             pass = new ShaderPass(SepiaShader);
