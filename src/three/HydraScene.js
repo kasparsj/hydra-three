@@ -140,6 +140,7 @@ class HydraScene extends HydraGroup {
         super(scene.getOrCreateScene(attributes));
 
         this.init(options);
+        this._autoClear = {amount: 1};
         this._layers = [];
     }
 
@@ -178,7 +179,7 @@ class HydraScene extends HydraGroup {
     }
 
     layer(id, options = {}) {
-        const layer = layers.create(id, this.scene.scene, (this.output || this.defaultOutput).synth.renderer, options);
+        const layer = layers.create(id, this.scene.scene, options);
         this._layers.push(layer);
         return layer;
     }

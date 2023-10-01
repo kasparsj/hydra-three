@@ -1,19 +1,19 @@
 import * as THREE from "three";
-import {ShaderPass} from "three/examples/jsm/postprocessing/ShaderPass";
 import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
 import * as fx from "./fx.js";
+import HydraUniform from "./HydraUniform.js";
+import {HydraShaderPass, HydraRenderPass} from "./HydraPass.js";
 
 const darkMaterial = new THREE.MeshBasicMaterial( { color: 'black' } );
 const materials = {};
 
 class Layer {
-    constructor(id, scene, renderer, options = {}) {
+    constructor(id, scene, options = {}) {
+        this.id = id;
         this.layer = new THREE.Layers();
         this.layer.set( id );
         this.scene = scene;
-        this.composer = new EffectComposer(renderer);
-        this.composer.renderToScreen = false;
-        this.add(options);
+        this.effects = Object.assign({}, options);
 
         options = Object.assign({
             selectFn: darkenMaterials,
@@ -25,10 +25,19 @@ class Layer {
     }
 
     add(options) {
-        fx.add(Object.assign({
+        Object.assign(this.effects, options);
+    }
+
+    compile(renderer, camera) {
+        this.composer = new EffectComposer(renderer);
+        this.composer.renderToScreen = false;
+        this.composer.addPass(new HydraRenderPass(this.scene, camera));
+        this.composer.passes[0].clear = true;
+        fx.add(Object.assign(this.effects, {
             composer: this.composer,
             scene: this.scene,
-        }, options));
+            camera: camera,
+        }));
     }
 
     select() {
@@ -43,11 +52,15 @@ class Layer {
         this.composer.render();
     }
 
-    getMixPass() {
+    getTexture() {
+        return this.composer.readBuffer.texture;
+    }
+
+    getMixPass(options = {}) {
         const mixMat = new THREE.ShaderMaterial({
             uniforms: {
-                baseTexture: { value: null },
-                layerTexture: { value: this.composer.renderTarget2.texture }
+                prevBuffer: { value: null },
+                layerTexture: new HydraUniform('layerMixPassTex' + this.id, null, () => this.getTexture(), 'hydra-layer'),
             },
             vertexShader: `
                 varying vec2 vUv;
@@ -56,23 +69,34 @@ class Layer {
                     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
                 }`,
             fragmentShader: `
-                uniform sampler2D baseTexture;
+                uniform sampler2D prevBuffer;
                 uniform sampler2D layerTexture;
                 varying vec2 vUv;
                 void main() {
-                    gl_FragColor = texture2D( layerTexture, vUv ) + texture2D( baseTexture, vUv );
+                    gl_FragColor = texture2D( layerTexture, vUv) + texture2D( prevBuffer, vUv );
                 }`,
             defines: {},
             transparent: true,
+            depthTest: false,
         });
-        const mixPass = new ShaderPass(mixMat, 'baseTexture');
+        const mixPass = new HydraShaderPass(mixMat, options);
         mixPass.needsSwap = true;
+        mixPass.clear = true;
         return mixPass;
+    }
+
+    dispose() {
+        if (this.composer) {
+            for (let i=0; i<this.composer.passes.length; i++) {
+                this.composer.passes[i].dispose();
+            }
+            this.composer.dispose();
+        }
     }
 }
 
-const create = (id, scene, renderer, options = {}) => {
-    return new Layer(id, scene, renderer, options);
+const create = (id, scene, options = {}) => {
+    return new Layer(id, scene, options);
 }
 
 const render = (layers) => {

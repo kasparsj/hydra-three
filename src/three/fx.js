@@ -1,3 +1,4 @@
+import {Pass} from "three/examples/jsm/postprocessing/Pass.js";
 import {ShaderPass} from "three/examples/jsm/postprocessing/ShaderPass";
 import {HorizontalBlurShader} from "three/examples/jsm/shaders/HorizontalBlurShader";
 import {VerticalBlurShader} from "three/examples/jsm/shaders/VerticalBlurShader";
@@ -22,10 +23,7 @@ const filmFrag = glsl("../shaders/film.frag");
 
 const add = (options) => {
     const { composer } = options;
-    if (!composer.passes.length) {
-        addPass('render', options);
-    }
-    if (options instanceof ShaderPass) {
+    if (options instanceof Pass) {
         composer.addPass(options);
     }
     else {
@@ -60,7 +58,7 @@ const add = (options) => {
                     addPass(prop, options);
                     break;
                 default:
-                    if (options[prop] instanceof ShaderPass) {
+                    if (options[prop] instanceof Pass) {
                         composer.addPass(options[prop]);
                     }
                     break;
@@ -150,15 +148,11 @@ const addPass = (type, options) => {
                         pass = new RenderPixelatedPass(6, scene, camera);
                         pass.enabled = options.pixelate;
                         break;
-                    case 'render':
-                        pass = new RenderPass(scene, camera);
-                        break;
                 }
             }
         }
     }
     if (pass) {
-        pass.enabled = type === 'render' || pass.enabled;
         composer.addPass(pass);
     }
     return pass;

@@ -19,6 +19,74 @@ class HydraPass extends Pass {
 
 class HydraShaderPass extends HydraPass {
 
+    constructor( shader, options = {} ) {
+
+        super(options);
+
+        if ( shader instanceof THREE.ShaderMaterial ) {
+
+            this.uniforms = shader.uniforms;
+
+            this.material = shader;
+
+        } else if ( shader ) {
+
+            this.uniforms = THRE.UniformsUtils.clone( shader.uniforms );
+
+            this.material = new THREE.ShaderMaterial( {
+
+                name: ( shader.name !== undefined ) ? shader.name : 'unspecified',
+                defines: Object.assign( {}, shader.defines ),
+                uniforms: this.uniforms,
+                vertexShader: shader.vertexShader,
+                fragmentShader: shader.fragmentShader
+
+            } );
+
+        }
+
+        this.fsQuad = new FullScreenQuad( this.material );
+
+    }
+
+    render( renderer, writeBuffer, readBuffer /*, deltaTime, maskActive */ ) {
+
+        if ( this.uniforms[ this.textureID ] ) {
+
+            this.uniforms[ this.textureID ].value = readBuffer.texture;
+
+        }
+
+        this.fsQuad.material = this.material;
+
+        if ( this.renderToScreen ) {
+
+            renderer.setRenderTarget( null );
+            this.fsQuad.render( renderer );
+
+        } else {
+
+            renderer.setRenderTarget( this.renderTarget ? this.renderTarget : writeBuffer );
+            // TODO: Avoid using autoClear properties, see https://github.com/mrdoob/three.js/pull/15571#issuecomment-465669600
+            if ( this.clear ) renderer.clear( renderer.autoClearColor, renderer.autoClearDepth, renderer.autoClearStencil );
+            this.fsQuad.render( renderer );
+
+        }
+
+    }
+
+    dispose() {
+
+        this.material.dispose();
+
+        this.fsQuad.dispose();
+
+    }
+
+}
+
+class HydraMaterialPass extends HydraPass {
+
     constructor(options) {
 
         super(options);
@@ -67,12 +135,12 @@ class HydraShaderPass extends HydraPass {
 
 class HydraRenderPass extends HydraPass {
 
-    constructor( options ) {
+    constructor( scene, camera, options = {} ) {
 
         super(options);
 
-        this.scene = options.scene.scene;
-        this.camera = options.camera;
+        this.scene = scene;
+        this.camera = camera;
 
         this.overrideMaterial = options.overrideMaterial || null;
 
@@ -162,4 +230,4 @@ class HydraRenderPass extends HydraPass {
     }
 }
 
-export { HydraShaderPass, HydraRenderPass };
+export { HydraShaderPass, HydraMaterialPass, HydraRenderPass };

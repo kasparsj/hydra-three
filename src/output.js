@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { ClearPass } from "three/examples/jsm/postprocessing/ClearPass.js";
 import HydraUniform from "./three/HydraUniform.js";
-import { HydraShaderPass, HydraRenderPass } from "./three/HydraPass.js";
+import { HydraMaterialPass, HydraRenderPass } from "./three/HydraPass.js";
 import {HydraVertexShader, HydraShader} from "./lib/HydraShader.js";
 import {cameraMixin} from "./lib/mixins.js";
 import * as fx from "./three/fx.js";
@@ -58,19 +58,34 @@ Output.prototype.render = function (passes) {
     this.composer.passes[i].dispose();
   }
   this.composer.passes = [];
+  if (this.layers) {
+    for (let i=0; i<this.layers.length; i++) {
+      this.layers[i].dispose();
+    }
+  }
+  this.layers = [];
   if (passes.length > 0) {
     for (let i=0; i<passes.length; i++) {
       let options = passes[i];
       let pass, fxScene, fxCamera;
       if (options.scene && !options.scene.empty()) {
         options.camera || (options.camera = this._camera);
-        pass = new HydraRenderPass(options);
-        fxScene = options.scene;
+        fxScene = options.scene.scene;
         fxCamera = options.camera;
-        this.layers = options.layers;
+        pass = new HydraRenderPass(fxScene, fxCamera, options);
+        if (options.layers && options.layers.length) {
+          options.layers.map((layer, i) => {
+            layer.compile(this.synth.renderer, fxCamera);
+            options.fx = (options.fx || {});
+            // todo: composer does not work with 2 successive renderTarget - prevBuffer will not be prev renderTarget
+            // todo: maybe make sure only last pass has renderTarget?
+            options.fx[('layer' + i)] = layer.getMixPass({renderTarget: options.renderTarget});
+          });
+          this.layers.push(...options.layers);
+        }
       }
       else {
-        pass = new HydraShaderPass(options);
+        pass = new HydraMaterialPass(options);
       }
       if (options.clear) {
         if (options.clear.amount >= 1) {
@@ -122,7 +137,7 @@ Output.prototype.fade = function(options) {
       prevBuffer: { value: null }
     }, this.uniforms),
   };
-  const shaderPass = new HydraShaderPass(passOptions);
+  const shaderPass = new HydraMaterialPass(passOptions);
   shaderPass.needsSwap = false;
   if (now) {
     shaderPass.render(this.composer.renderer, this.composer.writeBuffer, this.composer.readBuffer);

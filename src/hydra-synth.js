@@ -327,7 +327,7 @@ class HydraRenderer {
       varying vec2 vUv;
 
       void main () {
-        vec2 st = vec2(1.0 - vUv.x, vUv.y);
+        vec2 st = vUv;
         st*= vec2(2);
         vec2 q = floor(st).xy*(vec2(2.0, 1.0));
         int quad = int(q.x) + int(q.y);
@@ -371,7 +371,7 @@ class HydraRenderer {
       varying vec2 vUv;
 
       void main () {
-          gl_FragColor = texture2D(tex0, vec2(1.0 - vUv.x, vUv.y));
+          gl_FragColor = texture2D(tex0, vUv);
       }
       `,
       uniforms: {
