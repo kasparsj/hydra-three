@@ -41,10 +41,12 @@ const init = (scene, camera, options = {}) => {
 }
 
 const initCam = (scene, camera, options) => {
-    const camLight = scene.camLight || (scene.camLight = new THREE.PointLight( options.color, options.intensity));
-    if (options.hasOwnProperty('visible')) {
-        camLight.visible = options.visible;
+    if (options.color) {
+        options.color = new THREE.Color(options.color);
     }
+    const camLight = scene.camLight || (scene.camLight = new THREE.PointLight());
+    // todo: should set only if defined
+    Object.assign(camLight, options);
     camera.add(camLight);
     scene.add(camera);
 }

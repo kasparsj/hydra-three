@@ -31,7 +31,6 @@ const cameraMixin = {
         }
         this._camera.position.set(...eye);
         this._camera.lookAt(...target);
-        this._camera.updateProjectionMatrix();
         for (let attr in options) {
             if (this._camera.hasOwnProperty(attr)) {
                 this._camera[attr] = options[attr];
@@ -54,6 +53,7 @@ const cameraMixin = {
                 }
             }
         }
+        this._camera.updateProjectionMatrix();
         return this;
     },
 
