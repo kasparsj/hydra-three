@@ -21,15 +21,16 @@ const set = (id, tex) => {
     textures[id] = tex;
 }
 
-const parseOptions = (options, defaults = {}) => {
-    const minFilter = options.minFilter || (filters[options.min] || THREE.NearestFilter);
-    const magFilter = options.magFilter || (filters[options.mag] || THREE.NearestFilter);
+const parseOptions = (data, options, defaults = {}) => {
+    const minFilter = options.minFilter || (filters[options.min || options.filter] || THREE.NearestFilter);
+    const magFilter = options.magFilter || (filters[options.mag || options.filter] || THREE.NearestFilter);
     const type = typeof options.type === 'number'
         ? options.type
         : types[options.type] || (data instanceof Float32Array ? THREE.FloatType : THREE.UnsignedByteType);
     options = Object.assign({
         width: data.width,
         height: data.height,
+        depth: data.depth || 1,
     }, defaults, options, {
         minFilter,
         magFilter,
@@ -37,7 +38,7 @@ const parseOptions = (options, defaults = {}) => {
     });
     if (!options.format) {
         if (!options.numChannels) {
-            options.numChannels = options.width && options.height ? data.length / (options.width * options.height) : 1;
+            options.numChannels = options.width && options.height ? data.length / (options.width * options.height * options.depth) : 1;
         }
         // THREE.LuminanceFormat not working
         const formats = [THREE.RedFormat, THREE.RGFormat, THREE.RGBAFormat, THREE.RGBAFormat];
@@ -47,7 +48,7 @@ const parseOptions = (options, defaults = {}) => {
 }
 
 const data = (data, options = {}) => {
-    options = parseOptions(options, {
+    options = parseOptions(data, options, {
         generateMipmaps: false,
         wrapS: THREE.MirroredRepeatWrapping,
         wrapT: THREE.MirroredRepeatWrapping,
@@ -66,14 +67,12 @@ const data = (data, options = {}) => {
 }
 
 const dataArray = (data, options = {}) => {
-    options = parseOptions(options, {
-        depth: data.depth,
-    });
+    options = parseOptions(data, options);
     if (Array.isArray(data)) {
         data = Uint8Array.from(data);
     }
     const tex = new THREE.DataArrayTexture(data, options.width, options.height, options.depth);
-    ['format', 'generateMipamps', 'minFilter', 'magFilter'].forEach((prop) => {
+    ['type', 'format', 'generateMipmaps', 'minFilter', 'magFilter'].forEach((prop) => {
         if (typeof options[prop] !== 'undefined') {
             tex[prop] = options[prop];
         }
