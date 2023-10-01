@@ -157,9 +157,18 @@ Output.prototype.tick = function () {
 }
 
 Output.prototype.renderTexture = function(options = {}) {
-  // todo: create RenderTarget with options
-  // renderTarget = new WebGLRenderTarget( this._width * this._pixelRatio, this._height * this._pixelRatio, { type: HalfFloatType } );
-  const texComposer = new EffectComposer(this.synth.renderer);
+  const renderer = this.synth.renderer;
+  const size = renderer.getSize( new THREE.Vector2() );
+  options = Object.assign({
+    width: size.width * renderer.getPixelRatio(),
+    height: size.height * renderer.getPixelRatio(),
+    type: THREE.HalfFloatType,
+    generateMipmaps: true,
+    minFilter: THREE.LinearMipmapLinearFilter,
+  }, options);
+  const {width, height, ...texOptions} = options;
+  const renderTarget = new THREE.WebGLRenderTarget( width, height, texOptions );
+  const texComposer = new EffectComposer(this.synth.renderer, renderTarget);
   texComposer.renderToScreen = false;
   HydraUniform.update();
   for (let i=0; i<this.composer.passes.length; i++) {
