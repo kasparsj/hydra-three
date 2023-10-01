@@ -8,14 +8,13 @@ import VidRecorder from './lib/video-recorder.js'
 import ArrayUtils from './lib/array-utils.js'
 // import strudel from './lib/strudel.js'
 import Sandbox from './eval-sandbox.js'
-import {GeneratorFactory, processFunction} from './generator-factory.js'
+import {GeneratorFactory} from './generator-factory.js'
 import * as THREE from "three";
 import {HydraUniform} from "./three/HydraUniform.js"
 import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
 import {ShaderPass} from "three/examples/jsm/postprocessing/ShaderPass.js";
 import * as tx from "./three/tx.js";
 import * as gm from "./three/gm.js";
-import * as scene from "./three/scene.js";
 import * as cm from "./three/cm.js";
 import * as mt from "./three/mt.js";
 import {HydraScene} from "./three/HydraScene.js";

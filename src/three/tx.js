@@ -73,6 +73,9 @@ const dataArray = (data, options = {}) => {
         const formats = [THREE.RedFormat, THREE.RGFormat, THREE.RGBAFormat, THREE.RGBAFormat];
         options.format = formats[(options.numChannels-1)];
     }
+    if (Array.isArray(data)) {
+        data = Uint8Array.from(data);
+    }
     const tex = new THREE.DataArrayTexture(data, options.width, options.height, options.depth);
     tex.format = options.format;
     tex.needsUpdate = true;

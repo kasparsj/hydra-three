@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import Output from "../output.js";
 
 class HydraUniform
@@ -63,4 +62,4 @@ class HydraUniform
         }, {});
     }
 }
-export { HydraUniform, HydraArrayTextureUniform }
+export { HydraUniform };
