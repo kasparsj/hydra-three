@@ -21,7 +21,7 @@ const set = (id, tex) => {
     textures[id] = tex;
 }
 
-const data = (data, options = {}) => {
+const parseOptions = (options, defaults = {}) => {
     const minFilter = options.minFilter || (filters[options.min] || THREE.NearestFilter);
     const magFilter = options.magFilter || (filters[options.mag] || THREE.NearestFilter);
     const type = typeof options.type === 'number'
@@ -30,10 +30,7 @@ const data = (data, options = {}) => {
     options = Object.assign({
         width: data.width,
         height: data.height,
-        generateMipmaps: false,
-        wrapS: THREE.MirroredRepeatWrapping,
-        wrapT: THREE.MirroredRepeatWrapping,
-    }, options, {
+    }, defaults, options, {
         minFilter,
         magFilter,
         type
@@ -46,6 +43,15 @@ const data = (data, options = {}) => {
         const formats = [THREE.RedFormat, THREE.RGFormat, THREE.RGBAFormat, THREE.RGBAFormat];
         options.format = formats[(options.numChannels-1)];
     }
+    return options;
+}
+
+const data = (data, options = {}) => {
+    options = parseOptions(options, {
+        generateMipmaps: false,
+        wrapS: THREE.MirroredRepeatWrapping,
+        wrapT: THREE.MirroredRepeatWrapping,
+    });
     const tex = new THREE.DataTexture(data, options.width, options.height, options.format, options.type);
     tex.minFilter = options.minFilter;
     tex.magFilter = options.magFilter;
@@ -60,24 +66,18 @@ const data = (data, options = {}) => {
 }
 
 const dataArray = (data, options = {}) => {
-    options = Object.assign({
-        width: data.width,
-        height: data.height,
+    options = parseOptions(options, {
         depth: data.depth,
-    }, options);
-    if (!options.format) {
-        if (!options.numChannels) {
-            options.numChannels = options.width && options.height && options.depth ? data.length / (options.width * options.height * data.depth) : 1;
-        }
-        // THREE.LuminanceFormat not working
-        const formats = [THREE.RedFormat, THREE.RGFormat, THREE.RGBAFormat, THREE.RGBAFormat];
-        options.format = formats[(options.numChannels-1)];
-    }
+    });
     if (Array.isArray(data)) {
         data = Uint8Array.from(data);
     }
     const tex = new THREE.DataArrayTexture(data, options.width, options.height, options.depth);
-    tex.format = options.format;
+    ['format', 'generateMipamps', 'minFilter', 'magFilter'].forEach((prop) => {
+        if (typeof options[prop] !== 'undefined') {
+            tex[prop] = options[prop];
+        }
+    });
     tex.needsUpdate = true;
     return tex;
 }
