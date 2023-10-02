@@ -455,7 +455,6 @@ class HydraRenderer {
       for (let i = 0; i < this.s.length; i++) {
         this.s[i].tick(this.synth.time)
       }
-      HydraUniform.update();
       for (let i = 0; i < this.o.length; i++) {
         this.o[i].tick()
       }

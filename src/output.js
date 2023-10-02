@@ -170,7 +170,6 @@ Output.prototype.renderTexture = function(options = {}) {
   const renderTarget = new THREE.WebGLRenderTarget( width, height, texOptions );
   const texComposer = new EffectComposer(this.synth.renderer, renderTarget);
   texComposer.renderToScreen = false;
-  HydraUniform.update();
   for (let i=0; i<this.composer.passes.length; i++) {
     texComposer.addPass(this.composer.passes[i]);
   }
