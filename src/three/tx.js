@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { padTo } from "./arr.js";
 
 const textures = {};
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -27,6 +28,31 @@ const set = (id, tex) => {
     textures[id] = tex;
 }
 
+const setAttributes = (tex, options) => {
+    ['type', 'format', 'generateMipmaps', 'minFilter', 'magFilter', 'wrapS', 'wrapT', 'needsUpdate'].forEach((prop) => {
+        if (typeof options[prop] !== 'undefined') {
+            tex[prop] = options[prop];
+        }
+    });
+}
+
+const parseData = (data) => {
+    if (Array.isArray(data[0]) || data[0] instanceof Float32Array || data[0] instanceof Uint8Array) {
+        const height = data.length;
+        const width = data[0].length;
+        data = data.flat();
+        data.width = width;
+        data.height = height;
+    }
+    if (Array.isArray(data)) {
+        const {width, height} = data;
+        data = Uint8Array.from(data);
+        data.width = width;
+        data.height = height;
+    }
+    return data;
+}
+
 const parseOptions = (data, options, defaults = {}) => {
     const minFilter = options.minFilter || (filters[options.min || options.filter] || THREE.NearestFilter);
     const magFilter = options.magFilter || (filters[options.mag || options.filter] || THREE.NearestFilter);
@@ -34,9 +60,10 @@ const parseOptions = (data, options, defaults = {}) => {
         ? options.type
         : strTypes[options.type] || types[data.constructor.name] || THREE.UnsignedByteType;
     options = Object.assign({
-        width: data.width,
-        height: data.height,
+        width: data.width || Math.max(data.length, 1),
+        height: data.height || 1,
         depth: data.depth || 1,
+        needsUpdate: true,
     }, defaults, options, {
         minFilter,
         magFilter,
@@ -53,37 +80,55 @@ const parseOptions = (data, options, defaults = {}) => {
     return options;
 }
 
+const adjustData = (data, options) => {
+    if (options.height === 1) {
+        data = padTo(data, options.width);
+    }
+    else if (data.length > options.width * options.height) {
+        data = data.slice(0, options.width * options.height);
+    }
+    return data;
+}
+
 const data = (data, options = {}) => {
+    data = parseData(data);
     options = parseOptions(data, options, {
         generateMipmaps: false,
         wrapS: THREE.MirroredRepeatWrapping,
         wrapT: THREE.MirroredRepeatWrapping,
     });
-    const tex = new THREE.DataTexture(data, options.width, options.height, options.format, options.type);
-    tex.minFilter = options.minFilter;
-    tex.magFilter = options.magFilter;
-    tex.generateMipmaps = options.generateMipmaps;
-    tex.wrapS = options.wrapS;
-    tex.wrapT = options.wrapT;
-    tex.needsUpdate = true;
-    if (options.id) {
-        set(options.id, tex);
+    data = adjustData(data, options);
+    const {id} = options;
+    let tex = id ? textures[id] : null;
+    if (!tex || tex.image.width !== options.width || tex.image.height !== options.height) {
+        tex = new THREE.DataTexture(data, options.width, options.height, options.format, options.type);
+        if (id) {
+            textures[id] = tex;
+        }
     }
+    else {
+        tex.image = data;
+    }
+    setAttributes(tex, options);
     return tex;
 }
 
 const dataArray = (data, options = {}) => {
+    data = parseData(data);
     options = parseOptions(data, options);
-    if (Array.isArray(data)) {
-        data = Uint8Array.from(data);
-    }
-    const tex = new THREE.DataArrayTexture(data, options.width, options.height, options.depth);
-    ['type', 'format', 'generateMipmaps', 'minFilter', 'magFilter'].forEach((prop) => {
-        if (typeof options[prop] !== 'undefined') {
-            tex[prop] = options[prop];
+    data = adjustData(data, options);
+    const {id} = options;
+    let tex = id ? textures[id] : null;
+    if (!tex || tex.image.width !== options.width || tex.image.height !== options.height || tex.image.depth !== options.depth) {
+        tex = new THREE.DataArrayTexture(data, options.width, options.height, options.depth);
+        if (id) {
+            textures[id] = tex;
         }
-    });
-    tex.needsUpdate = true;
+    }
+    else {
+        tex.image = data;
+    }
+    setAttributes(tex, options);
     return tex;
 }
 
