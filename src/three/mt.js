@@ -44,7 +44,7 @@ const hydra = (source, properties = {}) => {
     if (source instanceof GlslSource) {
         // todo: compile only single pass?
         options = source.compile()[0];
-        properties = options.material;
+        properties = Object.assign(options.material, properties);
     }
     const {
         isMeshBasicMaterial, isMeshLambertMaterial, isMeshPhongMaterial,
