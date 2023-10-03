@@ -4,7 +4,7 @@ import {replaceGenType} from "./types.js"
 import * as THREE from "three"
 import {HydraFragmentShader, HydraVertexShader} from "./lib/HydraShader.js";
 import {HydraUniform} from "./three/HydraUniform.js";
-import {cameraMixin, sourceMixin} from "./lib/mixins.js";
+import {cameraMixin, clearMixin, sourceMixin} from "./lib/mixins.js";
 
 var GlslSource = function (obj, options) {
   this.init(options);
@@ -16,7 +16,7 @@ var GlslSource = function (obj, options) {
   return this;
 }
 
-Object.assign(GlslSource.prototype, cameraMixin, sourceMixin);
+Object.assign(GlslSource.prototype, cameraMixin, sourceMixin, clearMixin);
 
 GlslSource.prototype.addTransform = function (obj)  {
   this.transforms.push(obj)

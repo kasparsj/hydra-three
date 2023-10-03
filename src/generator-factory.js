@@ -136,4 +136,6 @@ function processFunction(obj) {
 
 }
 
+window.processFunction = processFunction;
+
 export { GeneratorFactory, processFunction }
