@@ -74,8 +74,9 @@ const parseOptions = (data, options, defaults = {}) => {
 }
 
 const adjustData = (data, options) => {
-    if (options.height === 1) {
-        data = padTo(data, options.width);
+    if (data.length < options.width * options.height) {
+        // todo: padding when height > 1 will be incorrect visually
+        data = padTo(data, options.width * options.height);
     }
     else if (data.length > options.width * options.height) {
         data = data.slice(0, options.width * options.height);
