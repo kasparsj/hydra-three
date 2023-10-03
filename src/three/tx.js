@@ -69,14 +69,6 @@ const parseOptions = (data, options, defaults = {}) => {
         magFilter,
         type
     });
-    if (!options.format) {
-        if (!options.numChannels) {
-            options.numChannels = options.width && options.height ? data.length / (options.width * options.height * options.depth) : 1;
-        }
-        // THREE.LuminanceFormat not working
-        const formats = [THREE.RedFormat, THREE.RGFormat, THREE.RGBAFormat, THREE.RGBAFormat];
-        options.format = formats[(options.numChannels-1)];
-    }
     return options;
 }
 
@@ -90,6 +82,16 @@ const adjustData = (data, options) => {
     return data;
 }
 
+const checkFormat = (data, options) => {
+    if (!options.format) {
+        if (!options.numChannels) {
+            options.numChannels = options.width && options.height ? data.length / (options.width * options.height * options.depth) : 1;
+        }
+        // THREE.LuminanceFormat not working
+        const formats = [THREE.RedFormat, THREE.RGFormat, THREE.RGBAFormat, THREE.RGBAFormat];
+        options.format = formats[(options.numChannels-1)];
+    }
+}
 const data = (data, options = {}) => {
     data = parseData(data);
     options = parseOptions(data, options, {
@@ -98,6 +100,7 @@ const data = (data, options = {}) => {
         wrapT: THREE.MirroredRepeatWrapping,
     });
     data = adjustData(data, options);
+    checkFormat(data, options);
     const {id} = options;
     let tex = id ? textures[id] : null;
     if (!tex || tex.image.width !== options.width || tex.image.height !== options.height) {
@@ -117,6 +120,7 @@ const dataArray = (data, options = {}) => {
     data = parseData(data);
     options = parseOptions(data, options);
     data = adjustData(data, options);
+    checkFormat(data, options);
     const {id} = options;
     let tex = id ? textures[id] : null;
     if (!tex || tex.image.width !== options.width || tex.image.height !== options.height || tex.image.depth !== options.depth) {
