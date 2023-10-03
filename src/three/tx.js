@@ -16,6 +16,9 @@ const types = {
     'Uint8Array': THREE.UnsignedByteType,
 };
 
+const typesArray = {};
+Object.keys(types).forEach((key) => typesArray[types[key]] = key);
+
 const filters = {
     'nearest': THREE.NearestFilter,
     'linear': THREE.LinearFilter,
@@ -37,18 +40,16 @@ const setAttributes = (tex, options) => {
 }
 
 const parseData = (data) => {
-    if (Array.isArray(data[0]) || data[0] instanceof Float32Array || data[0] instanceof Uint8Array) {
+    if (Array.isArray(data[0]) || data[0] instanceof Float32Array || data[0] instanceof Uint8Array || data[0] instanceof Uint16Array) {
         const height = data.length;
         const width = data[0].length;
         data = data.flat();
         data.width = width;
         data.height = height;
     }
-    if (Array.isArray(data)) {
-        const {width, height} = data;
-        data = Uint8Array.from(data);
-        data.width = width;
-        data.height = height;
+    else {
+        data.width = data.width || data.length;
+        data.height = data.height || 1;
     }
     return data;
 }
@@ -78,6 +79,9 @@ const adjustData = (data, options) => {
     }
     else if (data.length > options.width * options.height) {
         data = data.slice(0, options.width * options.height);
+    }
+    if (Array.isArray(data)) {
+        data = window[typesArray[options.type]].from(data);
     }
     return data;
 }
@@ -110,7 +114,7 @@ const data = (data, options = {}) => {
         }
     }
     else {
-        tex.image = data;
+        tex.image = { data, width: options.width, height: options.height };
     }
     setAttributes(tex, options);
     return tex;
