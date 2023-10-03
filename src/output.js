@@ -70,7 +70,7 @@ Output.prototype.render = function (passes) {
       let pass, fxScene, fxCamera;
       if (options.scene && !options.scene.empty()) {
         options.camera || (options.camera = this._camera);
-        fxScene = options.scene.scene;
+        fxScene = options.scene;
         fxCamera = options.camera;
         pass = new HydraRenderPass(fxScene, fxCamera, options);
         if (options.layers && options.layers.length) {

@@ -17,7 +17,7 @@ import * as tx from "./three/tx.js";
 import * as gm from "./three/gm.js";
 import * as cm from "./three/cm.js";
 import * as mt from "./three/mt.js";
-import {HydraScene} from "./three/HydraScene.js";
+import * as scene from "./three/scene.js";
 
 
 const Mouse = MouseTools()
@@ -476,7 +476,7 @@ class HydraRenderer {
   }
 
   scene(attributes) {
-    return new HydraScene({
+    return scene.getOrCreateScene({
       defaultOutput: this.generator.defaultOutput,
       defaultUniforms: this.generator.defaultUniforms,
       utils: this.generator.utils,

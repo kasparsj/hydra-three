@@ -1,7 +1,7 @@
 import formatArguments from './format-arguments.js'
 import {typeLookup, getLookup, getTypeLookup, castType, replaceGenType} from "./types.js";
 import GlslSource from "./glsl-source.js";
-import {HydraScene} from "./three/HydraScene.js";
+import {HydraScene} from "./three/scene.js";
 
 // converts a tree of javascript functions to a shader
 export default function(source) {
