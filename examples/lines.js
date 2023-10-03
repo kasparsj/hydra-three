@@ -3,7 +3,7 @@ scene().lines(
     mt.lines(solid(noise(1, 0.03).map(-1,1,-0.1,1.1), noise(2, 0.03).map(-1,1,-0.1,1.1)),
         cnoise(1000).saturate(8))
 )
-    .autoClear(0.5)
+    .clear(0.5)
     .out()
 
 // layering

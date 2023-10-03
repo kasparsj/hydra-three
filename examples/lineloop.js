@@ -23,11 +23,10 @@ scene().lineloop([200], mt.lineloop(solid(sin(1).add(sin(7)).mult(0.5).add(0.5),
 scene().lineloop([300], mt.lineloop(solid(
     sin(1).add(sin([()=>time/2%1000])).mult(0.5).add(0.5),
     cos(1).add(cos([()=>time/2%1000])).mult(0.5).add(0.5)
-))).autoClear().out();
+))).out();
 
 // dancing thread
 scene().lineloop([100], mt.lineloop(solid(noise(1).x, noise(2).y, noise(3).y).map(-1,1,0,1).out(o1)))
-    .autoClear()
     .out();
 
 o0.perspective([0, 0.1, 1.5], [0, 0, 0]).clear();

@@ -27,7 +27,7 @@ const sc = scene({background: color(1,1,0)})
         {instanced: count}
     )
     .lights()
-    .autoClear().out();
+    .out();
 
 let matrixSet = false;
 update = () => {

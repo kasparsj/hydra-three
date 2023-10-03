@@ -53,7 +53,7 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
         glslName: 'combine',
       }, shaderInfo, [], { useCamera: false }),
       viewport: this._viewport,
-      clear: this._autoClear,
+      clear: this._clear,
     }, options);
   }
 
@@ -73,7 +73,7 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
   return Object.assign({
     camera: this._camera,
     viewport: this._viewport,
-    clear: this._autoClear,
+    clear: this._clear,
     fx: this._fx,
   }, options);
 }

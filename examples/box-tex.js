@@ -4,7 +4,7 @@ o0.ortho([1, 0.5, 1], 0, {controls: true});
 
 let sc;
 
-sc = scene().mesh(gm.box(1,1,1), osc().phong()).lights().autoClear();
+sc = scene().mesh(gm.box(1,1,1), osc().phong()).lights();
 
 sc = scene().mesh(
     gm.box(0.5, 0.5, 0.5),
@@ -27,7 +27,7 @@ sc = scene().mesh(
         )
         .scale(10)
         .phong()
-).lights().autoClear();
+).lights();
 
 const map = solid(1).add(scene().points([100,100], mt.dots(cnoise(rand()), wnoise(rand()).map(0,1,5,20), cnoise().saturate()))).tex(o1);
 // const map = solid(1, 1, 1).sub(dots([100,100], cnoise(rand()), wnoise(rand()).map(0,1,4,20), cnoise()).saturate()).tex(o1);
@@ -40,7 +40,7 @@ sc = scene().mesh(
     gm.box(1, 1, 1),
     src(map).phong(),
 //   solid(1).phong({map: map})
-).lights().autoClear();
+).lights();
 
 // todo: wrong multiply order
 solid(1,1,0).mult(noise()).layer(sc).out();

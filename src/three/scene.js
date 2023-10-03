@@ -354,7 +354,7 @@ class HydraScene extends THREE.Scene {
         super();
 
         this.init(options);
-        this._autoClear = {amount: 1};
+        this._clear = {amount: 1};
         this._layers = [];
     }
 
@@ -372,7 +372,7 @@ class HydraScene extends THREE.Scene {
             camera: this._camera,
             // todo: viewport
             viewport: this._viewport,
-            clear: this._autoClear,
+            clear: this._clear,
             layers: this._layers,
             fx: this._fx,
         }, options);

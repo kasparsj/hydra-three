@@ -128,8 +128,8 @@ const sourceMixin = {
         throw "abstract SourceProto._createPass called";
     },
 
-    autoClear(amount = 1.0, options = {}) {
-        this._autoClear = {
+    clear(amount = 1.0, options = {}) {
+        this._clear = {
             amount,
             ...options,
         };

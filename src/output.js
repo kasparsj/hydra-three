@@ -87,7 +87,7 @@ Output.prototype.render = function (passes) {
       else {
         pass = new HydraMaterialPass(options);
       }
-      if (options.clear) {
+      if (options.clear && options.clear.amount > 0) {
         if (options.clear.amount >= 1) {
           pass.clear = true;
         }
