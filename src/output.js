@@ -4,7 +4,7 @@ import { ClearPass } from "three/examples/jsm/postprocessing/ClearPass.js";
 import {HydraUniform} from "./three/HydraUniform.js";
 import { HydraMaterialPass, HydraRenderPass } from "./three/HydraPass.js";
 import {HydraVertexShader, HydraShader} from "./lib/HydraShader.js";
-import {cameraMixin} from "./lib/mixins.js";
+import {cameraMixin, clearMixin} from "./lib/mixins.js";
 import * as fx from "./three/fx.js";
 import * as layers from "./three/layers.js";
 
@@ -19,7 +19,7 @@ var Output = function (index, synth) {
   this.init()
 }
 
-Object.assign(Output.prototype, cameraMixin);
+Object.assign(Output.prototype, cameraMixin, clearMixin);
 
 Output.prototype.init = function () {
   this.composer = new EffectComposer(this.synth.renderer);
@@ -65,6 +65,15 @@ Output.prototype.render = function (passes) {
   }
   this.layers = [];
   if (passes.length > 0) {
+    // todo: output level clear and fade are not working properly
+    if (this._clear && this._clear.amount > 0) {
+      if (this._clear.amount >= 1) {
+        this.composer.addPass(new ClearPass());
+      }
+      else {
+        this.composer.addPass(this._fadePass({...this._clear}));
+      }
+    }
     for (let i=0; i<passes.length; i++) {
       let options = passes[i];
       let pass, fxScene, fxCamera;
@@ -92,7 +101,7 @@ Output.prototype.render = function (passes) {
           pass.clear = true;
         }
         else {
-          this.composer.addPass(this.fade({now: false, ...options.clear}));
+          this.composer.addPass(this._fadePass({...options.clear}));
         }
       }
       this.composer.addPass(pass);
@@ -107,20 +116,18 @@ Output.prototype.render = function (passes) {
   }
 }
 
-Output.prototype.clear = function() {
+Output.prototype.clearNow = function() {
   const clear = new ClearPass();
   clear.render(this.composer.renderer, this.composer.writeBuffer, this.composer.readBuffer);
   clear.render(this.composer.renderer, this.composer.readBuffer, this.composer.writeBuffer);
   return this;
 }
 
-Output.prototype.fade = function(options) {
+Output.prototype._fadePass = function(options) {
   let amount = options;
   let camera = false;
-  let now = true;
   if (typeof(options) === 'object') {
     ({amount, camera} = options);
-    now = typeof(options.now) === 'undefined' ? true : options.now;
   }
   // todo: do we need to fade also temp buffers?
   const passOptions = {
@@ -139,10 +146,6 @@ Output.prototype.fade = function(options) {
   };
   const shaderPass = new HydraMaterialPass(passOptions);
   shaderPass.needsSwap = false;
-  if (now) {
-    shaderPass.render(this.composer.renderer, this.composer.writeBuffer, this.composer.readBuffer);
-    return this;
-  }
   return shaderPass;
 }
 

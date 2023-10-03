@@ -3,7 +3,7 @@ import * as mt from "./mt.js";
 import {GridGeometry} from "../lib/GridGeometry.js";
 import GlslSource from "../glsl-source.js";
 import {FullScreenQuad} from "three/examples/jsm/postprocessing/Pass.js";
-import {cameraMixin, sourceMixin, mixClass} from "../lib/mixins.js";
+import {cameraMixin, sourceMixin, mixClass, clearMixin} from "../lib/mixins.js";
 import * as layers from "./layers.js";
 import * as lights from "./lights.js";
 import * as world from "./world.js";
@@ -417,6 +417,6 @@ class HydraScene extends THREE.Scene {
     }
 }
 
-mixClass(HydraScene, cameraMixin, sourceMixin, sceneMixin);
+mixClass(HydraScene, cameraMixin, clearMixin, sourceMixin, sceneMixin);
 
 export {HydraScene, HydraGroup, getOrCreateScene}

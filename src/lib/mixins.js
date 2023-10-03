@@ -68,6 +68,16 @@ const cameraMixin = {
     }
 };
 
+const clearMixin = {
+    clear(amount = 1.0, options = {}) {
+        this._clear = {
+            amount,
+            ...options,
+        };
+        return this;
+    },
+};
+
 const sourceMixin = {
 
     init(options) {
@@ -128,14 +138,6 @@ const sourceMixin = {
         throw "abstract SourceProto._createPass called";
     },
 
-    clear(amount = 1.0, options = {}) {
-        this._clear = {
-            amount,
-            ...options,
-        };
-        return this;
-    },
-
     fx(options) {
         this._fx = options;
         return this;
@@ -157,4 +159,4 @@ const mixClass = (clazz, ...mixins) => {
     }
 }
 
-export { cameraMixin, sourceMixin, mixClass }
+export { cameraMixin, clearMixin, sourceMixin, mixClass }
