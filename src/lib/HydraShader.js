@@ -109,6 +109,14 @@ class HydraVertexShader extends HydraShader {
             `;
             call = `
             #include <uv_vertex>
+            #include <color_vertex>
+            #include <morphcolor_vertex>
+            #include <beginnormal_vertex>
+            #include <morphnormal_vertex>
+            #include <skinbase_vertex>
+            #include <skinnormal_vertex>
+            #include <defaultnormal_vertex>
+            #include <normal_vertex>
             #if defined( USE_UV )
             vec2 st = uv;
             #else
