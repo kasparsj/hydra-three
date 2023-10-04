@@ -76,6 +76,7 @@ const hydra = (source, properties = {}) => {
             FLAT_SHADED: !options.frag.useNormal,
             USE_UV: options.frag.useUV,
             USE_ALPHAHASH: true,
+            USE_DISPLACEMENTMAP: !!displacementMap,
             // USE_COLOR: !options.frag.useUV, // vColor
         },
         uniforms: options.uniforms,
@@ -244,21 +245,6 @@ const text = (color, options = {}) => {
     return hydra(hydraSynth.generator.createSource('text', textFunc, [color]), options);
 }
 
-const planeFunc = processFunction({
-    name: 'plane',
-    type: 'vert',
-    inputs: [
-        {name: 'pos', type: 'vec3', default: () => gradient()},
-        {name: 'color', type: 'vec4', default: 1},
-    ],
-    glsl: `return color;`,
-    vert: planeVert,
-    primitive: 'triangles',
-});
-const plane = (pos, color, options = {}) => {
-    return hydra(hydraSynth.generator.createSource('plane', planeFunc, [pos, color]), options);
-}
-
 const meshFunc = processFunction({
     name: 'mesh',
     type: 'vert',
@@ -297,6 +283,6 @@ export {
     lineBasic,
     worldPosGradientY,
     hydra,
-    dots, squares, lines, linestrip, lineloop, text, plane, mesh,
+    dots, squares, lines, linestrip, lineloop, text, mesh,
     getBlend,
 };

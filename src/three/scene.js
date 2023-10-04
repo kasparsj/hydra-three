@@ -329,7 +329,7 @@ const sceneMixin = {
     },
 
     at(index = 0) {
-        return this.children.filter((o) => o.name !== '__lights')[index];
+        return this.children.filter((o) => o.name !== '__lights' && o.name !== '__world')[index];
     },
 
     find(filter = {isMesh: true}) {
@@ -381,7 +381,7 @@ class HydraScene extends THREE.Scene {
     lights(options) {
         const camera = this._camera || (options && options.out || this.defaultOutput)._camera;
         // todo: cannot remove lights
-        lights.init(this.group({name: '__lights'}), camera, options || {cam: true, amb: true, sun: true, hemi: true});
+        lights.init(this.group({name: '__lights'}), camera, options || {all: true});
         return this;
     }
 
@@ -389,8 +389,8 @@ class HydraScene extends THREE.Scene {
         // todo: getOrCreate light
     }
 
-    hasLights() {
-        return !!this.find({name: '__lights'}).length;
+    getLights() {
+        return this.find({name: '__lights'})[0];
     }
 
     world(options = {}) {
@@ -402,8 +402,12 @@ class HydraScene extends THREE.Scene {
             }, options);
         }
         // todo: cannot remove world
-        world.init(this, options);
+        world.init(this.group({name: '__world'}), options);
         return this;
+    }
+
+    getWorld() {
+        return this.find({name: '__world'})[0];
     }
 
     layer(id, options = {}) {

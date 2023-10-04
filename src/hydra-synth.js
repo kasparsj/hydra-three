@@ -69,6 +69,7 @@ class HydraRenderer {
       update: (dt) => {},// user defined update function
       hush: this.hush.bind(this),
       tick: this.tick.bind(this),
+      shadowMap: this.shadowMap.bind(this),
       scene: this.scene.bind(this),
       tx,
       gm,
@@ -473,6 +474,16 @@ class HydraRenderer {
       this.saveFrame = false
     }
   //  this.regl.poll()
+  }
+
+  shadowMap(options) {
+    options = options || {
+      enabled: true,
+      type: THREE.PCFSoftShadowMap,
+    };
+    Object.keys(options).forEach((prop) => {
+      this.renderer.shadowMap[prop] = options[prop];
+    })
   }
 
   scene(attributes) {

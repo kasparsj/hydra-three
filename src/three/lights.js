@@ -2,41 +2,53 @@ import * as THREE from "three";
 
 const init = (scene, camera, options = {}) => {
     options = Object.assign({
-        intensityMul: 1,
+        intensity: 1,
     }, options);
-    if (options.hasOwnProperty('camera') || options.hasOwnProperty("cam")) {
+    if (options.camera || options.cam || options.all) {
         const camOptions = Object.assign({
             color: options.camColor || 0xFFFFFF,
             intensity: options.camIntensity || 0.5,
         }, typeof options.camera === 'object' ? options.camera : {});
-        camOptions.intensity = camOptions.intensity * options.intensityMul;
+        camOptions.intensity = camOptions.intensity * options.intensity;
         initCam(scene, camera, camOptions);
     }
-    if (options.hasOwnProperty('sun')) {
+    else {
+        // todo: remove camLight
+    }
+    if (options.sun || options.all) {
         const sunOptions = Object.assign({
             color: options.sunColor || 0xFFFFFF,
             intensity: options.sunIntensity || 0.7,
             elevation: options.sunEle || 45,
             azimuth: options.sunAzi || 90,
         }, typeof options.sun === 'object' ? options.sun : {});
-        sunOptions.intensity = sunOptions.intensity * options.intensityMul;
+        sunOptions.intensity = sunOptions.intensity * options.intensity;
         initSun(scene, camera, sunOptions);
     }
-    if (options.hasOwnProperty('ambient') || options.hasOwnProperty("amb")) {
+    else {
+        // todo: remove sunLight
+    }
+    if (options.ambient || options.amb || options.all) {
         const ambOptions = Object.assign({
             color: options.ambColor || 0x404040,
             intensity: options.ambIntensity || 0.1,
         }, typeof options.ambient === 'object' ? options.ambient : {});
-        ambOptions.intensity = ambOptions.intensity * options.intensityMul;
+        ambOptions.intensity = ambOptions.intensity * options.intensity;
         initAmbient(scene, ambOptions);
     }
-    if (options.hasOwnProperty('hemisphere') || options.hasOwnProperty("hemi")) {
+    else {
+        // todo: remove ambLight
+    }
+    if (options.hemisphere || options.hemi || options.all) {
         const hemiOptions = Object.assign({
             color: options.hemiColor || 0xFFFFFF,
             intensity: options.hemiIntensity || 0.5,
         }, typeof options.hemisphere === 'object' ? options.hemisphere : {});
-        hemiOptions.intensity = hemiOptions.intensity * options.intensityMul;
+        hemiOptions.intensity = hemiOptions.intensity * options.intensity;
         initHemi(scene, hemiOptions);
+    }
+    else {
+        // todo: remove hemiLight
     }
 }
 
@@ -70,6 +82,10 @@ const initSun = (scene, camera, options) => {
     sunLight.target.position.set(0, 0, 0);
     scene.add(sunLight);
     scene.add(sunLight.target);
+
+    if (options.helper) {
+        scene.add(new THREE.DirectionalLightHelper(scene.sunLight));
+    }
 }
 
 const posFromEleAzi = (elevation, azimuth, radius = 1) => {

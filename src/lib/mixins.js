@@ -11,7 +11,7 @@ const cameraMixin = {
             fov: 50,
             aspect: 1,
             near: 0.1,
-            far: 10,
+            far: 100,
             left: -1,
             right: 1,
             top: 1,
