@@ -76,7 +76,6 @@ const hydra = (source, properties = {}) => {
             FLAT_SHADED: !options.frag.useNormal,
             USE_UV: options.frag.useUV,
             USE_ALPHAHASH: true,
-            // USE_MAP: !!map, // is it needed?
             // USE_COLOR: !options.frag.useUV, // vColor
         },
         uniforms: options.uniforms,

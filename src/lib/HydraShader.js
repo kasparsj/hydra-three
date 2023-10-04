@@ -108,9 +108,9 @@ class HydraVertexShader extends HydraShader {
             ${transform.vert}
             `;
             call = `
+            #include <uv_vertex>
             #if defined( USE_UV )
             vec2 st = uv;
-            vUv = st;
             #else
             vec2 st = position.xy;
             #endif
