@@ -1,13 +1,12 @@
 await loadScript("/hy/index.js");
 
 shadowMap();
-o0.perspective([3,5,3], 0, {controls: true})
+o0.ortho([3,5,3], 0, {controls: true})
 
 const sc = scene()
-    .world()
-    .lights();
+    .lights({gui: true, all: true, sun: {helper: true}})
+    .world({gui: true, fog: true});
 
-// todo: shadows not working
 const group = sc.group();
 group.mesh(gm.box(), mt.meshPhong());
 

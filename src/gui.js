@@ -1,54 +1,74 @@
+import * as lightsLib from "./three/lights.js";
 import * as worldLib from "./three/world.js";
 
-const all = {};
+const guis = {};
 
-const create = async (name, settings, setupFn) => {
+const create = async (name = "hydra") => {
     await loadScript("https://unpkg.com/dat.gui");
     patchDat();
-    if (!all[name]) {
+    if (!guis[name]) {
         const gui = new dat.GUI({ name, hideable: false });
         gui.useLocalStorage = true;
-        gui.remember(settings);
+        guis[name] = gui;
+    }
+    return guis[name];
+}
+
+const addFolder = (gui, name, settings, setupFn) => {
+    gui.remember(settings);
+    try {
+        const folder = gui.addFolder(name);
         if (setupFn) {
-            setupFn(gui, settings);
+            setupFn(folder, settings);
         }
-        all[name] = gui;
+    }
+    catch (e) {
+        console.log(e.message);
     }
     return settings;
 }
 
-const lights = (scene) => {
-    return create("lights", {
-
-    }, (gui, settings) => {
-
-    });
+const lights = async (scene, defaults = {}) => {
+    const group = scene.getLights();
+    return addFolder(await create(), "lights",
+        Object.assign({}, lightsLib.defaults, defaults),
+        (folder, settings) => {
+            const update = () => { updateLights(scene, settings) }
+            folder.add(settings, 'intensity', 0, 10, 0.1).onChange(update);
+            folder.addColor(settings, 'camColor').onChange(update);
+            folder.add(settings, 'camIntensity', 0, 1, 0.1).onChange(update);
+            folder.addColor(settings, 'sunColor').onChange(update);
+            folder.add(settings, 'sunIntensity', 0, 1, 0.1).onChange(update);
+            folder.add(settings, 'sunEle', 0, 90, 1);
+            folder.add(settings, 'sunAzi', 0, 180, 1);
+            folder.addColor(settings, 'ambColor').onChange(update);
+            folder.add(settings, 'ambIntensity', 0, 1, 0.1).onChange(update);
+            folder.addColor(settings, 'groundColor').onChange(update);
+            folder.addColor(settings, 'skyColor').onChange(update);
+            folder.add(settings, 'hemiIntensity', 0, 1, 0.1).onChange(update);
+        }
+    );
 }
 
-const updateLights = (scene, group) => {
-
+const updateLights = (scene, settings) => {
+    lightsLib.update(scene, scene.getLights(), settings);
 }
 
-const world = (scene, defaults = {}) => {
+const world = async (scene, defaults = {}) => {
     const group = scene.getWorld();
-    const settings = create("world", Object.assign({
-        skyDome: false,
-        skyDomeColor: 0x0077ff,
-        sun: false,
-        ground: true,
-        groundColor: 0xffffff,
-        fog: true,
-        fogColor: scene.background || 0xffffff,
-    }, defaults), (gui, settings) => {
-        const update = () => { updateWorld(scene, settings) }
-        gui.add(settings, 'skyDome').onChange(update);
-        gui.addColor(settings, 'skyDomeColor').onChange(update);
-        gui.add(settings, 'sun').onChange(update);
-        gui.add(settings, 'ground').onChange(update);
-        gui.addColor(settings, 'groundColor').onChange(update);
-        gui.add(settings, 'fog').onChange(update);
-        gui.addColor(settings, 'fogColor').onChange(update);
-    });
+    const settings = addFolder(await create(), "world",
+        Object.assign({}, worldLib.defaults, { fogColor: scene.background || 0xffffff }, defaults),
+        (folder, settings) => {
+            const update = () => { updateWorld(scene, settings) }
+            folder.add(settings, 'skyDome').onChange(update);
+            folder.addColor(settings, 'skyDomeColor').onChange(update);
+            folder.add(settings, 'sun').onChange(update);
+            folder.add(settings, 'ground').onChange(update);
+            folder.addColor(settings, 'groundColor').onChange(update);
+            folder.add(settings, 'fog').onChange(update);
+            folder.addColor(settings, 'fogColor').onChange(update);
+        }
+    );
     if (!group) {
         updateWorld(scene, settings);
     }
@@ -67,4 +87,4 @@ function patchDat() {
     }
 }
 
-export { all, create, lights, world }
+export { create, addFolder, lights, world }

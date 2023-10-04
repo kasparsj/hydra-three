@@ -7,6 +7,18 @@ const skyName = "__sky";
 const sunName = "__sun";
 const groundName = "__ground";
 
+const defaults = {
+    skyDome: false,
+    skyDomeGeom: 'SphereGeometry',
+    skyDomeMat: 'worldPosGradientY',
+    skyDomeColor: 0x0077ff,
+    sun: false,
+    ground: true,
+    groundColor: 0xffffff,
+    fog: true,
+    fogColor: 0xffffff,
+};
+
 const updateSkyDome = (group, options) => {
     let sky = group.find({name: skyName})[0];
     if (sky) {
@@ -170,21 +182,11 @@ const updateFog = (scene, options) => {
 }
 
 const update = (scene, group, options) => {
-    options = Object.assign({
-        skyDome: false,
-        skyDomeGeom: 'SphereGeometry',
-        skyDomeMat: 'worldPosGradientY',
-        skyDomeColor: 0x0077ff,
-        sun: false,
-        ground: true,
-        groundColor: 0xffffff,
-        fog: true,
-        fogColor: scene.background || 0xffffff,
-    }, options);
+    options = Object.assign({}, defaults, {fogColor: scene.background || defaults.fogColor}, options);
     updateSkyDome(group, options);
     updateSun(group, options);
     updateGround(group, options);
     updateFog(scene, options);
 }
 
-export {update, getReliefAt}
+export {defaults, update, getReliefAt}

@@ -384,8 +384,10 @@ class HydraScene extends THREE.Scene {
 
     lights(options) {
         const camera = this._camera || (options && options.out || this.defaultOutput)._camera;
-        // todo: cannot remove lights
-        lights.init(this.group({name: grLights}), camera, options || {all: true});
+        lights.update(this.group({name: grLights}), camera, options || {all: true});
+        if (options.gui) {
+            gui.lights(this, options);
+        }
         return this;
     }
 

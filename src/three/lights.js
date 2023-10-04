@@ -1,77 +1,93 @@
 import * as THREE from "three";
 import * as gm from "./gm.js";
 
-const init = (scene, camera, options = {}) => {
-    options = Object.assign({
-        intensity: 1,
-    }, options);
-    if (options.camera || options.cam || options.all) {
-        const camOptions = Object.assign({
-            color: options.camColor || 0xFFFFFF,
-            intensity: options.camIntensity || 0.5,
-        }, typeof options.camera === 'object' ? options.camera : {});
-        camOptions.intensity = camOptions.intensity * options.intensity;
-        initCam(scene, camera, camOptions);
-    }
-    else {
-        // todo: remove camLight
-    }
-    if (options.sun || options.all) {
-        const sunOptions = Object.assign({
-            color: options.sunColor || 0xFFFFFF,
-            intensity: options.sunIntensity || 0.7,
-            elevation: options.sunEle || 45,
-            azimuth: options.sunAzi || 90,
-        }, typeof options.sun === 'object' ? options.sun : {});
-        sunOptions.intensity = sunOptions.intensity * options.intensity;
-        initSun(scene, camera, sunOptions);
-    }
-    else {
-        // todo: remove sunLight
-    }
-    if (options.ambient || options.amb || options.all) {
-        const ambOptions = Object.assign({
-            color: options.ambColor || 0x404040,
-            intensity: options.ambIntensity || 0.1,
-        }, typeof options.ambient === 'object' ? options.ambient : {});
-        ambOptions.intensity = ambOptions.intensity * options.intensity;
-        initAmbient(scene, ambOptions);
-    }
-    else {
-        // todo: remove ambLight
-    }
-    if (options.hemisphere || options.hemi || options.all) {
-        const hemiOptions = Object.assign({
-            groundColor: options.groundColor || 0xFFFFFF,
-            skyColor: options.skyColor || 0x0077ff,
-            intensity: options.hemiIntensity || 0.5,
-        }, typeof options.hemisphere === 'object' ? options.hemisphere : {});
-        hemiOptions.intensity = hemiOptions.intensity * options.intensity;
-        initHemi(scene, hemiOptions);
-    }
-    else {
-        // todo: remove hemiLight
-    }
+const camLightName = "__camLight";
+const sunLightName = "__sunLight";
+const ambLightName = "__ambLight";
+const hemiLightName = "__hemiLight";
+
+const defaults = {
+    intensity: 1,
+    camColor: 0xFFFFFF,
+    camIntensity: 0.5,
+    sunColor: 0xFFFFFF,
+    sunIntensity: 0.7,
+    sunEle: 45,
+    sunAzi: 90,
+    ambColor: 0x404040,
+    ambIntensity: 0.1,
+    groundColor: 0xFFFFFF,
+    skyColor: 0x0077ff,
+    hemiIntensity: 0.5
+};
+
+const update = (group, camera, options = {}) => {
+    options = Object.assign({}, defaults, options);
+
+    const camOptions = Object.assign({
+        color: options.camColor,
+        intensity: options.camIntensity,
+        visible: !!(options.camera || options.cam || options.all),
+    }, typeof options.camera === 'object' ? options.camera : {});
+    camOptions.intensity = camOptions.intensity * options.intensity;
+    updateCam(group, camera, camOptions);
+
+    const sunOptions = Object.assign({
+        color: options.sunColor,
+        intensity: options.sunIntensity,
+        elevation: options.sunEle,
+        azimuth: options.sunAzi,
+        visible: !!(options.sun || options.all)
+    }, typeof options.sun === 'object' ? options.sun : {});
+    sunOptions.intensity = sunOptions.intensity * options.intensity;
+    updateSun(group, camera, sunOptions);
+
+    const ambOptions = Object.assign({
+        color: options.ambColor,
+        intensity: options.ambIntensity,
+        visible: !!(options.ambient || options.amb || options.all),
+    }, typeof options.ambient === 'object' ? options.ambient : {});
+    ambOptions.intensity = ambOptions.intensity * options.intensity;
+    updateAmbient(group, ambOptions);
+
+    const hemiOptions = Object.assign({
+        groundColor: options.groundColor,
+        skyColor: options.skyColor,
+        intensity: options.hemiIntensity,
+        visible: !!(options.hemisphere || options.hemi || options.all),
+    }, typeof options.hemisphere || options.hemi || {});
+    hemiOptions.intensity = hemiOptions.intensity * options.intensity;
+    updateHemi(group, hemiOptions);
 }
 
-const initCam = (scene, camera, options) => {
+const updateCam = (group, camera, options) => {
+    let camLight = group.find({name: camLightName})[0];
+    if (!camLight) camLight = new THREE.PointLight();
+    camLight.name = camLightName;
     if (options.color) {
         options.color = new THREE.Color(options.color);
     }
-    const camLight = scene.camLight || (scene.camLight = new THREE.PointLight());
     // todo: should set only if defined
     Object.assign(camLight, options);
+    // todo: fix added twice
     camera.add(camLight);
-    scene.add(camera);
+    group.add(camera);
 }
 
-const initSun = (scene, camera, options) => {
-    const sunLight = scene.sunLight || (scene.sunLight = new THREE.DirectionalLight(options.color, options.intensity));
-    if (options.hasOwnProperty('visible')) {
-        sunLight.visible = options.visible;
+const updateSun = (group, camera, options) => {
+    let sunLight = group.find({name: sunLightName})[0];
+    if (!sunLight) sunLight = new THREE.DirectionalLight();
+    if (options.color) {
+        sunLight.color = new THREE.Color(options.color);
     }
+    ["intensity", "visible"].forEach((prop) => {
+        if (options.hasOwnProperty(prop)) {
+            sunLight[prop] = options[prop];
+        }
+    });
     const sunPos = gm.posFromEleAzi(options.elevation, options.azimuth, camera.far/2);
     sunLight.position.copy(sunPos);
+    sunLight.name = sunLightName;
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 512;
     sunLight.shadow.mapSize.height = 512;
@@ -90,31 +106,43 @@ const initSun = (scene, camera, options) => {
         sunLight.shadow.camera.bottom = -1;
     }
     sunLight.target.position.set(0, 0, 0);
-    scene.add(sunLight);
-    scene.add(sunLight.target);
-
+    group.add(sunLight);
+    group.add(sunLight.target);
+    // todo: fix added twice
     if (options.helper) {
-        scene.add(new THREE.DirectionalLightHelper(scene.sunLight));
+        group.add(new THREE.DirectionalLightHelper(sunLight));
     }
 }
 
-const initAmbient = (scene, options) => {
-    const ambLight = scene.ambLight || (scene.ambLight = new THREE.AmbientLight( options.color, options.intensity ));
-    if (options.hasOwnProperty('visible')) {
-        ambLight.visible = options.visible;
+const updateAmbient = (group, options) => {
+    let ambLight = group.find({name: ambLightName})[0];
+    if (!ambLight) ambLight = new THREE.AmbientLight();
+    ambLight.name = ambLightName;
+    // todo: should check property exists
+    Object.assign(ambLight, options);
+    if (options.color) {
+        ambLight.color = new THREE.Color(options.color);
     }
-    scene.add(ambLight);
+    group.add(ambLight);
 }
 
-const initHemi = (scene, options) => {
-    const hemiLight = scene.hemiLight || (scene.hemiLight = new THREE.HemisphereLight( options.skyColor, options.groundColor, options.intensity ));
-    if (options.hasOwnProperty('visible')) {
-        hemiLight.visible = options.visible;
+const updateHemi = (group, options) => {
+    let hemiLight = group.find({name: hemiLightName})[0];
+    if (!hemiLight) hemiLight = new THREE.HemisphereLight();
+    hemiLight.name = hemiLightName;
+    if (options.skyColor) {
+        hemiLight.skyColor = new THREE.Color(options.skyColor);
     }
+    if (options.groundColor) {
+        hemiLight.groundColor = new THREE.Color(options.groundColor);
+    }
+    ["intensity", "visible"].forEach((prop) => {
+        if (options.hasOwnProperty(prop)) {
+            hemiLight[prop] = options[prop];
+        }
+    });
     hemiLight.position.set( 0, 50, 0 );
-    scene.add(hemiLight);
+    group.add(hemiLight);
 }
 
-export {
-    init, initAmbient, initSun, initCam, initHemi,
-}
+export { camLightName, sunLightName, ambLightName, hemiLightName, defaults, update }
