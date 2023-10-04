@@ -110,6 +110,7 @@ class HydraVertexShader extends HydraShader {
             call = `
             #if defined( USE_UV )
             vec2 st = uv;
+            vUv = st;
             #else
             vec2 st = position.xy;
             #endif
