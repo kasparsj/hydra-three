@@ -3,6 +3,7 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import * as gm from "./gm";
 import * as mt from "./mt";
 
+const groupName = '__world';
 const skyName = "__sky";
 const sunName = "__sun";
 const groundName = "__ground";
@@ -181,7 +182,8 @@ const updateFog = (scene, options) => {
     }
 }
 
-const update = (scene, group, options) => {
+const update = (scene, options) => {
+    const group = scene.group({name: groupName});
     options = Object.assign({}, defaults, {fogColor: scene.background || defaults.fogColor}, options);
     updateSkyDome(group, options);
     updateSun(group, options);
@@ -189,4 +191,4 @@ const update = (scene, group, options) => {
     updateFog(scene, options);
 }
 
-export {defaults, update, getReliefAt}
+export {groupName, defaults, update, getReliefAt}

@@ -9,9 +9,6 @@ import * as lights from "./lights.js";
 import * as world from "./world.js";
 import * as gui from "../gui.js";
 
-const grLights = '__lights';
-const grWorld = '__world';
-
 const scenes = {}
 const groups = {};
 const meshes = [];
@@ -333,7 +330,7 @@ const sceneMixin = {
     },
 
     at(index = 0) {
-        return this.children.filter((o) => o.name !== grLights && o.name !== grWorld)[index];
+        return this.children.filter((o) => o.name !== lights.groupName && o.name !== world.groupName)[index];
     },
 
     find(filter = {isMesh: true}) {
@@ -383,39 +380,31 @@ class HydraScene extends THREE.Scene {
     }
 
     lights(options) {
-        const camera = this._camera || (options && options.out || this.defaultOutput)._camera;
-        lights.update(this.group({name: grLights}), camera, options || {all: true});
+        const camera = this.getCamera(options);
+        lights.update(this, camera, options || {all: true});
         if (options.gui) {
-            gui.lights(this, options);
+            gui.lights(this, camera, options);
         }
         return this;
     }
 
-    light() {
-        // todo: getOrCreate light
-    }
-
-    getLights() {
-        return this.find({name: grLights})[0];
+    getCamera(options) {
+        return this._camera || (options && options.out || this.defaultOutput)._camera;
     }
 
     world(options = {}) {
         if (!options.near || !options.far) {
-            const camera = this._camera || (options.out || this.defaultOutput)._camera;
+            const camera = this.getCamera(options);
             options = Object.assign({
                 near: camera.near,
                 far: camera.far,
             }, options);
         }
-        world.update(this, this.group({name: grWorld}), options);
+        world.update(this, options);
         if (options.gui) {
             gui.world(this, options);
         }
         return this;
-    }
-
-    getWorld() {
-        return this.find({name: grWorld})[0];
     }
 
     layer(id, options = {}) {
@@ -431,4 +420,4 @@ class HydraScene extends THREE.Scene {
 
 mixClass(HydraScene, cameraMixin, clearMixin, sourceMixin, sceneMixin);
 
-export { grLights, grWorld, HydraScene, HydraGroup, getOrCreateScene}
+export { HydraScene, HydraGroup, getOrCreateScene}

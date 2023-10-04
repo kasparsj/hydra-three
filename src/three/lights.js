@@ -1,8 +1,10 @@
 import * as THREE from "three";
 import * as gm from "./gm.js";
 
+const groupName = "__lights"
 const camLightName = "__camLight";
 const sunLightName = "__sunLight";
+const sunLightHelperName = "__sunLightHelper";
 const ambLightName = "__ambLight";
 const hemiLightName = "__hemiLight";
 
@@ -25,7 +27,8 @@ const defaults = {
     hemiIntensity: 0.5
 };
 
-const update = (group, camera, options = {}) => {
+const update = (scene, camera, options = {}) => {
+    const group = scene.group({name: groupName});
     options = Object.assign({}, defaults, options);
 
     const camOptions = Object.assign({
@@ -80,54 +83,74 @@ const updateCam = (group, camera, options) => {
 
 const updateSun = (group, camera, options) => {
     let sunLight = group.find({name: sunLightName})[0];
-    if (!sunLight) sunLight = new THREE.DirectionalLight();
-    if (options.color) {
-        sunLight.color = new THREE.Color(options.color);
-    }
-    ["intensity", "visible"].forEach((prop) => {
-        if (options.hasOwnProperty(prop)) {
-            sunLight[prop] = options[prop];
+    let helper = group.find({name: sunLightHelperName})[0];
+    if (options.visible) {
+        if (!sunLight) sunLight = new THREE.DirectionalLight();
+        if (options.color) {
+            sunLight.color = new THREE.Color(options.color);
         }
-    });
-    const sunPos = gm.posFromEleAzi(options.elevation, options.azimuth, camera.far/2);
-    sunLight.position.copy(sunPos);
-    sunLight.name = sunLightName;
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 512;
-    sunLight.shadow.mapSize.height = 512;
-    sunLight.shadow.camera.near = camera.near; // default
-    sunLight.shadow.camera.far = camera.far; // default
-    if (camera.isOrthographicCamera) {
-        sunLight.shadow.camera.left = camera.left;
-        sunLight.shadow.camera.right = camera.right;
-        sunLight.shadow.camera.top = camera.top;
-        sunLight.shadow.camera.bottom = camera.bottom;
+        ["intensity"].forEach((prop) => {
+            if (options.hasOwnProperty(prop)) {
+                sunLight[prop] = options[prop];
+            }
+        });
+        const sunPos = gm.posFromEleAzi(options.elevation, options.azimuth, camera.far/2);
+        sunLight.position.copy(sunPos);
+        sunLight.name = sunLightName;
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 512;
+        sunLight.shadow.mapSize.height = 512;
+        sunLight.shadow.camera.near = camera.near; // default
+        sunLight.shadow.camera.far = camera.far; // default
+        if (camera.isOrthographicCamera) {
+            sunLight.shadow.camera.left = camera.left;
+            sunLight.shadow.camera.right = camera.right;
+            sunLight.shadow.camera.top = camera.top;
+            sunLight.shadow.camera.bottom = camera.bottom;
+        }
+        else {
+            sunLight.shadow.camera.left = -1;
+            sunLight.shadow.camera.right = 1;
+            sunLight.shadow.camera.top = 1;
+            sunLight.shadow.camera.bottom = -1;
+        }
+        sunLight.target.position.set(0, 0, 0);
+        group.add(sunLight);
+        group.add(sunLight.target);
+        // todo: fix added twice
+        if (options.helper) {
+            if (!helper) helper = new THREE.DirectionalLightHelper(sunLight);
+            helper.name = sunLightHelperName;
+            group.add(helper);
+        }
     }
-    else {
-        sunLight.shadow.camera.left = -1;
-        sunLight.shadow.camera.right = 1;
-        sunLight.shadow.camera.top = 1;
-        sunLight.shadow.camera.bottom = -1;
-    }
-    sunLight.target.position.set(0, 0, 0);
-    group.add(sunLight);
-    group.add(sunLight.target);
-    // todo: fix added twice
-    if (options.helper) {
-        group.add(new THREE.DirectionalLightHelper(sunLight));
+    else if (sunLight) {
+        group.remove(sunLight);
+        group.remove(sunLight.target);
+        if (helper) {
+            group.remove(helper);
+        }
     }
 }
 
 const updateAmbient = (group, options) => {
     let ambLight = group.find({name: ambLightName})[0];
-    if (!ambLight) ambLight = new THREE.AmbientLight();
-    ambLight.name = ambLightName;
-    // todo: should check property exists
-    Object.assign(ambLight, options);
-    if (options.color) {
-        ambLight.color = new THREE.Color(options.color);
+    if (options.visible) {
+        if (!ambLight) ambLight = new THREE.AmbientLight();
+        ambLight.name = ambLightName;
+        if (options.color) {
+            ambLight.color = new THREE.Color(options.color);
+        }
+        ["intensity"].forEach((prop) => {
+            if (options.hasOwnProperty(prop)) {
+                ambLight[prop] = options[prop];
+            }
+        });
+        group.add(ambLight);
     }
-    group.add(ambLight);
+    else if (ambLight) {
+        group.remove(ambLight);
+    }
 }
 
 const updateHemi = (group, options) => {
@@ -149,4 +172,4 @@ const updateHemi = (group, options) => {
     group.add(hemiLight);
 }
 
-export { camLightName, sunLightName, ambLightName, hemiLightName, defaults, update }
+export { groupName, camLightName, sunLightName, sunLightHelperName, ambLightName, hemiLightName, defaults, update }
