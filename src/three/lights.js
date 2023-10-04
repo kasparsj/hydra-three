@@ -75,10 +75,18 @@ const initSun = (scene, camera, options) => {
     sunLight.shadow.mapSize.height = 512;
     sunLight.shadow.camera.near = camera.near; // default
     sunLight.shadow.camera.far = camera.far; // default
-    sunLight.shadow.camera.left = -512;
-    sunLight.shadow.camera.right = 512;
-    sunLight.shadow.camera.top = 512;
-    sunLight.shadow.camera.bottom = -512;
+    if (camera.isOrthographicCamera) {
+        sunLight.shadow.camera.left = camera.left;
+        sunLight.shadow.camera.right = camera.right;
+        sunLight.shadow.camera.top = camera.top;
+        sunLight.shadow.camera.bottom = camera.bottom;
+    }
+    else {
+        sunLight.shadow.camera.left = -1;
+        sunLight.shadow.camera.right = 1;
+        sunLight.shadow.camera.top = 1;
+        sunLight.shadow.camera.bottom = -1;
+    }
     sunLight.target.position.set(0, 0, 0);
     scene.add(sunLight);
     scene.add(sunLight.target);
