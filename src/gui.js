@@ -84,7 +84,7 @@ const world = async (scene, defaults = {}) => {
 }
 
 const updateWorld = (scene, settings) => {
-    worldLib.update(scene, scene.getWorld(), settings);
+    worldLib.update(scene, settings);
 }
 
 function patchDat() {

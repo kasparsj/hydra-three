@@ -69,16 +69,22 @@ const update = (scene, camera, options = {}) => {
 
 const updateCam = (group, camera, options) => {
     let camLight = group.find({name: camLightName})[0];
-    if (!camLight) camLight = new THREE.PointLight();
-    camLight.name = camLightName;
-    if (options.color) {
-        options.color = new THREE.Color(options.color);
+    if (options.visible) {
+        if (!camLight) camLight = new THREE.PointLight();
+        camLight.name = camLightName;
+        if (options.color) {
+            options.color = new THREE.Color(options.color);
+        }
+        // todo: should set only if defined
+        Object.assign(camLight, options);
+        // todo: fix added twice
+        camera.add(camLight);
+        group.add(camera);
     }
-    // todo: should set only if defined
-    Object.assign(camLight, options);
-    // todo: fix added twice
-    camera.add(camLight);
-    group.add(camera);
+    else {
+        group.remove(camera);
+        camera.remove(camLight);
+    }
 }
 
 const updateSun = (group, camera, options) => {
