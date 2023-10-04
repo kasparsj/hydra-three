@@ -8,14 +8,18 @@ const hemiLightName = "__hemiLight";
 
 const defaults = {
     intensity: 1,
+    cam: false,
     camColor: 0xFFFFFF,
     camIntensity: 0.5,
+    sun: false,
     sunColor: 0xFFFFFF,
     sunIntensity: 0.7,
     sunEle: 45,
     sunAzi: 90,
+    amb: false,
     ambColor: 0x404040,
     ambIntensity: 0.1,
+    hemi: false,
     groundColor: 0xFFFFFF,
     skyColor: 0x0077ff,
     hemiIntensity: 0.5
@@ -131,7 +135,7 @@ const updateHemi = (group, options) => {
     if (!hemiLight) hemiLight = new THREE.HemisphereLight();
     hemiLight.name = hemiLightName;
     if (options.skyColor) {
-        hemiLight.skyColor = new THREE.Color(options.skyColor);
+        hemiLight.color = new THREE.Color(options.skyColor);
     }
     if (options.groundColor) {
         hemiLight.groundColor = new THREE.Color(options.groundColor);

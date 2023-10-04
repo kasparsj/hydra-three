@@ -29,25 +29,37 @@ const addFolder = (gui, name, settings, setupFn) => {
 }
 
 const lights = async (scene, defaults = {}) => {
-    const group = scene.getLights();
-    return addFolder(await create(), "lights",
-        Object.assign({}, lightsLib.defaults, defaults),
+    const settings = Object.assign({}, lightsLib.defaults, defaults);
+    settings.cam = !!settings.cam || settings.all;
+    settings.sun = !!settings.sun || settings.all;
+    settings.amb = !!settings.amb || settings.all;
+    settings.hemi = !!settings.hemi || settings.all;
+    addFolder(await create(), "lights",
+        settings,
         (folder, settings) => {
             const update = () => { updateLights(scene, settings) }
             folder.add(settings, 'intensity', 0, 10, 0.1).onChange(update);
+            folder.add(settings, 'cam').onChange(update);
             folder.addColor(settings, 'camColor').onChange(update);
             folder.add(settings, 'camIntensity', 0, 1, 0.1).onChange(update);
+            folder.add(settings, 'sun').onChange(update);
             folder.addColor(settings, 'sunColor').onChange(update);
             folder.add(settings, 'sunIntensity', 0, 1, 0.1).onChange(update);
             folder.add(settings, 'sunEle', 0, 90, 1);
             folder.add(settings, 'sunAzi', 0, 180, 1);
+            folder.add(settings, 'amb').onChange(update);
             folder.addColor(settings, 'ambColor').onChange(update);
             folder.add(settings, 'ambIntensity', 0, 1, 0.1).onChange(update);
             folder.addColor(settings, 'groundColor').onChange(update);
             folder.addColor(settings, 'skyColor').onChange(update);
+            folder.add(settings, 'hemi').onChange(update);
             folder.add(settings, 'hemiIntensity', 0, 1, 0.1).onChange(update);
         }
     );
+    if (!scene.getLights()) {
+        updateLights(scene, settings);
+    }
+    return settings;
 }
 
 const updateLights = (scene, settings) => {
@@ -55,7 +67,6 @@ const updateLights = (scene, settings) => {
 }
 
 const world = async (scene, defaults = {}) => {
-    const group = scene.getWorld();
     const settings = addFolder(await create(), "world",
         Object.assign({}, worldLib.defaults, { fogColor: scene.background || 0xffffff }, defaults),
         (folder, settings) => {
@@ -69,7 +80,7 @@ const world = async (scene, defaults = {}) => {
             folder.addColor(settings, 'fogColor').onChange(update);
         }
     );
-    if (!group) {
+    if (!scene.getWorld()) {
         updateWorld(scene, settings);
     }
     return settings;
