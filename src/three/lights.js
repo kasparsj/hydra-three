@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import * as gm from "./gm.js";
 
 const init = (scene, camera, options = {}) => {
     options = Object.assign({
@@ -41,7 +42,8 @@ const init = (scene, camera, options = {}) => {
     }
     if (options.hemisphere || options.hemi || options.all) {
         const hemiOptions = Object.assign({
-            color: options.hemiColor || 0xFFFFFF,
+            groundColor: options.groundColor || 0xFFFFFF,
+            skyColor: options.skyColor || 0x0077ff,
             intensity: options.hemiIntensity || 0.5,
         }, typeof options.hemisphere === 'object' ? options.hemisphere : {});
         hemiOptions.intensity = hemiOptions.intensity * options.intensity;
@@ -68,7 +70,7 @@ const initSun = (scene, camera, options) => {
     if (options.hasOwnProperty('visible')) {
         sunLight.visible = options.visible;
     }
-    const sunPos = posFromEleAzi(options.elevation, options.azimuth, camera.far/2);
+    const sunPos = gm.posFromEleAzi(options.elevation, options.azimuth, camera.far/2);
     sunLight.position.copy(sunPos);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 512;
@@ -94,14 +96,6 @@ const initSun = (scene, camera, options) => {
     if (options.helper) {
         scene.add(new THREE.DirectionalLightHelper(scene.sunLight));
     }
-}
-
-const posFromEleAzi = (elevation, azimuth, radius = 1) => {
-    const phi = THREE.MathUtils.degToRad( 90 - elevation );
-    const theta = THREE.MathUtils.degToRad(azimuth);
-    const pos = new THREE.Vector3();
-    pos.setFromSphericalCoords( radius, phi, theta );
-    return pos;
 }
 
 const initAmbient = (scene, options) => {

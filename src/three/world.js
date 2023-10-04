@@ -1,120 +1,120 @@
 import * as THREE from "three";
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
-import * as geoms from "./gm";
-import * as mats from "./mt";
+import * as gm from "./gm";
+import * as mt from "./mt";
 
-let sky, sun, ground;
+const skyName = "__sky";
+const sunName = "__sun";
+const groundName = "__ground";
 
-const init = (scene, options = {}) => {
-    options = Object.assign({
-        skyDome: false,
-        skyDomeGeom: 'SphereGeometry',
-        skyDomeMat: 'worldPosGradientY',
-        skyDomeColor: 0x0077ff,
-        sun: false,
-        ground: true,
-        fog: true,
-    }, options);
-    if (options.hasOwnProperty('skyDome')) {
-        createSkyDome(scene, options);
+const updateSkyDome = (group, options) => {
+    let sky = group.find({name: skyName})[0];
+    if (sky) {
+        group.remove(sky);
     }
-    if (options.hasOwnProperty('sun')) {
-        createSun(scene, options);
-    }
-    if (options.hasOwnProperty('ground')) {
-        createGround(scene, options);
-    }
-    if (options.hasOwnProperty('fog') && options.fog) {
-        createFog(scene, options);
-    }
-    return scene.api;
-}
-
-const createSkyDome = (scene, options) => {
-    let geom, mat;
-    if (options.skyDomeGeom && options.skyDomeGeom.isBufferGeometry) {
-        geom = options.skyDomeGeom;
-    }
-    else {
-        if (options.skyDomeGeom === 'Sky') {
-            sky = new Sky();
-            sky.scale.setScalar(options.far);
-            scene.add(sky);
-            if (options.sun) {
-                const sunPos = geoms.posFromEleAzi(options.sunElevetion || 2, options.sunAzimuth || 180);
-                sky.material.uniforms.sunPosition.value.copy(sunPos);
-                return;
+    if (options.skyDome) {
+        let geom, mat;
+        if (options.skyDomeGeom && options.skyDomeGeom.isBufferGeometry) {
+            geom = options.skyDomeGeom;
+        }
+        else {
+            if (options.skyDomeGeom === 'Sky') {
+                sky = new Sky();
+                sky.name = skyName;
+                sky.scale.setScalar(options.far);
+                group.add(sky);
+                if (options.sun) {
+                    const sunPos = gm.posFromEleAzi(options.sunElevetion || 2, options.sunAzimuth || 180);
+                    sky.material.uniforms.sunPosition.value.copy(sunPos);
+                    return;
+                }
+            }
+            switch (options.skyDomeGeom) {
+                case 'BoxGeometry':
+                    geom = new THREE.BoxGeometry( options.far / 2, options.far / 2, options.far / 2 );
+                    break;
+                case 'SphereGeometry':
+                default:
+                    geom = new THREE.SphereGeometry( options.far / 3 * 2, 32, 15 );
+                    break;
             }
         }
-        switch (options.skyDomeGeom) {
-            case 'BoxGeometry':
-                geom = new THREE.BoxGeometry( options.far / 2, options.far / 2, options.far / 2 );
-                break;
-            case 'SphereGeometry':
-            default:
-                geom = new THREE.SphereGeometry( options.far / 3 * 2, 32, 15 );
-                break;
+        const matOptions = Object.assign({
+            side: THREE.BackSide
+        }, options.matOptions || {});
+        if (!options.skyDomeMat || options.skyDomeMat === 'worldPosGradientY') {
+            const topColor = new THREE.Color(options.skyDomeColor);
+            const bottomColor = new THREE.Color(options.groundColor);
+            const matUniforms = Object.assign({
+                topColor: topColor,
+                bottomColor: bottomColor,
+            }, options.matUniforms || {});
+            mat = mt.worldPosGradientY(matOptions, matUniforms);
         }
+        else {
+            const color = new THREE.Color(options.skyDomeColor);
+            const matOptions2 = Object.assign({
+                color: color
+            }, matOptions);
+            mat = mt[options.skyDomeMat](matOptions2, {});
+        }
+        sky = new THREE.Mesh(geom, mat);
+        sky.name = skyName;
+        group.add(sky);
     }
-    const matOptions = Object.assign({
-        side: THREE.BackSide
-    }, options.matOptions || {});
-    if (!options.skyDomeMat || options.skyDomeMat === 'worldPosGradientY') {
-        const topColor = new THREE.Color(options.skyDomeColor);
-        const bottomColor = new THREE.Color(options.groundColor);
-        const matUniforms = Object.assign({
-            topColor: topColor,
-            bottomColor: bottomColor,
-        }, options.matUniforms || {});
-        mat = mats.worldPosGradientY(matOptions, matUniforms);
-    }
-    else {
-        const color = new THREE.Color(options.skyDomeColor);
-        const matOptions2 = Object.assign({
-            color: color
-        }, matOptions);
-        mat = mats[options.skyDomeMat](matOptions2, {});
-    }
-    sky = new THREE.Mesh(geom, mat);
-    sky.visible = options.skyDome;
-    scene.add(sky);
 }
 
-const createSun = (scene, options) => {
-    if (options.skyDomeGeom !== 'Sky') {
-        const geom = new THREE.SphereGeometry(100);
-        const mat = new THREE.MeshBasicMaterial({color: new THREE.Color(0xffffff)});
-        sun = new THREE.Mesh(geom, mat);
+const updateSun = (group, options) => {
+    let sun = group.find({name: sunName})[0];
+    if (options.sun) {
+        if (!sun) sun = sun = new THREE.Mesh();
+        if (options.skyDomeGeom !== 'Sky') {
+            const geom = new THREE.SphereGeometry(100);
+            const mat = new THREE.MeshBasicMaterial({color: new THREE.Color(0xffffff)});
+            const sunPos = gm.posFromEleAzi(options.sunElevetion, options.sunAzimuth, options.far/2);
+            sun.name = sunName;
+            sun.geometry = geom;
+            sun.material = mat;
+            sun.position.copy(sunPos);
+            group.add(sun);
+        }
+    }
+    if (sun) {
         sun.visible = options.sun;
-        const sunPos = geoms.posFromEleAzi(options.sunElevetion, options.sunAzimuth, options.far/2);
-        sun.position.copy(sunPos);
-        scene.add(sun);
     }
 }
 
-const createGround = (scene, options) => {
-    const size = options.far * 2;
-    const segments = (options.groundSegments || 1) + 1;
-    const geom = new THREE.PlaneGeometry( size, size, segments-1, segments-1 );
-    geom.rotateX(-Math.PI / 2);
-    let relief;
-    if (options.groundRelief) {
-        const vertices = geom.attributes.position.array;
-        relief = generateRelief(segments, segments, options.groundNoise, options.groundNoiseF, options.groundNoiseZ);
-        for ( let i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
-            vertices[j + 1] = relief[i] * options.groundRelief;
+const updateGround = (group, options) => {
+    let ground = group.find({name: groundName})[0];
+    if (options.ground) {
+        if (!ground) ground = ground = new THREE.Mesh();
+        const size = options.far * 2;
+        const segments = (options.groundSegments || 1) + 1;
+        const geom = new THREE.PlaneGeometry( size, size, segments-1, segments-1 );
+        geom.rotateX(-Math.PI / 2);
+        let relief;
+        if (options.groundRelief) {
+            const vertices = geom.attributes.position.array;
+            relief = generateRelief(segments, segments, options.groundNoise, options.groundNoiseF, options.groundNoiseZ);
+            for ( let i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
+                vertices[j + 1] = relief[i] * options.groundRelief;
+            }
         }
+        const mat = mt.meshLambert({
+            color: options.groundColor,
+            wireframe: options.groundWireframe || false,
+            map: options.groundMap || null,
+        }, {});
+        ground.name = groundName;
+        ground.geometry = geom;
+        ground.material = mat;
+        ground.receiveShadow = true;
+        ground.userData.relief = relief;
+        group.add(ground);
     }
-    const mat = mats.meshLambert({
-        color: options.groundColor || 0xffffff,
-        wireframe: options.groundWireframe || false,
-        map: options.groundMap || null,
-    }, {});
-    ground = new THREE.Mesh( geom, mat );
-    ground.visible = options.ground;
-    ground.receiveShadow = true;
-    ground.userData.relief = relief;
-    scene.add(ground);
+    if (ground) {
+        ground.visible = options.ground;
+    }
 }
 
 function generateRelief(width, height, noiseType, noiseF, noiseZ) {
@@ -127,7 +127,8 @@ function generateRelief(width, height, noiseType, noiseF, noiseZ) {
     return data;
 }
 
-function getReliefAt(vec) {
+function getReliefAt(scene, vec) {
+    let ground = group.find({name: groundName})[0];
     if (ground && ground.userData.relief) {
         const wSegments = ground.geometry.parameters.widthSegments;
         const hSegments = ground.geometry.parameters.heightSegments;
@@ -142,7 +143,7 @@ function getReliefAt(vec) {
         const c = new THREE.Vector3(x2, ground.userData.relief[z2 * (wSegments+1) + x2], z2);
         const d = new THREE.Vector3(x1, ground.userData.relief[z2 * (wSegments+1) + x1], z2);
         let edge1, edge2, planeNormal, D;
-        if (geoms.signedArea(new THREE.Vector2(b.x, b.z), new THREE.Vector2(d.x, d.z), new THREE.Vector2(x, z)) > 0) {
+        if (gm.signedArea(new THREE.Vector2(b.x, b.z), new THREE.Vector2(d.x, d.z), new THREE.Vector2(x, z)) > 0) {
             edge1 = new THREE.Vector3().subVectors(b, a);
             edge2 = new THREE.Vector3().subVectors(d, a);
             planeNormal = new THREE.Vector3().crossVectors(edge1, edge2).normalize();
@@ -159,33 +160,31 @@ function getReliefAt(vec) {
     return 0;
 }
 
-const createFog = (scene, options) => {
-    const fogColor = options.fogColor || (options.hemisphere ? options.hemisphere.groundColor : scene.background);
-    scene.fog = new THREE.Fog(fogColor, options.near, options.far);
-}
-
-const update = (scene, options) => {
-    if (options.hasOwnProperty('skyDome')) {
-        scene.remove(sky);
-        createSkyDome(scene, options);
+const updateFog = (scene, options) => {
+    if (options.fog) {
+        scene.fog = new THREE.Fog(options.fogColor, options.near, options.far);
     }
-    if (options.hasOwnProperty('sun')) {
-        sun.visible = options.sun;
-    }
-    if (options.hasOwnProperty('ground')) {
-        ground.visible = options.ground;
-    }
-    if (options.hasOwnProperty('groundWireframe')) {
-        ground.material.wireframe = options.groundWireframe;
-    }
-    if (options.hasOwnProperty('fog')) {
-        if (options.fog) {
-            createFog(scene, options);
-        }
-        else {
-            scene.fog = null;
-        }
+    else if (scene.fog) {
+        scene.fog = null;
     }
 }
 
-export {sky, sun, ground, init, update, getReliefAt}
+const update = (scene, group, options) => {
+    options = Object.assign({
+        skyDome: false,
+        skyDomeGeom: 'SphereGeometry',
+        skyDomeMat: 'worldPosGradientY',
+        skyDomeColor: 0x0077ff,
+        sun: false,
+        ground: true,
+        groundColor: 0xffffff,
+        fog: true,
+        fogColor: scene.background || 0xffffff,
+    }, options);
+    updateSkyDome(group, options);
+    updateSun(group, options);
+    updateGround(group, options);
+    updateFog(scene, options);
+}
+
+export {update, getReliefAt}

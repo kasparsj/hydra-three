@@ -7,6 +7,10 @@ import {cameraMixin, sourceMixin, mixClass, clearMixin} from "../lib/mixins.js";
 import * as layers from "./layers.js";
 import * as lights from "./lights.js";
 import * as world from "./world.js";
+import * as gui from "../gui.js";
+
+const grLights = '__lights';
+const grWorld = '__world';
 
 const scenes = {}
 const groups = {};
@@ -329,7 +333,7 @@ const sceneMixin = {
     },
 
     at(index = 0) {
-        return this.children.filter((o) => o.name !== '__lights' && o.name !== '__world')[index];
+        return this.children.filter((o) => o.name !== grLights && o.name !== grWorld)[index];
     },
 
     find(filter = {isMesh: true}) {
@@ -381,7 +385,7 @@ class HydraScene extends THREE.Scene {
     lights(options) {
         const camera = this._camera || (options && options.out || this.defaultOutput)._camera;
         // todo: cannot remove lights
-        lights.init(this.group({name: '__lights'}), camera, options || {all: true});
+        lights.init(this.group({name: grLights}), camera, options || {all: true});
         return this;
     }
 
@@ -390,7 +394,7 @@ class HydraScene extends THREE.Scene {
     }
 
     getLights() {
-        return this.find({name: '__lights'})[0];
+        return this.find({name: grLights})[0];
     }
 
     world(options = {}) {
@@ -401,13 +405,15 @@ class HydraScene extends THREE.Scene {
                 far: camera.far,
             }, options);
         }
-        // todo: cannot remove world
-        world.init(this.group({name: '__world'}), options);
+        world.update(this, this.group({name: grWorld}), options);
+        if (options.gui) {
+            gui.world(this, options);
+        }
         return this;
     }
 
     getWorld() {
-        return this.find({name: '__world'})[0];
+        return this.find({name: grWorld})[0];
     }
 
     layer(id, options = {}) {
@@ -423,4 +429,4 @@ class HydraScene extends THREE.Scene {
 
 mixClass(HydraScene, cameraMixin, clearMixin, sourceMixin, sceneMixin);
 
-export {HydraScene, HydraGroup, getOrCreateScene}
+export { grLights, grWorld, HydraScene, HydraGroup, getOrCreateScene}

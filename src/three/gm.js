@@ -61,8 +61,21 @@ const text = (text, options = {}) => {
     return geom;
 }
 
+const posFromEleAzi = (elevation, azimuth, radius = 1) => {
+    const phi = THREE.MathUtils.degToRad( 90 - elevation );
+    const theta = THREE.MathUtils.degToRad(azimuth);
+    const pos = new THREE.Vector3();
+    pos.setFromSphericalCoords( radius, phi, theta );
+    return pos;
+}
+
+function signedArea(A, B, C) {
+    return 0.5 * ((B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x));
+}
+
 export {
     box, capsule, circle, cone, cylinder, dodecahedron, edges, extrude,
     icosahedron, lathe, octahedron, plane, polyhedron, ring, shape, sphere,
     tetrahedron, torus, torusKnot, tube, wireframe, points, line, grid, text,
+    posFromEleAzi, signedArea,
 };

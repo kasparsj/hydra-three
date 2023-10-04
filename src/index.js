@@ -1,5 +1,4 @@
 import Synth from './hydra-synth.js'
-//import ShaderGenerator = require('./shader-generator.js')
-// alert('hi')
-// export default Synth
+import './gui.js'
+
 module.exports = Synth

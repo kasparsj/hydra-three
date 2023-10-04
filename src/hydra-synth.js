@@ -18,6 +18,7 @@ import * as gm from "./three/gm.js";
 import * as cm from "./three/cm.js";
 import * as mt from "./three/mt.js";
 import * as scene from "./three/scene.js";
+import * as gui from "./gui.js";
 
 
 const Mouse = MouseTools()
@@ -75,6 +76,7 @@ class HydraRenderer {
       gm,
       cm,
       mt,
+      gui,
     }
 
     if (makeGlobal) {
