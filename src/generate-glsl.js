@@ -10,6 +10,7 @@ export default function(source) {
 
 function createParams(options = {}) {
   return Object.assign({
+    // todo: make it object, so that duplicates are filtered out
     uniforms: [], // list of uniforms used in shader
     glslFunctions: [], // list of functions used in shader
     fragColor: '',

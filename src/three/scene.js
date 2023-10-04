@@ -259,8 +259,8 @@ const sceneMixin = {
         // todo: text
         // todo: plane
         let mesh;
-        if (typeof material === 'undefined' || !material.isMaterial) {
-            material = mt.mesh(material);
+        if (typeof material === 'undefined' || material === null || !material.isMaterial) {
+            material = mt.mesh(material === null ? undefined : material);
         }
         if (options.type === 'quad') {
             const quad = new FullScreenQuad(material);

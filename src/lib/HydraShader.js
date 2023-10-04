@@ -114,7 +114,9 @@ class HydraVertexShader extends HydraShader {
             vec2 st = position.xy;
             #endif
             vPosition = ${shaderInfo.position}.xyz;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(vPosition, 1.0);
+            vec4 mvPosition = vec4( vPosition, 1.0 );
+            mvPosition = modelViewMatrix * mvPosition;
+            gl_Position = projectionMatrix * mvPosition;
             `;
         }
 

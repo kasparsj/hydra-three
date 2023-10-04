@@ -1,10 +1,10 @@
 import generateGlsl from './generate-glsl.js'
 import utilityGlsl from './glsl/utility-functions.js'
 import {replaceGenType} from "./types.js"
-import * as THREE from "three"
 import {HydraFragmentShader, HydraVertexShader} from "./lib/HydraShader.js";
 import {HydraUniform} from "./three/HydraUniform.js";
 import {cameraMixin, clearMixin, sourceMixin} from "./lib/mixins.js";
+import * as mt from "./three/mt.js";
 
 var GlslSource = function (obj, options) {
   this.init(options);
@@ -84,28 +84,17 @@ GlslSource.prototype.material = function(options) {
 }
 
 GlslSource.prototype.basic = function(options = {}) {
-  this.material(Object.assign({
-    isMeshBasicMaterial: true,
-    color: new THREE.Color( 0xffffff ),
-  }, options));
+  this.material(Object.assign(mt.basicProps, options));
   return this;
 }
 
 GlslSource.prototype.phong = function(options = {}) {
-  this.material(Object.assign({
-    isMeshPhongMaterial: true,
-    color: new THREE.Color( 0xffffff ),
-    specular: new THREE.Color( 0x111111 ),
-    shininess: 30,
-  }, options));
+  this.material(Object.assign(mt.phongProps, options));
   return this;
 }
 
 GlslSource.prototype.lambert = function(options = {}) {
-  this.material(Object.assign({
-    isMeshLambertMaterial: true,
-    color: new THREE.Color( 0xffffff ),
-  }, options));
+  this.material(Object.assign(mt.lambertProps, options));
   return this;
 }
 

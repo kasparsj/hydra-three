@@ -18,6 +18,23 @@ const linesFrag = glsl("../shaders/lines.frag");
 const linestripFrag = glsl("../shaders/linestrip.frag");
 const lineloopFrag = glsl("../shaders/lineloop.frag");
 
+const basicProps = {
+    isMeshBasicMaterial: true,
+    color: new THREE.Color( 0xffffff ),
+};
+
+const phongProps = {
+    isMeshPhongMaterial: true,
+    color: new THREE.Color( 0xffffff ),
+    specular: new THREE.Color( 0x111111 ),
+    shininess: 30,
+};
+
+const lambertProps = {
+    isMeshLambertMaterial: true,
+    color: new THREE.Color( 0xffffff ),
+};
+
 const meshBasic = (options) => new THREE.MeshBasicMaterial(options);
 const meshPhong = (options) => new THREE.MeshPhongMaterial(options);
 const meshStandard = (options) => new THREE.MeshStandardMaterial(options);
@@ -43,8 +60,9 @@ const hydra = (source, properties = {}) => {
     let options = source;
     if (source instanceof GlslSource) {
         // todo: compile only single pass?
+        Object.assign(source._material, properties);
         options = source.compile()[0];
-        properties = Object.assign(options.material, properties);
+        properties = options.material;
     }
     const {
         isMeshBasicMaterial, isMeshLambertMaterial, isMeshPhongMaterial,
@@ -58,6 +76,7 @@ const hydra = (source, properties = {}) => {
             FLAT_SHADED: !options.frag.useNormal,
             USE_UV: options.frag.useUV,
             USE_ALPHAHASH: true,
+            // USE_MAP: !!map, // is it needed?
             // USE_COLOR: !options.frag.useUV, // vColor
         },
         uniforms: options.uniforms,
@@ -274,6 +293,7 @@ const getBlend = (blendMode) => {
 }
 
 export {
+    basicProps, phongProps, lambertProps,
     meshBasic, meshPhong, meshLambert, meshStandard,
     lineBasic,
     worldPosGradientY,
