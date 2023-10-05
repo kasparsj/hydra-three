@@ -58,12 +58,13 @@ const parseData = (data) => {
 
 const parseOptions = (options, defaults = {}) => {
     const { minFilter, magFilter, min, mag, filter, type, ...rest } = options;
-    return Object.assign({
+    defaults = Object.assign({
         type: THREE.UnsignedByteType
-    }, defaults,  {
-        minFilter: minFilter || (filters[min || filter] || THREE.NearestFilter),
-        magFilter: magFilter || (filters[mag || filter] || THREE.NearestFilter),
-        type: typeof type === 'number' ? type : strTypes[type]
+    }, defaults);
+    return Object.assign(defaults, {
+        minFilter: minFilter || filters[min || filter] || THREE.NearestFilter,
+        magFilter: magFilter || filters[mag || filter] || THREE.NearestFilter,
+        type: typeof type === 'number' ? type : typeof type === 'string' ? strTypes[type] : defaults.type,
     }, rest);
 }
 
@@ -73,7 +74,7 @@ const parseDataOptions = (data, options, defaults = {}) => {
         height: data.height || 1,
         depth: data.depth || 1,
         needsUpdate: true,
-    }, defaults, options, parseOptions(options, {
+    }, defaults, parseOptions(options, {
         type: types[data.constructor.name]
     }));
     return options;
