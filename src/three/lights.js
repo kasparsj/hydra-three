@@ -68,6 +68,7 @@ const update = (scene, camera, options = {}) => {
 }
 
 const updateCam = (group, camera, options) => {
+    // todo: store in groups userData?
     let camLight = group.find({name: camLightName})[0];
     if (options.visible) {
         if (!camLight) camLight = new THREE.PointLight();

@@ -7,6 +7,7 @@ import {HydraVertexShader, HydraShader} from "./lib/HydraShader.js";
 import {cameraMixin, clearMixin} from "./lib/mixins.js";
 import * as fx from "./three/fx.js";
 import * as layers from "./three/layers.js";
+import * as tx from "./three/tx.js";
 
 var Output = function (index, synth) {
   this.id = index;
@@ -30,14 +31,40 @@ Output.prototype.init = function () {
     resolution: HydraUniform.get('resolution', 'hydra'),
   }
 
-  this.temp0 = this.composer.renderTarget2.clone();
-  this.temp0.texture.name = this.label + '.temp0';
-  this.temp1 = this.composer.renderTarget2.clone();
-  this.temp1.texture.name = this.label + '.temp1';
-
+  this.initTempFbos(this.composer.renderTarget2);
   this.camera();
 
   return this
+}
+
+Output.prototype.createFbo = function(options = {}) {
+  const renderer = this.synth.renderer;
+  const size = renderer.getSize( new THREE.Vector2() );
+  options = Object.assign({
+    width: size.width * renderer.getPixelRatio(),
+    height: size.height * renderer.getPixelRatio(),
+  }, options);
+  return tx.fbo(options);
+}
+
+Output.prototype.initFbos = function(renderTarget) {
+  if (!renderTarget.isRenderTarget) {
+    renderTarget = this.createFbo(renderTarget);
+  }
+  this.composer.renderTarget1 = renderTarget;
+  this.composer.renderTarget1.name = 'EffectComposer.rt1';
+  this.composer.renderTarget2 = renderTarget.clone();
+  this.composer.renderTarget2.name = 'EffectComposer.rt2';
+  this.composer.writeBuffer = this.composer.renderTarget1;
+  this.composer.readBuffer = this.composer.renderTarget2;
+  this.initTempFbos(renderTarget);
+}
+
+Output.prototype.initTempFbos = function(renderTarget) {
+  this.temp0 = renderTarget.clone();
+  this.temp0.texture.name = this.label + '.temp0';
+  this.temp1 = renderTarget.clone();
+  this.temp1.texture.name = this.label + '.temp1';
 }
 
 Output.prototype.resize = function(width, height) {
@@ -160,17 +187,7 @@ Output.prototype.tick = function () {
 }
 
 Output.prototype.renderTexture = function(options = {}) {
-  const renderer = this.synth.renderer;
-  const size = renderer.getSize( new THREE.Vector2() );
-  options = Object.assign({
-    width: size.width * renderer.getPixelRatio(),
-    height: size.height * renderer.getPixelRatio(),
-    type: THREE.HalfFloatType,
-    generateMipmaps: true,
-    minFilter: THREE.LinearMipmapLinearFilter,
-  }, options);
-  const {width, height, ...texOptions} = options;
-  const renderTarget = new THREE.WebGLRenderTarget( width, height, texOptions );
+  const renderTarget = this.createFbo();
   const texComposer = new EffectComposer(this.synth.renderer, renderTarget);
   texComposer.renderToScreen = false;
   for (let i=0; i<this.composer.passes.length; i++) {

@@ -6,7 +6,9 @@ const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
 const strTypes = {
     'half float': THREE.HalfFloatType,
+    'float16': THREE.HalfFloatType,
     'float': THREE.FloatType,
+    'float32': THREE.FloatType,
     'uint8': THREE.UnsignedByteType,
 };
 
@@ -54,22 +56,26 @@ const parseData = (data) => {
     return data;
 }
 
-const parseOptions = (data, options, defaults = {}) => {
-    const minFilter = options.minFilter || (filters[options.min || options.filter] || THREE.NearestFilter);
-    const magFilter = options.magFilter || (filters[options.mag || options.filter] || THREE.NearestFilter);
-    const type = typeof options.type === 'number'
-        ? options.type
-        : strTypes[options.type] || types[data.constructor.name] || THREE.UnsignedByteType;
+const parseOptions = (options, defaults = {}) => {
+    const { minFilter, magFilter, min, mag, filter, type, ...rest } = options;
+    return Object.assign({
+        type: THREE.UnsignedByteType
+    }, defaults,  {
+        minFilter: minFilter || (filters[min || filter] || THREE.NearestFilter),
+        magFilter: magFilter || (filters[mag || filter] || THREE.NearestFilter),
+        type: typeof type === 'number' ? type : strTypes[type]
+    }, rest);
+}
+
+const parseDataOptions = (data, options, defaults = {}) => {
     options = Object.assign({
         width: data.width || Math.max(data.length, 1),
         height: data.height || 1,
         depth: data.depth || 1,
         needsUpdate: true,
-    }, defaults, options, {
-        minFilter,
-        magFilter,
-        type
-    });
+    }, defaults, options, parseOptions(options, {
+        type: types[data.constructor.name]
+    }));
     return options;
 }
 
@@ -99,7 +105,7 @@ const checkFormat = (data, options) => {
 }
 const data = (data, options = {}) => {
     data = parseData(data);
-    options = parseOptions(data, options, {
+    options = parseDataOptions(data, options, {
         generateMipmaps: false,
         wrapS: THREE.MirroredRepeatWrapping,
         wrapT: THREE.MirroredRepeatWrapping,
@@ -123,7 +129,7 @@ const data = (data, options = {}) => {
 
 const dataArray = (data, options = {}) => {
     data = parseData(data);
-    options = parseOptions(data, options);
+    options = parseDataOptions(data, options);
     data = adjustData(data, options);
     checkFormat(data, options);
     const {id} = options;
@@ -212,7 +218,7 @@ const mirror1 = (texture, x = 2, y = 2, options = {}) => {
         generateMipmaps: texture.generateMipmaps,
     }, options);
     const {width, height, minFilter, magFilter, generateMipmaps, ...matOptions} = options;
-    const renderTarget = createRenderTarget(options);
+    const renderTarget = fbo(options);
     const scene = createQuadScene(new THREE.MeshBasicMaterial(Object.assign({
         map: texture,
     }, matOptions)));
@@ -305,7 +311,7 @@ const pointsym = (texture, options = {}) => {
 const atlas = (textures, options = {}) => {
     const width = textures[0].image.width;
     const height = textures[0].image.height;
-    const renderTarget = createRenderTarget({
+    const renderTarget = fbo({
         width: width * textures.length,
         height,
         minFilter: textures[0].minFilter,
@@ -340,7 +346,7 @@ const atlas = (textures, options = {}) => {
 }
 
 const createSceneTexture = (scene, options = {}) => {
-    const renderTarget = createRenderTarget(options);
+    const renderTarget = fbo(options);
     const renderer = hydraSynth.renderer;
     renderer.setRenderTarget(renderTarget);
     renderer.render(scene, camera);
@@ -360,21 +366,19 @@ const createQuadScene = (material, options = {}) => {
     return scene;
 }
 
-const createRenderTarget = (options = {}) => {
-    options = Object.assign({
+const fbo = (options = {}) => {
+    options = parseOptions(options, {
         width: 1024,
         height: 1024,
+        type: THREE.HalfFloatType,
         minFilter: THREE.LinearMipmapLinearFilter,
         magFilter: THREE.LinearFilter,
         generateMipmaps: true,
-    }, options);
-    return new THREE.WebGLRenderTarget(options.width, options.height, {
-        minFilter: options.minFilter,
-        magFilter: options.magFilter,
-        generateMipmaps: options.generateMipmaps,
         wrapS: THREE.MirroredRepeatWrapping,
         wrapT: THREE.MirroredRepeatWrapping,
     });
+    const {width, height, ...texOptions} = options;
+    return new THREE.WebGLRenderTarget(width, height, texOptions);
 }
 
 export {
@@ -382,5 +386,5 @@ export {
     data, dataArray, load, save,
     wrap, repeat, mirror, mirror1, pointsym,
     atlas,
-    createSceneTexture, createQuadScene, createRenderTarget,
+    createSceneTexture, createQuadScene, fbo,
 }

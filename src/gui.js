@@ -14,7 +14,10 @@ const create = async (name = "hydra") => {
     return guis[name];
 }
 
-const addFolder = (gui, name, settings, setupFn) => {
+const addFolder = async(name, settings, setupFn, gui) => {
+    if (!gui) {
+        gui = await create();
+    }
     gui.remember(settings);
     try {
         const folder = gui.addFolder(name);
@@ -36,7 +39,7 @@ const lights = async (scene, camera, defaults = {}) => {
     settings.amb = !!settings.amb || settings.all;
     settings.hemi = !!settings.hemi || settings.all;
     delete settings.all;
-    addFolder(await create(), "lights",
+    addFolder("lights",
         settings,
         (folder, settings) => {
             const update = () => { updateLights(scene, camera, settings) }
@@ -67,7 +70,7 @@ const updateLights = (scene, camera, settings) => {
 
 const world = async (scene, defaults = {}) => {
     const settings = Object.assign({}, worldLib.defaults, { fogColor: scene.background || 0xffffff }, defaults);
-    addFolder(await create(), "world",
+    addFolder("world",
         settings,
         (folder, settings) => {
             const update = () => { updateWorld(scene, settings) }
