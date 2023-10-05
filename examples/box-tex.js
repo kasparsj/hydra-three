@@ -29,9 +29,9 @@ sc = scene().mesh(
         .phong()
 ).lights();
 
-const map = solid(1).add(scene().points([100,100], mt.dots(cnoise(rand()), wnoise(rand()).map(0,1,5,20), cnoise().saturate()))).tex(o1);
-// const map = solid(1, 1, 1).sub(dots([100,100], cnoise(rand()), wnoise(rand()).map(0,1,4,20), cnoise()).saturate()).tex(o1);
-// const map = wnoise().add(dots([1024], cnoise(rand()), wnoise(rand()).map(0,1,0,20), cnoise()).saturate(5)).tex(o1);
+const map = solid(1).add(scene().points([100,100], mt.dots(cnoise(rnd.num()), wnoise(rnd.num()).map(0,1,5,20), cnoise().saturate()))).tex(o1);
+// const map = solid(1, 1, 1).sub(dots([100,100], cnoise(rnd.num()), wnoise(rnd.num()).map(0,1,4,20), cnoise()).saturate()).tex(o1);
+// const map = wnoise().add(dots([1024], cnoise(rnd.num()), wnoise(rnd.num()).map(0,1,0,20), cnoise()).saturate(5)).tex(o1);
 // const map = snoise(20, [rand()*10000]).tex(o1);
 // const map = wnoise().tex(o1);
 // const map = cnoise().tex(o1);
@@ -46,7 +46,7 @@ sc = scene().mesh(
 solid(1,1,0).mult(noise()).layer(sc).out();
 
 update = () => {
-    const box = sc.scene.at(0);
+    const box = sc.at(0);
     // box.rotation.x += 0.001;
     box.rotation.y += 0.001;
 }

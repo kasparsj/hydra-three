@@ -42,13 +42,13 @@ const cameraMixin = {
                 domElement: document.body,
                 enableZoom: true,
             }, options || {});
-            if (this._controls) {
-                this._controls.dispose();
+            if (this._camera.userData.controls) {
+                this._camera.userData.controls.dispose();
             }
-            this._controls = new HydraOrbitControls(this._camera, options.domElement);
+            this._camera.userData.controls = new HydraOrbitControls(this._camera, options.domElement);
             for (let attr in options) {
-                if (this._controls.hasOwnProperty(attr)) {
-                    this._controls[attr] = options[attr];
+                if (this._camera.userData.controls.hasOwnProperty(attr)) {
+                    this._camera.userData.controls[attr] = options[attr];
                     delete options[attr];
                 }
             }

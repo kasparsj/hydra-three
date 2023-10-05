@@ -28,6 +28,14 @@ const defaults = {
     hemiIntensity: 0.5
 };
 
+const find = (scene, lightName) => {
+    let group = scene;
+    if (scene.isScene) {
+        group = scene.group({name: groupName});
+    }
+    return group.find({name: lightName})[0];
+}
+
 const update = (scene, camera, options = {}) => {
     const group = scene.group({name: groupName});
     options = Object.assign({}, defaults, options);
@@ -183,4 +191,7 @@ const updateHemi = (group, options) => {
     group.add(hemiLight);
 }
 
-export { groupName, camLightName, sunLightName, sunLightHelperName, ambLightName, hemiLightName, defaults, update }
+export {
+    groupName, camLightName, sunLightName, sunLightHelperName, ambLightName, hemiLightName, defaults,
+    find, update,
+}

@@ -33,6 +33,7 @@ Output.prototype.init = function () {
 
   this.initTempFbos(this.composer.renderTarget2);
   this.camera();
+  this.reset();
 
   return this
 }
@@ -80,7 +81,7 @@ Output.prototype.getTexture = function () {
    return this.composer.readBuffer.texture;
 }
 
-Output.prototype.stop = function() {
+Output.prototype.reset = function() {
   for (let i=0; i<this.composer.passes.length; i++) {
     this.composer.passes[i].dispose();
   }
@@ -91,10 +92,11 @@ Output.prototype.stop = function() {
     }
   }
   this.layers = [];
+  this.controls = [];
 }
 
 Output.prototype._set = function (passes) {
-  this.stop();
+  this.reset();
   if (passes.length > 0) {
     // todo: output level clear and fade are not working properly
     if (this._clear && this._clear.amount > 0) {
@@ -110,6 +112,9 @@ Output.prototype._set = function (passes) {
       let pass, fxScene, fxCamera;
       if (options.scene && !options.scene.empty()) {
         options.camera || (options.camera = this._camera);
+        if (options.camera.userData.controls) {
+          this.controls.push(options.camera.userData.controls);
+        }
         fxScene = options.scene;
         fxCamera = options.camera;
         pass = new HydraRenderPass(fxScene, fxCamera, options);
@@ -181,8 +186,8 @@ Output.prototype._fadePass = function(options) {
 }
 
 Output.prototype.tick = function () {
-  if (this._controls) {
-    this._controls.update();
+  for (let i=0; i<this.controls.length; i++) {
+    this.controls[i].update();
   }
   this.render();
 }
@@ -197,10 +202,10 @@ Output.prototype.render = function() {
 Output.prototype.renderTexture = function(options = {}) {
   options = Object.assign({
     render: true,
-    stop: true,
+    reset: true,
     disposePrev: true,
   }, options);
-  const {render, stop, disposePrev, ...fboOptions} = options;
+  const {render, reset, disposePrev, ...fboOptions} = options;
   const renderTarget = this.createFbo(fboOptions);
   const texComposer = new EffectComposer(this.synth.renderer, renderTarget);
   texComposer.renderToScreen = false;
@@ -211,8 +216,8 @@ Output.prototype.renderTexture = function(options = {}) {
   if (render) {
     this.render();
   }
-  if (stop) {
-    this.stop();
+  if (reset) {
+    this.reset();
   }
   if (disposePrev && this.texComposer) {
     this.texComposer.dispose();

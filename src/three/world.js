@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import * as gm from "./gm";
 import * as mt from "./mt";
+import * as nse from "./noise.js";
 
 const groupName = '__world';
 const skyName = "__sky";
@@ -16,6 +17,7 @@ const defaults = {
     sun: false,
     ground: true,
     groundColor: 0xffffff,
+    groundNoise: "improved",
     fog: true,
     fogColor: 0xffffff,
 };
@@ -108,7 +110,7 @@ const updateGround = (group, options) => {
         let relief;
         if (options.groundRelief) {
             const vertices = geom.attributes.position.array;
-            relief = generateRelief(segments, segments, options.groundNoise, options.groundNoiseF, options.groundNoiseZ);
+            relief = generateRelief(segments, segments, options.groundNoiseF, options.groundNoiseZ, options.groundNoise);
             for ( let i = 0, j = 0, l = vertices.length; i < l; i ++, j += 3 ) {
                 vertices[j + 1] = relief[i] * options.groundRelief;
             }
@@ -130,12 +132,12 @@ const updateGround = (group, options) => {
     }
 }
 
-function generateRelief(width, height, noiseType, noiseF, noiseZ) {
+function generateRelief(width, height, noiseF, noiseZ, noiseType = "improved") {
     const size = width * height, data = new Float32Array( size );
     for ( let i = 0; i < size; i++) {
         const x = i % width, y = ~~(i / width);
         // todo: check dt is loaded
-        data[i] = nse.get3(noiseType, x * noiseF, y * noiseF, noiseZ);
+        data[i] = nse.get3(x * noiseF, y * noiseF, noiseZ, noiseType);
     }
     return data;
 }

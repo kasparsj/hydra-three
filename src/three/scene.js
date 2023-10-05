@@ -382,7 +382,7 @@ class HydraScene extends THREE.Scene {
     lights(options) {
         const camera = this.getCamera(options);
         lights.update(this, camera, options || {all: true});
-        if (options.gui) {
+        if (options && options.gui) {
             gui.lights(this, camera, options);
         }
         return this;
@@ -411,6 +411,16 @@ class HydraScene extends THREE.Scene {
         const layer = layers.create(id, this, options);
         this._layers.push(layer);
         return layer;
+    }
+
+    lookAt(target, options = {}) {
+        const camera = this.getCamera(options);
+        camera.userData.target = target;
+        camera.lookAt(camera.userData.target);
+        if (camera.userData.controls) {
+            camera.userData.controls.target = camera.userData.target;
+        }
+        return this;
     }
 
     axesHelper(size) {

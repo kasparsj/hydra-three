@@ -1,9 +1,6 @@
-await loadScript("/dt/index.js");
 await loadScript("/hy/index.js");
 
 o0.ortho([1, 0.5, 1], 0, {controls: true});
-
-nse.init();
 
 const w = 0.02;
 const h = 0.02;
@@ -31,7 +28,7 @@ const sc = scene({background: color(1,1,0)})
 
 let matrixSet = false;
 update = () => {
-    const box = sc.scene.at(0);
+    const box = sc.at(0);
     if (drawLines) {
         box.isMesh = false;
         box.isLine = true;
@@ -45,13 +42,13 @@ update = () => {
             const quaternion = quat();
             const scale = vec3(1.0, 1.0, 1.0);
 
-            const [x, z] = grid2( i, sqrt(count) );
-            const t = nse.get2("improved", x, z, -2, 5, 1);
-            const y = t < 0 ? nse.get2("yellow", x, z, 0, 20, 0.5) : t;
+            const [x, z] = grid2( i, Math.sqrt(count) );
+            const t = nse.get2(x, z, -2, 5, 1);
+            const y = t < 0 ? nse.get2(x, z, 0, 20, 0.5, "yellow") : t;
             scale.y = y;
 
-            position.x = x * w - sqrt(count) * w / 2;
-            position.z = z * d - sqrt(count) * d / 2;
+            position.x = x * w - Math.sqrt(count) * w / 2;
+            position.z = z * d - Math.sqrt(count) * d / 2;
             position.y = y * h / 2;
 
             matrix.compose( position, quaternion, scale );

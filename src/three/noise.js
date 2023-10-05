@@ -29,9 +29,6 @@ const initFBM = () => {
         get3: function(x, y, z, scale = 1, options = {}) {
             return fbm((f) => { return improved.get3(x * scale * f, y * scale * f, z * scale * f) }, 0, options);
         },
-        get4: function(x, y, z, w, scale = 1, options = {}) {
-            return fbm((f) => { return simplex.get4(x * scale * f, y * scale * f, z * f, w * scale * f) }, 0, options);
-        },
     };
     brown = {
         get2: function(x, y, scale = 1, options = {}) {
@@ -40,9 +37,6 @@ const initFBM = () => {
         get3: function(x, y, z, scale = 1, options = {}) {
             return fbm((f) => { return improved.get3(x * scale * f, y * scale * f, z * scale * f) }, 0.5, options);
         },
-        get4: function(x, y, z, w, scale = 1, options = {}) {
-            return fbm((f) => { return simplex.get4(x * scale * f, y * scale * f, z * scale * f, w * scale * f) }, 0.5, options);
-        },
     };
     yellow = {
         get2: function(x, y, scale = 1, options = {}) {
@@ -50,9 +44,6 @@ const initFBM = () => {
         },
         get3: function(x, y, z, scale = 1, options = {}) {
             return fbm((f) => { return improved.get3(x * scale * f, y * scale * f, z * scale * f) }, 1.0, options);
-        },
-        get4: function(x, y, z, w, scale = 1, options = {}) {
-            return fbm((f) => { return simplex.get4(x * scale * f, y * scale * f, z * scale * f, w * scale * f) }, 1.0, options);
         },
     };
 }
@@ -69,21 +60,21 @@ const initImproved = ({scale}) => {
     };
 }
 
-function get2(type, x, y, min = 0, max = 1, scale = 1) {
+function get2(x, y, min = 0, max = 1, scale = 1, type = "improved") {
     if (!types[type]) throw "nse.get2: invalid noise type " + type;
-    if (!types[type].get) throw "nse.get2: not supported noise type " + type;
+    if (!types[type].get2) throw "nse.get2: not supported noise type " + type;
     return map(types[type].get2(x, y, scale), -1, 1, min, max);
 }
 
-function get3(type, x, y, z, min = 0, max = 1, scale = 1) {
+function get3(x, y, z, min = 0, max = 1, scale = 1, type = "improved") {
     if (!types[type]) throw "nse.get3: invalid noise type " + type;
-    if (!types[type].get) throw "nse.get3: not supported noise type " + type;
+    if (!types[type].get3) throw "nse.get3: not supported noise type " + type;
     return map(types[type].get3(x, y, z, scale), -1, 1, min, max);
 }
 
-function get4(type, x, y, z, w, min = 0, max = 1, scale = 1) {
+function get4(x, y, z, w, min = 0, max = 1, scale = 1, type = "improved") {
     if (!types[type]) throw "nse.get4: invalid noise type " + type;
-    if (!types[type].get) throw "nse.get4: not supported noise type " + type;
+    if (!types[type].get4) throw "nse.get4: not supported noise type " + type;
     return map(types[type].get4(x, y, z, w, scale), -1, 1, min, max);
 }
 

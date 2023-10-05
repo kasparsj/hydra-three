@@ -15,9 +15,9 @@ import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
 import {ShaderPass} from "three/examples/jsm/postprocessing/ShaderPass.js";
 import * as tx from "./three/tx.js";
 import * as gm from "./three/gm.js";
-import * as cm from "./three/cm.js";
 import * as mt from "./three/mt.js";
 import * as scene from "./three/scene.js";
+import * as cmp from "./three/cmp.js";
 import * as rnd from "./three/rnd.js";
 import * as nse from "./three/noise.js";
 import * as math from "./three/math.js";
@@ -77,8 +77,8 @@ class HydraRenderer {
       scene: this.scene.bind(this),
       tx,
       gm,
-      cm,
       mt,
+      cmp,
       rnd,
       nse,
       gui,
