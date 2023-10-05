@@ -80,7 +80,7 @@ Output.prototype.getTexture = function () {
    return this.composer.readBuffer.texture;
 }
 
-Output.prototype.render = function (passes) {
+Output.prototype.stop = function() {
   for (let i=0; i<this.composer.passes.length; i++) {
     this.composer.passes[i].dispose();
   }
@@ -91,6 +91,10 @@ Output.prototype.render = function (passes) {
     }
   }
   this.layers = [];
+}
+
+Output.prototype._set = function (passes) {
+  this.stop();
   if (passes.length > 0) {
     // todo: output level clear and fade are not working properly
     if (this._clear && this._clear.amount > 0) {
@@ -180,6 +184,10 @@ Output.prototype.tick = function () {
   if (this._controls) {
     this._controls.update();
   }
+  this.render();
+}
+
+Output.prototype.render = function() {
   if (this.layers && this.layers.length > 0) {
     layers.render(this.layers);
   }
@@ -187,14 +195,26 @@ Output.prototype.tick = function () {
 }
 
 Output.prototype.renderTexture = function(options = {}) {
-  const renderTarget = this.createFbo();
+  options = Object.assign({
+    render: true,
+    stop: true,
+    disposePrev: true,
+  }, options);
+  const {render, stop, disposePrev, ...fboOptions} = options;
+  const renderTarget = this.createFbo(fboOptions);
   const texComposer = new EffectComposer(this.synth.renderer, renderTarget);
   texComposer.renderToScreen = false;
   for (let i=0; i<this.composer.passes.length; i++) {
     texComposer.addPass(this.composer.passes[i]);
   }
   texComposer.render();
-  if (this.texComposer) {
+  if (render) {
+    this.render();
+  }
+  if (stop) {
+    this.stop();
+  }
+  if (disposePrev && this.texComposer) {
     this.texComposer.dispose();
     this.texComposer = texComposer;
   }

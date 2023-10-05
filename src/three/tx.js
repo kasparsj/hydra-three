@@ -59,11 +59,13 @@ const parseData = (data) => {
 const parseOptions = (options, defaults = {}) => {
     const { minFilter, magFilter, min, mag, filter, type, ...rest } = options;
     defaults = Object.assign({
-        type: THREE.UnsignedByteType
+        type: THREE.UnsignedByteType,
+        minFilter: THREE.NearestFilter,
+        magFilter: THREE.NearestFilter,
     }, defaults);
     return Object.assign(defaults, {
-        minFilter: minFilter || filters[min || filter] || THREE.NearestFilter,
-        magFilter: magFilter || filters[mag || filter] || THREE.NearestFilter,
+        minFilter: minFilter || filters[min || filter] || defaults.minFilter,
+        magFilter: magFilter || filters[mag || filter] || defaults.magFilter,
         type: typeof type === 'number' ? type : typeof type === 'string' ? strTypes[type] : defaults.type,
     }, rest);
 }
