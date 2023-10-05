@@ -18,6 +18,9 @@ import * as gm from "./three/gm.js";
 import * as cm from "./three/cm.js";
 import * as mt from "./three/mt.js";
 import * as scene from "./three/scene.js";
+import * as rnd from "./three/rnd.js";
+import * as nse from "./three/noise.js";
+import * as math from "./three/math.js";
 import * as gui from "./gui.js";
 
 
@@ -76,8 +79,13 @@ class HydraRenderer {
       gm,
       cm,
       mt,
+      rnd,
+      nse,
       gui,
     }
+
+    nse.init();
+    Object.assign(Math, math);
 
     if (makeGlobal) {
       window.loadScript = this.loadScript
