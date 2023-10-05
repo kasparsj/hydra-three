@@ -18,6 +18,7 @@ const defaults = {
     sunIntensity: 0.7,
     sunEle: 45,
     sunAzi: 90,
+    sunHelper: false,
     amb: false,
     ambColor: 0x404040,
     ambIntensity: 0.1,
@@ -44,6 +45,7 @@ const update = (scene, camera, options = {}) => {
         intensity: options.sunIntensity,
         elevation: options.sunEle,
         azimuth: options.sunAzi,
+        helper: options.sunHelper,
         visible: !!(options.sun || options.all)
     }, typeof options.sun === 'object' ? options.sun : {});
     sunOptions.intensity = sunOptions.intensity * options.intensity;
@@ -124,11 +126,13 @@ const updateSun = (group, camera, options) => {
         sunLight.target.position.set(0, 0, 0);
         group.add(sunLight);
         group.add(sunLight.target);
-        // todo: fix added twice
         if (options.helper) {
             if (!helper) helper = new THREE.DirectionalLightHelper(sunLight);
             helper.name = sunLightHelperName;
             group.add(helper);
+        }
+        else if (helper) {
+            group.remove(helper);
         }
     }
     else if (sunLight) {

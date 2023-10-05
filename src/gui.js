@@ -50,8 +50,9 @@ const lights = async (scene, camera, defaults = {}) => {
             folder.add(settings, 'sun').onChange(update);
             folder.addColor(settings, 'sunColor').onChange(update);
             folder.add(settings, 'sunIntensity', 0, 1, 0.1).onChange(update);
-            folder.add(settings, 'sunEle', 0, 90, 1);
-            folder.add(settings, 'sunAzi', 0, 180, 1);
+            folder.add(settings, 'sunEle', 0, 90, 1).onChange(update);
+            folder.add(settings, 'sunAzi', 0, 180, 1).onChange(update);
+            folder.add(settings, 'sunHelper').onChange(update);
             folder.add(settings, 'amb').onChange(update);
             folder.addColor(settings, 'ambColor').onChange(update);
             folder.add(settings, 'ambIntensity', 0, 1, 0.1).onChange(update);
