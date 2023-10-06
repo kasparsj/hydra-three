@@ -107,7 +107,7 @@ const addPass = (type, options) => {
                     nIntensity: { value: options.noiseIntensity || 1 },
                     sIntensity: { value: options.scanlinesIntensity },
                     sCount: { value: options.scanlinesCount },
-                    grayscale: { value: options.grayscale },
+                    grayscale: { value: options.grayscale || false },
                     time: time,
                     uGrainSize: { value: options.grainSize || 2 },
                     tDiffuse: { value: null },
