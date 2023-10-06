@@ -19,13 +19,17 @@ const cameraMixin = {
         }, options);
         switch (options.type) {
             case 'perspective':
-                this._camera = new THREE.PerspectiveCamera( options.fov, options.aspect, options.near, options.far);
+                if (!this._camera || !(this._camera instanceof THREE.PerspectiveCamera)) {
+                    this._camera = new THREE.PerspectiveCamera();
+                }
                 eye || (eye = [0,0,3]);
                 break;
             case 'ortho':
             case 'orthographic':
             default:
-                this._camera = new THREE.OrthographicCamera(options.left, options.right, options.top, options.bottom, options.near, options.far);
+                if (!this._camera || !(this._camera instanceof THREE.OrthographicCamera)) {
+                    this._camera = new THREE.OrthographicCamera();
+                }
                 eye || (eye = [0,0,1]);
                 break;
         }

@@ -16,10 +16,14 @@ const defaults = {
     skyDomeColor: 0x0077ff,
     sun: false,
     ground: true,
+    groundSize: 20,
     groundColor: 0xffffff,
+    groundMat: 'meshLambert',
     groundNoise: "improved",
     fog: true,
     fogColor: 0xffffff,
+    near: 0.1,
+    far: 10,
 };
 
 const updateSkyDome = (group, options) => {
@@ -103,10 +107,12 @@ const updateGround = (group, options) => {
     let ground = group.find({name: groundName})[0];
     if (options.ground) {
         if (!ground) ground = ground = new THREE.Mesh();
-        const size = options.far * 2;
         const segments = (options.groundSegments || 1) + 1;
-        const geom = new THREE.PlaneGeometry( size, size, segments-1, segments-1 );
-        geom.rotateX(-Math.PI / 2);
+        let geom = ground.geometry;
+        if (!geom || !geom.parameters || geom.parameters.width !== options.groundSize) {
+            geom = new THREE.PlaneGeometry( options.groundSize, options.groundSize, segments-1, segments-1 );
+            geom.rotateX(-Math.PI / 2);
+        }
         let relief;
         if (options.groundRelief) {
             const vertices = geom.attributes.position.array;
@@ -115,11 +121,14 @@ const updateGround = (group, options) => {
                 vertices[j + 1] = relief[i] * options.groundRelief;
             }
         }
-        const mat = mt.meshLambert({
-            color: options.groundColor,
-            wireframe: options.groundWireframe || false,
-            map: options.groundMap || null,
-        }, {});
+        let mat = options.groundMat;
+        if (!mat.isMaterial) {
+            mat = mt[mat]({
+                color: options.groundColor,
+                wireframe: options.groundWireframe || false,
+                map: options.groundMap || null,
+            }, {});
+        }
         ground.name = groundName;
         ground.geometry = geom;
         ground.material = mat;
@@ -186,7 +195,10 @@ const updateFog = (scene, options) => {
 
 const update = (scene, options) => {
     const group = scene.group({name: groupName});
-    options = Object.assign({}, defaults, {fogColor: scene.background || defaults.fogColor}, options);
+    options = Object.assign({}, defaults, {
+        fogColor: scene.background || defaults.fogColor,
+        groundSize: options.far ? options.far * 2 : defaults.groundSize,
+    }, options);
     updateSkyDome(group, options);
     updateSun(group, options);
     updateGround(group, options);

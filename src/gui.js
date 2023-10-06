@@ -79,9 +79,13 @@ const world = async (scene, defaults = {}) => {
             folder.addColor(settings, 'skyDomeColor').onChange(update);
             folder.add(settings, 'sun').onChange(update);
             folder.add(settings, 'ground').onChange(update);
+            folder.add(settings, 'groundSize', 1, 2000).onChange(update);
+            folder.add(settings, 'groundMat', ['meshBasic', 'meshLambert', 'meshPhong']).onChange(update);
             folder.addColor(settings, 'groundColor').onChange(update);
             folder.add(settings, 'fog').onChange(update);
             folder.addColor(settings, 'fogColor').onChange(update);
+            folder.add(settings, 'near', 0, 10, 0.1).onChange(update);
+            folder.add(settings, 'far', 1, 1000, 1).onChange(update);
         }
     );
     return settings;
