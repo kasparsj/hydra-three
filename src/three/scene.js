@@ -380,8 +380,9 @@ class HydraScene extends THREE.Scene {
     }
 
     lights(options) {
+        options || (options = {all: true});
         const camera = this.getCamera(options);
-        lights.update(this, camera, options || {all: true});
+        lights.update(this, camera, options);
         if (options && options.gui) {
             gui.lights(this, camera, options);
         }

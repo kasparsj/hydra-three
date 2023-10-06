@@ -34,10 +34,10 @@ const addFolder = async(name, settings, setupFn, gui) => {
 // todo: better pass scene
 const lights = async (scene, camera, defaults = {}) => {
     const settings = Object.assign({}, lightsLib.defaults, defaults);
-    settings.cam = !!settings.cam || settings.all;
-    settings.sun = !!settings.sun || settings.all;
-    settings.amb = !!settings.amb || settings.all;
-    settings.hemi = !!settings.hemi || settings.all;
+    settings.cam = !!(settings.cam || settings.all);
+    settings.sun = !!(settings.sun || settings.all);
+    settings.amb = !!(settings.amb || settings.all);
+    settings.hemi = !!(settings.hemi || settings.all);
     delete settings.all;
     addFolder("lights",
         settings,
