@@ -20,6 +20,18 @@ var Output = function (index, synth) {
   this.init()
 }
 
+Output.prototype = {
+  get pixelRatio() {
+    return this._pixelRatio || this.synth.renderer.getPixelRatio();
+  },
+  set pixelRatio(value) {
+    if (this.pixelRatio !== value) {
+      this._pixelRatio = value;
+      this.initFbos();
+    }
+  }
+};
+
 Object.assign(Output.prototype, cameraMixin, clearMixin);
 
 Output.prototype.init = function () {
@@ -33,7 +45,7 @@ Output.prototype.init = function () {
 
   this.initTempFbos(this.composer.renderTarget2);
   this.camera();
-  this.reset();
+  this.stop();
 
   return this
 }
@@ -42,15 +54,19 @@ Output.prototype.createFbo = function(options = {}) {
   const renderer = this.synth.renderer;
   const size = renderer.getSize( new THREE.Vector2() );
   options = Object.assign({
-    width: size.width * renderer.getPixelRatio(),
-    height: size.height * renderer.getPixelRatio(),
+    width: size.width * this.pixelRatio,
+    height: size.height * this.pixelRatio,
   }, options);
   return tx.fbo(options);
 }
 
 Output.prototype.initFbos = function(renderTarget) {
   if (!renderTarget.isRenderTarget) {
-    renderTarget = this.createFbo(renderTarget);
+    const options = renderTarget;
+    if (options.pixelRatio) {
+      this._pixelRatio = options.pixelRatio;
+    }
+    renderTarget = this.createFbo(options);
   }
   this.composer.renderTarget1 = renderTarget;
   this.composer.renderTarget1.name = 'EffectComposer.rt1';
@@ -81,7 +97,7 @@ Output.prototype.getTexture = function () {
    return this.composer.readBuffer.texture;
 }
 
-Output.prototype.reset = function() {
+Output.prototype.stop = function() {
   for (let i=0; i<this.composer.passes.length; i++) {
     this.composer.passes[i].dispose();
   }
@@ -96,7 +112,7 @@ Output.prototype.reset = function() {
 }
 
 Output.prototype._set = function (passes) {
-  this.reset();
+  this.stop();
   if (passes.length > 0) {
     // todo: output level clear and fade are not working properly
     if (this._clear && this._clear.amount > 0) {
@@ -202,10 +218,10 @@ Output.prototype.render = function() {
 Output.prototype.renderTexture = function(options = {}) {
   options = Object.assign({
     render: true,
-    reset: true,
+    stop: true,
     disposePrev: true,
   }, options);
-  const {render, reset, disposePrev, ...fboOptions} = options;
+  const {render, stop, disposePrev, ...fboOptions} = options;
   const renderTarget = this.createFbo(fboOptions);
   const texComposer = new EffectComposer(this.synth.renderer, renderTarget);
   texComposer.renderToScreen = false;
@@ -216,8 +232,8 @@ Output.prototype.renderTexture = function(options = {}) {
   if (render) {
     this.render();
   }
-  if (reset) {
-    this.reset();
+  if (stop) {
+    this.stop();
   }
   if (disposePrev && this.texComposer) {
     this.texComposer.dispose();

@@ -31,7 +31,7 @@ class HydraShaderPass extends HydraPass {
 
         } else if ( shader ) {
 
-            this.uniforms = THRE.UniformsUtils.clone( shader.uniforms );
+            this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
 
             this.material = new THREE.ShaderMaterial( {
 
@@ -66,7 +66,13 @@ class HydraShaderPass extends HydraPass {
 
         } else {
 
-            renderer.setRenderTarget( this.renderTarget ? this.renderTarget : writeBuffer );
+            const renderTarget = this.renderTarget ? this.renderTarget : writeBuffer;
+
+            if (this.uniforms['resolution']) {
+                this.uniforms['resolution'] = {value: [ renderTarget.width, renderTarget.height ]};
+            }
+
+            renderer.setRenderTarget(renderTarget);
             // TODO: Avoid using autoClear properties, see https://github.com/mrdoob/three.js/pull/15571#issuecomment-465669600
             if ( this.clear ) renderer.clear( renderer.autoClearColor, renderer.autoClearDepth, renderer.autoClearStencil );
             this.fsQuad.render( renderer );
@@ -115,7 +121,13 @@ class HydraMaterialPass extends HydraPass {
 
         } else {
 
-            renderer.setRenderTarget( this.renderTarget ? this.renderTarget : writeBuffer );
+            const renderTarget = this.renderTarget ? this.renderTarget : writeBuffer;
+
+            if (this.material.uniforms['resolution']) {
+                this.material.uniforms['resolution'] = {value: [ renderTarget.width, renderTarget.height ]};
+            }
+
+            renderer.setRenderTarget(renderTarget);
             // TODO: Avoid using autoClear properties, see https://github.com/mrdoob/three.js/pull/15571#issuecomment-465669600
             if ( this.clear ) renderer.clear( renderer.autoClearColor, renderer.autoClearDepth, renderer.autoClearStencil );
             this.fsQuad.render( renderer );
@@ -154,13 +166,6 @@ class HydraRenderPass extends HydraPass {
 
     render( renderer, writeBuffer, readBuffer /*, deltaTime, maskActive */ ) {
 
-        for (let i=0; i<this.scene.children.length; i++) {
-            const material = this.scene.children[i].material;
-            if ( material && material.uniforms && material.uniforms[ this.textureID ] ) {
-                material.uniforms[ this.textureID ].value = readBuffer.texture;
-            }
-        }
-
         const oldAutoClear = renderer.autoClear;
         renderer.autoClear = false;
 
@@ -194,7 +199,21 @@ class HydraRenderPass extends HydraPass {
 
         }
 
-        renderer.setRenderTarget( this.renderToScreen ? null : (this.renderTarget ? this.renderTarget : writeBuffer) );
+        const renderTarget = this.renderToScreen ? null : (this.renderTarget ? this.renderTarget : writeBuffer);
+
+        for (let i=0; i<this.scene.children.length; i++) {
+            const material = this.scene.children[i].material;
+            if ( material && material.uniforms ) {
+                if (material.uniforms[ this.textureID ]) {
+                    material.uniforms[ this.textureID ].value = readBuffer.texture;
+                }
+                if (material.uniforms['resolution']) {
+                    material.uniforms['resolution'] = { value: [ renderTarget.width, renderTarget.height ] };
+                }
+            }
+        }
+
+        renderer.setRenderTarget(renderTarget);
 
         if ( this.clear === true ) {
 

@@ -21,6 +21,7 @@ import * as cmp from "./three/cmp.js";
 import * as rnd from "./three/rnd.js";
 import * as nse from "./three/noise.js";
 import * as math from "./three/math.js";
+import * as arr from "./three/arr.js";
 import * as gui from "./gui.js";
 
 
@@ -82,6 +83,7 @@ class HydraRenderer {
       rnd,
       nse,
       gui,
+      arr,
     }
 
     nse.init();
@@ -303,7 +305,7 @@ class HydraRenderer {
       alpha: true,
     };
 
-    this.renderer = webgl === 1 ? new THREE.WebGL1Renderer( options ) : new THREE.WebGLRenderer( options);
+    this.renderer = webgl === 1 ? new THREE.WebGL1Renderer( options ) : new THREE.WebGLRenderer(options);
     this.renderer.clear();
     this.renderer.autoClear = false;
     this.synth.renderer = this.renderer;
