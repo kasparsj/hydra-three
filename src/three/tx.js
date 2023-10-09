@@ -21,6 +21,8 @@ const types = {
 const typesArray = {};
 Object.keys(types).forEach((key) => typesArray[types[key]] = key);
 
+const formats = [THREE.RedFormat, THREE.RGFormat, THREE.RGBAFormat, THREE.RGBAFormat];
+
 const filters = {
     'nearest': THREE.NearestFilter,
     'linear': THREE.LinearFilter,
@@ -77,7 +79,9 @@ const parseDataOptions = (data, options, defaults = {}) => {
         depth: data.depth || 1,
         needsUpdate: true,
     }, defaults, parseOptions(options, {
-        type: types[data.constructor.name]
+        type: !Array.isArray(data)
+            ? types[data.constructor.name]
+            : typeof data[0] === 'number' && Number.isInteger(data[0]) && data[0] >= 0 && data[0] <= 255 ? THREE.UnsignedByteType : THREE.FloatType
     }));
     return options;
 }
@@ -87,9 +91,6 @@ const adjustData = (data, options) => {
         // todo: padding when height > 1 will be incorrect visually
         data = padTo(data, options.width * options.height * options.depth);
     }
-    else if (data.length > options.width * options.height * options.depth) {
-        data = data.slice(0, options.width * options.height * options.depth);
-    }
     if (Array.isArray(data)) {
         data = window[typesArray[options.type]].from(data);
     }
@@ -98,23 +99,33 @@ const adjustData = (data, options) => {
 
 const checkFormat = (data, options) => {
     if (!options.format) {
-        if (!options.numChannels) {
-            options.numChannels = options.width && options.height ? data.length / (options.width * options.height * options.depth) : 1;
-        }
         // THREE.LuminanceFormat not working
-        const formats = [THREE.RedFormat, THREE.RGFormat, THREE.RGBAFormat, THREE.RGBAFormat];
-        options.format = formats[(options.numChannels-1)];
+        options.format = formats[(getNumChannels(data, options)-1)];
     }
 }
-const data = (data, options = {}) => {
+
+const getNumChannels = (data, options) => {
+    return options.width && options.height ? data.length / (options.width * options.height * options.depth) : 1;
+}
+
+const parseDataAndOptions = (data, options, defaults = {}) => {
     data = parseData(data);
-    options = parseDataOptions(data, options, {
-        generateMipmaps: false,
-        wrapS: THREE.MirroredRepeatWrapping,
-        wrapT: THREE.MirroredRepeatWrapping,
-    });
+    options = parseDataOptions(data, options, defaults);
     data = adjustData(data, options);
     checkFormat(data, options);
+    const numChannels = formats.indexOf(options.format) + 1;
+    if (data.length > options.width * options.height * options.depth * numChannels) {
+        data = data.slice(0, options.width * options.height * options.depth * numChannels);
+    }
+    return {data, options};
+}
+
+const data = (data_, options_ = {}) => {
+    const {data, options} = parseDataAndOptions(data_, options_, {
+        generateMipmaps: false,
+        // wrapS: THREE.MirroredRepeatWrapping,
+        // wrapT: THREE.MirroredRepeatWrapping,
+    });
     const {id} = options;
     let tex = id ? textures[id] : null;
     if (!tex || tex.image.width !== options.width || tex.image.height !== options.height) {
@@ -130,11 +141,8 @@ const data = (data, options = {}) => {
     return tex;
 }
 
-const dataArray = (data, options = {}) => {
-    data = parseData(data);
-    options = parseDataOptions(data, options);
-    data = adjustData(data, options);
-    checkFormat(data, options);
+const dataArray = (data_, options_ = {}) => {
+    const {data, options} = parseDataAndOptions(data_, options_);
     const {id} = options;
     let tex = id ? textures[id] : null;
     if (!tex || tex.image.width !== options.width || tex.image.height !== options.height || tex.image.depth !== options.depth) {
@@ -377,8 +385,8 @@ const fbo = (options = {}) => {
         minFilter: THREE.LinearMipmapLinearFilter,
         magFilter: THREE.LinearFilter,
         generateMipmaps: true,
-        wrapS: THREE.MirroredRepeatWrapping,
-        wrapT: THREE.MirroredRepeatWrapping,
+        // wrapS: THREE.MirroredRepeatWrapping,
+        // wrapT: THREE.MirroredRepeatWrapping,
     });
     const {width, height, ...texOptions} = options;
     return new THREE.WebGLRenderTarget(width, height, texOptions);
