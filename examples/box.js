@@ -5,7 +5,7 @@ const sc = scene().lights()
     .out();
 
 update = () => {
-    const box = sc.scene.at(0);
+    const box = sc.at(0);
 //     box.rotation.x += 0.01;
     box.rotation.y += 0.01;
 }
