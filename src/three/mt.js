@@ -165,7 +165,9 @@ const dotsFunc = processFunction({
     blendMode: true,
 });
 const dots = (pos, size, color, fade, options = {}) => {
-    return hydra(hydraSynth.generator.createSource('dots', dotsFunc, [pos, size, color, fade]), options);
+    return hydra(hydraSynth.generator.createSource('dots', dotsFunc, [pos, size, color, fade]), Object.assign({
+        transparent: true
+    }, options));
 }
 
 const squaresFunc = processFunction({
@@ -183,7 +185,9 @@ const squaresFunc = processFunction({
     blendMode: true,
 });
 const squares = (pos, size, color, fade, options = {}) => {
-    return hydra(hydraSynth.generator.createSource('squares', squaresFunc, [pos, size, color, fade]), options);
+    return hydra(hydraSynth.generator.createSource('squares', squaresFunc, [pos, size, color, fade]), Object.assign({
+        transparent: true
+    }, options));
 }
 
 const linesFunc = processFunction({
@@ -198,7 +202,9 @@ const linesFunc = processFunction({
     primitive: 'lines',
 });
 const lines = (pos, color, options = {}) => {
-    return hydra(hydraSynth.generator.createSource('lines', linesFunc, [pos, color]), options);
+    return hydra(hydraSynth.generator.createSource('lines', linesFunc, [pos, color]), Object.assign({
+        transparent: true
+    }, options));
 }
 
 const linestripFunc = processFunction({
@@ -213,7 +219,9 @@ const linestripFunc = processFunction({
     primitive: 'line strip',
 });
 const linestrip = (pos, color, options = {}) => {
-    return hydra(hydraSynth.generator.createSource('linestrip', linestripFunc, [pos, color]), options);
+    return hydra(hydraSynth.generator.createSource('linestrip', linestripFunc, [pos, color]), Object.assign({
+        transparent: true
+    }, options));
 }
 
 const lineloopFunc = processFunction({
@@ -228,7 +236,9 @@ const lineloopFunc = processFunction({
     primitive: 'line loop',
 });
 const lineloop = (pos, color, options = {}) => {
-    return hydra(hydraSynth.generator.createSource('lineloop', lineloopFunc, [pos, color]), options);
+    return hydra(hydraSynth.generator.createSource('lineloop', lineloopFunc, [pos, color]), Object.assign({
+        transparent: true
+    }, options));
 }
 
 const textFunc = processFunction({
