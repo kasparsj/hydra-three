@@ -260,8 +260,11 @@ const sceneMixin = {
         // todo: text
         // todo: plane
         let mesh;
-        if (typeof material === 'undefined' || material === null || !material.isMaterial) {
-            material = mt.mesh(material === null ? undefined : material);
+        if (typeof material === 'undefined' || material === null || material.isColor) {
+            material = mt.meshBasic({color: material || new THREE.Color()});
+        }
+        else if (!material.isMaterial) {
+            material = mt.mesh(material);
         }
         if (options.type === 'quad') {
             const quad = new FullScreenQuad(material);
