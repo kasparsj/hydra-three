@@ -67,7 +67,7 @@ const parseOptions = (options, defaults = {}) => {
     }, defaults);
     return Object.assign(defaults, {
         minFilter: minFilter || filters[min || filter] || defaults.minFilter,
-        magFilter: magFilter || filters[mag || filter] || defaults.magFilter,
+        magFilter: magFilter || filters[mag || (filter === 'mipmap' ? 'linear' : filter)] || defaults.magFilter,
         type: typeof type === 'number' ? type : typeof type === 'string' ? strTypes[type] : defaults.type,
     }, rest);
 }
