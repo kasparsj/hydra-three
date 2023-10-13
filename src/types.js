@@ -32,6 +32,9 @@ const getTypeLookup = {
     xy: 'vec2', yx: 'vec2',
     xyz: 'vec3', xzy: 'vec3', yzx: 'vec3', yxz: 'vec3', zxy: 'vec3', zyx: 'vec3',
     xyzw: 'vec4',
+    xxx: 'vec3',
+    yyy: 'vec3',
+    zzz: 'vec3',
 };
 
 const castType = (func, fromType, toType, alpha = 0.0) => {

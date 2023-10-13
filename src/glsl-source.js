@@ -109,7 +109,7 @@ GlslSource.prototype.st = function(source) {
   return this;
 }
 
-const glslProps = ['x', 'y', 'z', 'xy', 'xz', 'yx', 'yz', 'zx', 'zy', 'xyz', 'xyzw'];
+const glslProps = ['x', 'y', 'z', 'xy', 'xz', 'yx', 'yz', 'zx', 'zy', 'xyz', 'xyzw', 'xxx', 'yyy', 'zzz'];
 glslProps.map((prop) => {
   Object.defineProperty(GlslSource.prototype, prop, {
     get() {
