@@ -65,19 +65,22 @@ const parseData = (data) => {
 }
 
 const parseOptions = (options, defaults = {}) => {
-    const { minFilter, magFilter, min, mag, filter, type, wrapS, wrapT, wrapR, ...rest } = options;
+    const { minFilter, magFilter, min, mag, filter, type, wrapS, wrapT, wrapR, wrap, ...rest } = options;
     defaults = Object.assign({
         type: THREE.UnsignedByteType,
         minFilter: THREE.NearestFilter,
         magFilter: THREE.NearestFilter,
+        wrapS: typeof wrap === 'string' ? strWrap[wrap] : wrap,
+        wrapT: typeof wrap === 'string' ? strWrap[wrap] : wrap,
+        wrapR: typeof wrap === 'string' ? strWrap[wrap] : wrap,
     }, defaults);
     return Object.assign(defaults, {
         minFilter: minFilter || filters[min || filter] || defaults.minFilter,
         magFilter: magFilter || filters[mag || (filter === 'mipmap' ? 'linear' : filter)] || defaults.magFilter,
         type: typeof type === 'number' ? type : typeof type === 'string' ? strTypes[type] : defaults.type,
-        wrapS: typeof wrapS === 'string' ? strWrap[wrapS] : defaults.wrapS,
-        wrapT: typeof wrapS === 'string' ? strWrap[wrapS] : defaults.wrapT,
-        wrapR: typeof wrapR === 'string' ? strWrap[wrapR] : defaults.wrapR,
+        wrapS: typeof wrapS === 'string' ? strWrap[wrapS] : wrapS || defaults.wrapS,
+        wrapT: typeof wrapT === 'string' ? strWrap[wrapT] : wrapT || defaults.wrapT,
+        wrapR: typeof wrapR === 'string' ? strWrap[wrapR] : wrapR || defaults.wrapR,
     }, rest);
 }
 
