@@ -29,6 +29,12 @@ const filters = {
     'mipmap': THREE.LinearMipmapLinearFilter,
 };
 
+const strWrap = {
+    'repeat': THREE.RepeatWrapping,
+    'mirror': THREE.MirroredRepeatWrapping,
+    'clamp': THREE.ClampToEdgeWrapping,
+};
+
 const get = (id) => textures[id];
 
 const set = (id, tex) => {
@@ -36,7 +42,7 @@ const set = (id, tex) => {
 }
 
 const setAttributes = (tex, options) => {
-    ['type', 'format', 'generateMipmaps', 'minFilter', 'magFilter', 'wrapS', 'wrapT', 'needsUpdate'].forEach((prop) => {
+    ['type', 'format', 'generateMipmaps', 'minFilter', 'magFilter', 'wrapS', 'wrapT', 'wrapR', 'needsUpdate'].forEach((prop) => {
         if (typeof options[prop] !== 'undefined') {
             tex[prop] = options[prop];
         }
@@ -59,7 +65,7 @@ const parseData = (data) => {
 }
 
 const parseOptions = (options, defaults = {}) => {
-    const { minFilter, magFilter, min, mag, filter, type, ...rest } = options;
+    const { minFilter, magFilter, min, mag, filter, type, wrapS, wrapT, wrapR, ...rest } = options;
     defaults = Object.assign({
         type: THREE.UnsignedByteType,
         minFilter: THREE.NearestFilter,
@@ -69,6 +75,9 @@ const parseOptions = (options, defaults = {}) => {
         minFilter: minFilter || filters[min || filter] || defaults.minFilter,
         magFilter: magFilter || filters[mag || (filter === 'mipmap' ? 'linear' : filter)] || defaults.magFilter,
         type: typeof type === 'number' ? type : typeof type === 'string' ? strTypes[type] : defaults.type,
+        wrapS: typeof wrapS === 'string' ? strWrap[wrapS] : defaults.wrapS,
+        wrapT: typeof wrapS === 'string' ? strWrap[wrapS] : defaults.wrapT,
+        wrapR: typeof wrapR === 'string' ? strWrap[wrapR] : defaults.wrapR,
     }, rest);
 }
 
