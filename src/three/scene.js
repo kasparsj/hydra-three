@@ -242,7 +242,14 @@ const sceneMixin = {
                             //     }
                             //     instancedGeometry.setAttribute('instancePosition', new THREE.InstancedBufferAttribute(instancePositions, 3));
                             // }
-                            material = material || mt.lines();
+                            if (!material) {
+                                if (geometry instanceof GridGeometry) {
+                                    material = mt.lines();
+                                }
+                                else {
+                                    material = mt.lineBasic();
+                                }
+                            }
                             object = getOrCreateLineSegments(Object.assign({geometry, material}, options));
                             break;
                     }

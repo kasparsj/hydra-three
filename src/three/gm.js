@@ -40,7 +40,14 @@ const points = (num) => {
     return geom;
 }
 
-const line = (points) => new THREE.BufferGeometry().setFromPoints(points);
+const line = (points) => {
+    for (let i=0; i<points.length; i++) {
+        if (Array.isArray(points[i])) {
+            points[i] = new THREE.Vector3(...points[i]);
+        }
+    }
+    return new THREE.BufferGeometry().setFromPoints(points);
+}
 
 const grid = (...args) => new GridGeometry(...args);
 

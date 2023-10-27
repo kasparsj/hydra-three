@@ -64,7 +64,7 @@ function processGlsl(obj, returnType, args = []) {
 
     const func = `${returnType || ''} ${obj.glslName}(${allArgs}`;
     const fixOrWrap = (glsl) => {
-        if (glsl.indexOf(func) === -1) {
+        if (glsl.replace(/\s+/g, " ").indexOf(func) === -1) {
             if (glsl.indexOf(`${returnType} main(${allArgs}`) > -1) {
                 return glsl.replace(`${returnType} main(${allArgs}`, func);
             }

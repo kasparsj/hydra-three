@@ -72,6 +72,11 @@ class HydraRenderer {
       render: this._render.bind(this),
       setResolution: this.setResolution.bind(this),
       update: (dt) => {},// user defined update function
+      click: (event) => {},
+      mousedown: (event) => {},
+      mouseup: (event) => {},
+      keydown: (event) => {},
+      keyup: (event) => {},
       hush: this.hush.bind(this),
       tick: this.tick.bind(this),
       shadowMap: this.shadowMap.bind(this),
@@ -154,7 +159,7 @@ class HydraRenderer {
     if(autoLoop) loop(this.tick.bind(this)).start()
 
     // final argument is properties that the user can set, all others are treated as read-only
-    this.sandbox = new Sandbox(this.synth, makeGlobal, ['speed', 'update', 'bpm', 'fps'])
+    this.sandbox = new Sandbox(this.synth, makeGlobal, ['speed', 'update', 'click', 'mousedown', 'mouseup', 'keydown', 'keyup', 'bpm', 'fps'])
 
     this.i = 0
   }
@@ -176,8 +181,12 @@ class HydraRenderer {
       this.synth.solid(0, 0, 0, 0).out(output)
     })
     this.synth.render(this.o[0])
-    // this.synth.update = (dt) => {}
     this.sandbox.set('update', (dt) => {})
+    this.sandbox.set('click', (event) => {})
+    this.sandbox.set('mousedown', (event) => {})
+    this.sandbox.set('mouseup', (event) => {})
+    this.sandbox.set('keydown', (event) => {})
+    this.sandbox.set('keyup', (event) => {})
   }
 
   loadScript(url = "", once = true) {
@@ -283,6 +292,11 @@ class HydraRenderer {
       this.canvas.style.imageRendering = 'pixelated'
       document.body.appendChild(this.canvas)
     }
+    this.canvas.addEventListener("click", (event) => { typeof this.synth.click === 'function' && this.synth.click(event) });
+    this.canvas.addEventListener("mousedown", (event) => { typeof this.synth.mousedown === 'function' && this.synth.mousedown(event) });
+    this.canvas.addEventListener("mouseup", (event) => { typeof this.synth.mouseup === 'function' && this.synth.mouseup(event) });
+    document.addEventListener("keydown", (event) => { typeof this.synth.keydown === 'function' && this.synth.keydown(event) });
+    document.addEventListener("keyup", (event) => { typeof this.synth.keyup === 'function' && this.synth.keyup(event) });
   }
 
   _initThree (webgl) {
