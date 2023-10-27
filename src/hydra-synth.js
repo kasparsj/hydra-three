@@ -303,14 +303,20 @@ class HydraRenderer {
     window.THREE = THREE;
     window.color = (...args) => new THREE.Color(...args);
     window.vec2 = (x, y) => {
+      if (x.isVector2) return x.clone();
       Array.isArray(x) && (y = x[1], x = x[0]);
       return new THREE.Vector2(x, typeof y === 'undefined' ? x : y);
     }
     window.vec3 = (x, y, z) => {
+      if (x.isVector3) return x.clone();
       Array.isArray(x) && (z = x[2], y = x[1], x = x[0]);
       return new THREE.Vector3(x, typeof y === 'undefined' ? (y = x) : y, typeof z === 'undefined' ? y : z);
     }
-    window.vec4 = (...args) => new THREE.Vector4(...args);
+    window.vec4 = (x, y, z, w) => {
+      if (x.isVector4) return x.clone();
+      Array.isArray(x) && (w = x[3], z = x[2], y = x[1], x = x[0]);
+      return new THREE.Vector4(x, typeof y === 'undefined' ? (y = x) : y, typeof z === 'undefined' ? (z = y) : z, typeof w === 'undefined' ? z : w);
+    }
     window.box3 = (min, max) => new THREE.Box3(min, max);
     window.quat = (...args) => new THREE.Quaternion(...args);
     window.mat4 = (...args) => new THREE.Matrix4(...args);
