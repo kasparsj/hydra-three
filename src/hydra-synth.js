@@ -303,9 +303,11 @@ class HydraRenderer {
     window.THREE = THREE;
     window.color = (...args) => new THREE.Color(...args);
     window.vec2 = (x, y) => {
+      Array.isArray(x) && (y = x[1], x = x[0]);
       return new THREE.Vector2(x, y || x);
     }
     window.vec3 = (x, y, z) => {
+      Array.isArray(x) && (z = x[2], y = x[1], x = x[0]);
       return new THREE.Vector3(x, y || (y = x), z || y);
     }
     window.vec4 = (...args) => new THREE.Vector4(...args);

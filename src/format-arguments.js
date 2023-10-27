@@ -99,6 +99,9 @@ export default function formatArguments(transform, startIndex) {
           const arr = Array(length).fill(typedArg.value);
           typedArg.value = `${typedArg.type}(${arr.map(ensure_decimal_dot).join(', ')})`
         }
+        else if (typedArg.value.isVector2 || typedArg.value.isVector3 || typedArg.value.isVector4) {
+          typedArg.isUniform = true
+        }
       } else if (input.type === 'sampler2D' || input.type === 'sampler2DArray') {
         // typedArg.tex = typedArg.value
         var x = typedArg.value
