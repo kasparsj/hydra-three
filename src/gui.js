@@ -4,8 +4,10 @@ import * as worldLib from "./three/world.js";
 const guis = {};
 
 const create = async (name = "hydra") => {
-    await loadScript("https://unpkg.com/dat.gui");
-    patchDat();
+    if (!dat.GUI) {
+        await loadScript("https://unpkg.com/dat.gui");
+        patchDat();
+    }
     if (!guis[name]) {
         const gui = new dat.GUI({ name, hideable: false });
         gui.useLocalStorage = true;
@@ -14,19 +16,24 @@ const create = async (name = "hydra") => {
     return guis[name];
 }
 
-const addFolder = async(name, settings, setupFn, gui) => {
-    if (!gui) {
-        gui = await create();
-    }
-    gui.remember(settings);
-    try {
-        const folder = gui.addFolder(name);
-        if (setupFn) {
-            setupFn(folder, settings);
+const addFolder = (name, settings, setupFn, gui) => {
+    const _addFolder = (gui) => {
+        gui.remember(settings);
+        try {
+            const folder = gui.addFolder(name);
+            if (setupFn) {
+                setupFn(folder, settings);
+            }
+        }
+        catch (e) {
+            console.log(e.message);
         }
     }
-    catch (e) {
-        console.log(e.message);
+    if (!gui) {
+        create().then(_addFolder);
+    }
+    else {
+        _addFolder(gui);
     }
     return settings;
 }
