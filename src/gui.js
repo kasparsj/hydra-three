@@ -108,4 +108,11 @@ function patchDat() {
     }
 }
 
-export { init, create, addFolder, lights, world }
+const hideSaveRow = (nameOrGui) => {
+    // todo: nameOrGui
+    if (document.getElementsByClassName("save-row").length) {
+        document.getElementsByClassName("save-row")[0].style = 'display:none';
+    }
+}
+
+export { init, create, addFolder, lights, world, hideSaveRow }

@@ -91,16 +91,16 @@ const sourceMixin = {
         this._viewport = {};
     },
 
-    out(_output) {
-        var output = _output || this.defaultOutput
-        this.output = output;
-        var glsl = this.compile()
-        if(output) try{
-            output._set(glsl)
+    out(_output, options = {}) {
+        const output = _output || this.defaultOutput
+        this.output = output
+        const glsl = this.compile()
+        try {
+            output._set(glsl, options)
         } catch (error) {
             console.log('shader could not compile', error)
         }
-        return this;
+        return this
     },
 
     tex(_output, options = {}) {

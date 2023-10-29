@@ -111,7 +111,7 @@ Output.prototype.stop = function() {
   this.controls = [];
 }
 
-Output.prototype._set = function (passes) {
+Output.prototype._set = function (passes, {cssRenderer = false}) {
   this.stop();
   if (passes.length > 0) {
     // todo: output level clear and fade are not working properly
@@ -166,6 +166,9 @@ Output.prototype._set = function (passes) {
       }
     }
   }
+  this.cssRenderer = typeof cssRenderer === 'string'
+      ? {'2d': 'css2DRenderer', 'css2drenderer': 'css2DRenderer', '3d': 'css3DRenderer', 'css3drenderer': 'css3DRenderer'}[cssRenderer.toLowerCase()]
+      : null;
 }
 
 Output.prototype.clearNow = function() {
@@ -213,6 +216,13 @@ Output.prototype.render = function() {
     layers.render(this.layers);
   }
   this.composer.render();
+  if (this.cssRenderer && this.synth[this.cssRenderer]) {
+    for (let i=0; i<this.composer.passes.length; i++) {
+      if (this.composer.passes[i].scene && this.composer.passes[i].camera) {
+        this.synth[this.cssRenderer].render(this.composer.passes[i].scene, this.composer.passes[i].camera);
+      }
+    }
+  }
 }
 
 Output.prototype.renderTexture = function(options = {}) {

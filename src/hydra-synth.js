@@ -23,7 +23,9 @@ import * as nse from "./three/noise.js";
 import * as math from "./three/math.js";
 import * as arr from "./three/arr.js";
 import * as gui from "./gui.js";
-
+import * as el from "./el.js";
+import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 
 const Mouse = MouseTools()
 // to do: add ability to pass in certain uniforms and transforms
@@ -89,6 +91,7 @@ class HydraRenderer {
       nse,
       gui,
       arr,
+      el,
     }
 
     nse.init();
@@ -231,6 +234,8 @@ class HydraRenderer {
     this.s.forEach((source) => {
       source.resize(width, height)
     })
+    this.css2DRenderer.setSize(width, height)
+    this.css3DRenderer.setSize(width, height)
   }
 
   canvasToImage (callback) {
@@ -332,6 +337,15 @@ class HydraRenderer {
     this.renderer.autoClear = false;
     this.synth.renderer = this.renderer;
     this.composer = new EffectComposer(this.renderer);
+
+    this.css2DRenderer = new CSS2DRenderer();
+    this.css2DRenderer.setSize(this.width, this.height);
+    document.body.appendChild( this.css2DRenderer.domElement );
+    this.synth.css2DRenderer = this.css2DRenderer;
+    this.css3DRenderer = new CSS3DRenderer();
+    this.css3DRenderer.setSize(this.width, this.height);
+    this.synth.css3DRenderer = this.css3DRenderer;
+    document.body.appendChild( this.css3DRenderer.domElement );
 
     new HydraUniform('tex', null, () => this.output.getTexture(), 'hydra');
     new HydraUniform('tex0', null, () => this.o[0].getTexture(), 'hydra');

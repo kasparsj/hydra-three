@@ -3,6 +3,8 @@ import * as mt from "./mt.js";
 import {GridGeometry} from "../lib/GridGeometry.js";
 import GlslSource from "../glsl-source.js";
 import {FullScreenQuad} from "three/examples/jsm/postprocessing/Pass.js";
+import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+import { CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 import {cameraMixin, sourceMixin, mixClass, clearMixin} from "../lib/mixins.js";
 import * as layers from "./layers.js";
 import * as lights from "./lights.js";
@@ -333,6 +335,18 @@ const sceneMixin = {
         setObject3DAttrs(group, attributes);
         groups[group.name] = group;
         return group;
+    },
+
+    css2d(element, attributes = {}) {
+        const obj = new CSS2DObject(element);
+        setObject3DAttrs(obj, attributes);
+        return this._add(obj);
+    },
+
+    css3d(element, attributes = {}) {
+        const obj = new CSS3DObject(element);
+        setObject3DAttrs(obj, attributes);
+        return this._add(obj);
     },
 
     // todo: does having just lights count as empty?
