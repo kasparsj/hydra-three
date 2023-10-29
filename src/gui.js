@@ -3,11 +3,14 @@ import * as worldLib from "./three/world.js";
 
 const guis = {};
 
-const create = async (name = "hydra") => {
+const init = async () => {
     if (!dat.GUI) {
         await loadScript("https://unpkg.com/dat.gui");
-        patchDat();
     }
+    patchDat();
+}
+
+const create = (name = "hydra") => {
     if (!guis[name]) {
         const gui = new dat.GUI({ name, hideable: false });
         gui.useLocalStorage = true;
@@ -17,23 +20,18 @@ const create = async (name = "hydra") => {
 }
 
 const addFolder = (name, settings, setupFn, gui) => {
-    const _addFolder = (gui) => {
-        gui.remember(settings);
-        try {
-            const folder = gui.addFolder(name);
-            if (setupFn) {
-                setupFn(folder, settings);
-            }
-        }
-        catch (e) {
-            console.log(e.message);
-        }
-    }
     if (!gui) {
-        create().then(_addFolder);
+        gui = create();
     }
-    else {
-        _addFolder(gui);
+    gui.remember(settings);
+    try {
+        const folder = gui.addFolder(name);
+        if (setupFn) {
+            setupFn(folder, settings);
+        }
+    }
+    catch (e) {
+        console.log(e.message);
     }
     return settings;
 }
@@ -110,4 +108,4 @@ function patchDat() {
     }
 }
 
-export { create, addFolder, lights, world }
+export { init, create, addFolder, lights, world }
