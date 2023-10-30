@@ -1,6 +1,7 @@
 const create = (tag, attributes) => {
     const el = document.createElement(tag);
     setAttributes(el, attributes);
+    return el;
 }
 
 const setAttributes = (el, attributes) => {

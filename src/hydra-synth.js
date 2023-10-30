@@ -43,6 +43,8 @@ class HydraRenderer {
     enableStreamCapture = true,
     webgl = 2,
     canvas,
+    css2DElement,
+    css3DElement,
     precision,
     extendTransforms = {} // add your own functions on init
   } = {}) {
@@ -137,7 +139,7 @@ class HydraRenderer {
 
     this.generator = undefined
 
-    this._initThree(webgl);
+    this._initThree(webgl, css2DElement, css3DElement);
     this._initOutputs(numOutputs)
     this._initSources(numSources)
     this._generateGlslTransforms()
@@ -304,7 +306,7 @@ class HydraRenderer {
     document.addEventListener("keyup", (event) => { typeof this.synth.keyup === 'function' && this.synth.keyup(event) });
   }
 
-  _initThree (webgl) {
+  _initThree (webgl, css2DElement, css3DElement) {
     window.THREE = THREE;
     window.color = (...args) => new THREE.Color(...args);
     window.vec2 = (x, y) => {
@@ -338,11 +340,11 @@ class HydraRenderer {
     this.synth.renderer = this.renderer;
     this.composer = new EffectComposer(this.renderer);
 
-    this.css2DRenderer = new CSS2DRenderer();
+    this.css2DRenderer = new CSS2DRenderer({element:css2DElement});
     this.css2DRenderer.setSize(this.width, this.height);
     document.body.appendChild( this.css2DRenderer.domElement );
     this.synth.css2DRenderer = this.css2DRenderer;
-    this.css3DRenderer = new CSS3DRenderer();
+    this.css3DRenderer = new CSS3DRenderer({element:css3DElement});
     this.css3DRenderer.setSize(this.width, this.height);
     this.synth.css3DRenderer = this.css3DRenderer;
     document.body.appendChild( this.css3DRenderer.domElement );
