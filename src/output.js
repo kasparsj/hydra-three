@@ -4,7 +4,7 @@ import { ClearPass } from "three/examples/jsm/postprocessing/ClearPass.js";
 import {HydraUniform} from "./three/HydraUniform.js";
 import { HydraMaterialPass, HydraRenderPass } from "./three/HydraPass.js";
 import {HydraVertexShader, HydraShader} from "./lib/HydraShader.js";
-import {cameraMixin, clearMixin} from "./lib/mixins.js";
+import {cameraMixin, autoClearMixin} from "./lib/mixins.js";
 import * as fx from "./three/fx.js";
 import * as layers from "./three/layers.js";
 import * as tx from "./three/tx.js";
@@ -32,7 +32,7 @@ Output.prototype = {
   }
 };
 
-Object.assign(Output.prototype, cameraMixin, clearMixin);
+Object.assign(Output.prototype, cameraMixin, autoClearMixin);
 
 Output.prototype.init = function () {
   this.composer = new EffectComposer(this.synth.renderer);
@@ -115,12 +115,12 @@ Output.prototype._set = function (passes, {cssRenderer = false}) {
   this.stop();
   if (passes.length > 0) {
     // todo: output level clear and fade are not working properly
-    if (this._clear && this._clear.amount > 0) {
-      if (this._clear.amount >= 1) {
+    if (this._autoClear && this._autoClear.amount > 0) {
+      if (this._autoClear.amount >= 1) {
         this.composer.addPass(new ClearPass());
       }
       else {
-        this.composer.addPass(this._fadePass({...this._clear}));
+        this.composer.addPass(this._fadePass({...this._autoClear}));
       }
     }
     for (let i=0; i<passes.length; i++) {
@@ -148,12 +148,12 @@ Output.prototype._set = function (passes, {cssRenderer = false}) {
       else {
         pass = new HydraMaterialPass(options);
       }
-      if (options.clear && options.clear.amount > 0) {
-        if (options.clear.amount >= 1) {
+      if (options.autoClear && options.autoClear.amount > 0) {
+        if (options.autoClear.amount >= 1) {
           pass.clear = true;
         }
         else {
-          this.composer.addPass(this._fadePass({...options.clear}));
+          this.composer.addPass(this._fadePass({...options.autoClear}));
         }
       }
       this.composer.addPass(pass);

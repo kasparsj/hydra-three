@@ -5,7 +5,7 @@ import GlslSource from "../glsl-source.js";
 import {FullScreenQuad} from "three/examples/jsm/postprocessing/Pass.js";
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
-import {cameraMixin, sourceMixin, mixClass, clearMixin} from "../lib/mixins.js";
+import {cameraMixin, sourceMixin, mixClass, autoClearMixin} from "../lib/mixins.js";
 import * as layers from "./layers.js";
 import * as lights from "./lights.js";
 import * as world from "./world.js";
@@ -380,7 +380,7 @@ class HydraScene extends THREE.Scene {
         super();
 
         this.init(options);
-        this._clear = {amount: 1};
+        this._autoClear = {amount: 1};
         this._layers = [];
     }
 
@@ -398,7 +398,7 @@ class HydraScene extends THREE.Scene {
             camera: this._camera,
             // todo: viewport
             viewport: this._viewport,
-            clear: this._clear,
+            autoClear: this._autoClear,
             layers: this._layers,
             fx: this._fx,
         }, options);
@@ -454,6 +454,6 @@ class HydraScene extends THREE.Scene {
     }
 }
 
-mixClass(HydraScene, cameraMixin, clearMixin, sourceMixin, sceneMixin);
+mixClass(HydraScene, cameraMixin, autoClearMixin, sourceMixin, sceneMixin);
 
 export { HydraScene, HydraGroup, getOrCreateScene}

@@ -72,9 +72,9 @@ const cameraMixin = {
     }
 };
 
-const clearMixin = {
-    clear(amount = 1.0, options = {}) {
-        this._clear = {
+const autoClearMixin = {
+    autoClear(amount = 1.0, options = {}) {
+        this._autoClear = {
             amount,
             ...options,
         };
@@ -163,4 +163,4 @@ const mixClass = (clazz, ...mixins) => {
     }
 }
 
-export { cameraMixin, clearMixin, sourceMixin, mixClass }
+export { cameraMixin, autoClearMixin, sourceMixin, mixClass }

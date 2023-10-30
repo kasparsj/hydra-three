@@ -3,7 +3,7 @@ import utilityGlsl from './glsl/utility-functions.js'
 import {replaceGenType} from "./types.js"
 import {HydraFragmentShader, HydraVertexShader} from "./lib/HydraShader.js";
 import {HydraUniform} from "./three/HydraUniform.js";
-import {cameraMixin, clearMixin, sourceMixin} from "./lib/mixins.js";
+import {cameraMixin, autoClearMixin, sourceMixin} from "./lib/mixins.js";
 import * as mt from "./three/mt.js";
 
 var GlslSource = function (obj, options) {
@@ -16,7 +16,7 @@ var GlslSource = function (obj, options) {
   return this;
 }
 
-Object.assign(GlslSource.prototype, cameraMixin, sourceMixin, clearMixin);
+Object.assign(GlslSource.prototype, cameraMixin, sourceMixin, autoClearMixin);
 
 GlslSource.prototype.addTransform = function (obj)  {
   this.transforms.push(obj)
@@ -53,7 +53,7 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
         glslName: 'combine',
       }, shaderInfo, [], { useCamera: false }),
       viewport: this._viewport,
-      clear: this._clear,
+      autoClear: this._autoClear,
     }, options);
   }
 
@@ -73,7 +73,7 @@ GlslSource.prototype.createPass = function(shaderInfo, options = {}) {
   return Object.assign({
     camera: this._camera,
     viewport: this._viewport,
-    clear: this._clear,
+    autoClear: this._autoClear,
     fx: this._fx,
   }, options);
 }

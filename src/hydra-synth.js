@@ -342,12 +342,19 @@ class HydraRenderer {
 
     this.css2DRenderer = new CSS2DRenderer({element:css2DElement});
     this.css2DRenderer.setSize(this.width, this.height);
+    this.css2DRenderer.domElement.style.position = 'absolute';
+    this.css2DRenderer.domElement.style.top = '0px';
+    this.css2DRenderer.domElement.style.pointerEvents = 'none';
     document.body.appendChild( this.css2DRenderer.domElement );
     this.synth.css2DRenderer = this.css2DRenderer;
+
     this.css3DRenderer = new CSS3DRenderer({element:css3DElement});
     this.css3DRenderer.setSize(this.width, this.height);
-    this.synth.css3DRenderer = this.css3DRenderer;
+    this.css3DRenderer.domElement.style.position = 'absolute';
+    this.css3DRenderer.domElement.style.top = '0px';
+    this.css3DRenderer.domElement.style.pointerEvents = 'none';
     document.body.appendChild( this.css3DRenderer.domElement );
+    this.synth.css3DRenderer = this.css3DRenderer;
 
     new HydraUniform('tex', null, () => this.output.getTexture(), 'hydra');
     new HydraUniform('tex0', null, () => this.o[0].getTexture(), 'hydra');

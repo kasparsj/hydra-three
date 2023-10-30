@@ -29,7 +29,7 @@ scene().lineloop([300], mt.lineloop(solid(
 scene().lineloop([100], mt.lineloop(solid(noise(1).x, noise(2).y, noise(3).y).map(-1,1,0,1).out(o1)))
     .out();
 
-o0.perspective([0, 0.1, 1.5], [0, 0, 0]).clear();
+o0.perspective([0, 0.1, 1.5], [0, 0, 0]).autoClear();
 const sc = scene({background: color(1, 0, 0)});
 const numLines = 30;
 const R = 0.15;
