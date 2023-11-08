@@ -2,11 +2,13 @@ import * as THREE from "three";
 
 const color = (...args) => new THREE.Color(...args);
 const vec2 = (x, y) => {
+    x || (x = 0);
     if (x.isVector2) return x.clone();
     Array.isArray(x) && (y = x[1], x = x[0]);
     return new THREE.Vector2(x, typeof y === 'undefined' ? x : y);
 }
 const vec3 = (x, y, z) => {
+    x || (x = 0);
     if (x.isVector3) return x.clone();
     Array.isArray(x) && (z = x[2], y = x[1], x = x[0]);
     return new THREE.Vector3(x, typeof y === 'undefined' ? (y = x) : y, typeof z === 'undefined' ? y : z);
@@ -21,7 +23,20 @@ const quat = (...args) => new THREE.Quaternion(...args);
 const mat4 = (...args) => new THREE.Matrix4(...args);
 const sx = (x, w = window.innerWidth) => x/w * 2;
 const sy = (y, h = window.innerHeight) => y/h * 2;
-const xy = (x, y, w = window.innerWidth, h = window.innerHeight) => vec2(-1 + x/w * 2, 1 - y/h * 2);
-const xyz = (x, y, z, w = window.innerWidth, h = window.innerHeight) => vec3(-1 + x/w * 2, 1 - y/h * 2, z);
+const xy = (x, y, w = window.innerWidth, h = window.innerHeight) => {
+    if (x.isVector2) {
+        y = x.y;
+        x = x.x;
+    }
+    return vec2(-1 + x/w * 2, 1 - y/h * 2);
+}
+const xyz = (x, y, z, w = window.innerWidth, h = window.innerHeight) => {
+    if (x.isVector3) {
+        z = x.z;
+        y = x.y;
+        x = x.x;
+    }
+    return vec3(-1 + x/w * 2, 1 - y/h * 2, z);
+}
 
 export { color, vec2, vec3, vec4, box3, quat, mat4, sx, sy, xy, xyz }
