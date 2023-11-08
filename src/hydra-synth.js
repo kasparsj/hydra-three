@@ -24,6 +24,7 @@ import * as math from "./three/math.js";
 import * as arr from "./three/arr.js";
 import * as gui from "./gui.js";
 import * as el from "./el.js";
+import * as utils from "./three/utils.js";
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 
@@ -79,6 +80,7 @@ class HydraRenderer {
       click: (event) => {},
       mousedown: (event) => {},
       mouseup: (event) => {},
+      mousemove: (event) => {},
       keydown: (event) => {},
       keyup: (event) => {},
       hush: this.hush.bind(this),
@@ -164,7 +166,7 @@ class HydraRenderer {
     if(autoLoop) loop(this.tick.bind(this)).start()
 
     // final argument is properties that the user can set, all others are treated as read-only
-    this.sandbox = new Sandbox(this.synth, makeGlobal, ['speed', 'update', 'click', 'mousedown', 'mouseup', 'keydown', 'keyup', 'bpm', 'fps'])
+    this.sandbox = new Sandbox(this.synth, makeGlobal, ['speed', 'update', 'click', 'mousedown', 'mouseup', 'mousemove', 'keydown', 'keyup', 'bpm', 'fps'])
 
     this.i = 0
   }
@@ -190,6 +192,7 @@ class HydraRenderer {
     this.sandbox.set('click', (event) => {})
     this.sandbox.set('mousedown', (event) => {})
     this.sandbox.set('mouseup', (event) => {})
+    this.sandbox.set('mousemove', (event) => {})
     this.sandbox.set('keydown', (event) => {})
     this.sandbox.set('keyup', (event) => {})
   }
@@ -302,31 +305,14 @@ class HydraRenderer {
     this.canvas.addEventListener("click", (event) => { typeof this.synth.click === 'function' && this.synth.click(event) });
     this.canvas.addEventListener("mousedown", (event) => { typeof this.synth.mousedown === 'function' && this.synth.mousedown(event) });
     this.canvas.addEventListener("mouseup", (event) => { typeof this.synth.mouseup === 'function' && this.synth.mouseup(event) });
+    this.canvas.addEventListener("mousemove", (event) => { typeof this.synth.mousemove === 'function' && this.synth.mousemove(event) });
     document.addEventListener("keydown", (event) => { typeof this.synth.keydown === 'function' && this.synth.keydown(event) });
     document.addEventListener("keyup", (event) => { typeof this.synth.keyup === 'function' && this.synth.keyup(event) });
   }
 
   _initThree (webgl, css2DElement, css3DElement) {
     window.THREE = THREE;
-    window.color = (...args) => new THREE.Color(...args);
-    window.vec2 = (x, y) => {
-      if (x.isVector2) return x.clone();
-      Array.isArray(x) && (y = x[1], x = x[0]);
-      return new THREE.Vector2(x, typeof y === 'undefined' ? x : y);
-    }
-    window.vec3 = (x, y, z) => {
-      if (x.isVector3) return x.clone();
-      Array.isArray(x) && (z = x[2], y = x[1], x = x[0]);
-      return new THREE.Vector3(x, typeof y === 'undefined' ? (y = x) : y, typeof z === 'undefined' ? y : z);
-    }
-    window.vec4 = (x, y, z, w) => {
-      if (x.isVector4) return x.clone();
-      Array.isArray(x) && (w = x[3], z = x[2], y = x[1], x = x[0]);
-      return new THREE.Vector4(x, typeof y === 'undefined' ? (y = x) : y, typeof z === 'undefined' ? (z = y) : z, typeof w === 'undefined' ? z : w);
-    }
-    window.box3 = (min, max) => new THREE.Box3(min, max);
-    window.quat = (...args) => new THREE.Quaternion(...args);
-    window.mat4 = (...args) => new THREE.Matrix4(...args);
+    Object.assign(window, utils);
 
     const options = {
       canvas: this.canvas,
