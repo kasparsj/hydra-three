@@ -49,6 +49,11 @@ const line = (points) => {
     return new THREE.BufferGeometry().setFromPoints(points);
 }
 
+const ellipse = (width, height, points = 50) => {
+    const curve = new THREE.EllipseCurve(0, 0, width, height);
+    return new THREE.BufferGeometry().setFromPoints(curve.getPoints(points));
+}
+
 const grid = (...args) => new GridGeometry(...args);
 
 const text = (text, options = {}) => {
@@ -83,6 +88,7 @@ function signedArea(A, B, C) {
 export {
     box, capsule, circle, cone, cylinder, dodecahedron, edges, extrude,
     icosahedron, lathe, octahedron, plane, polyhedron, ring, shape, sphere,
-    tetrahedron, torus, torusKnot, tube, wireframe, points, line, grid, text,
+    tetrahedron, torus, torusKnot, tube, wireframe, points, line, ellipse,
+    grid, text,
     posFromEleAzi, signedArea,
 };
