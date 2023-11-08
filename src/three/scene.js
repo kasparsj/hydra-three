@@ -82,7 +82,14 @@ const getOrCreateScene = (options, attributes = {}) => {
     }
     for (let attr in attributes) {
         if (!attributes.hasOwnProperty(attr)) continue;
-        scene[attr] = attributes[attr];
+        switch (attr) {
+            case 'background':
+                scene[attr] = new THREE.Color(attributes[attr]);
+                break;
+            default:
+                scene[attr] = attributes[attr];
+                break;
+        }
     }
     scenes[scene.name] = scene;
     return scene;
