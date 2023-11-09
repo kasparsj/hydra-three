@@ -82,16 +82,9 @@ const cameraMixin = {
     toCameraBounds(type, width, height) {
         switch (type) {
             case 'screen':
-            case 'normalized':
-                if (type === 'screen') {
-                    // todo: listen for resize?
-                    width || (width = window.innerWidth);
-                    height || (height = window.innerHeight);
-                }
-                else {
-                    width || (width = 1);
-                    height || (height = 1);
-                }
+                // todo: listen for resize?
+                width || (width = window.innerWidth);
+                height || (height = window.innerHeight);
                 return {
                     aspect: width / height,
                     left: 0,
@@ -117,8 +110,8 @@ const cameraMixin = {
         return this.setCameraBounds('screen', w, h);
     },
 
-    normalizedCoords(w, h) {
-        return this.setCameraBounds('normalized', w, h);
+    normalizedCoords() {
+        return this.setCameraBounds('screen', 1, 1);
     },
 
     cartesianCoords(w, h) {
