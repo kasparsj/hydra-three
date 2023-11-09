@@ -24,7 +24,7 @@ import * as math from "./three/math.js";
 import * as arr from "./three/arr.js";
 import * as gui from "./gui.js";
 import * as el from "./el.js";
-import * as utils from "./three/utils.js";
+import * as globals from "./three/globals.js";
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 import { initCanvas } from "./canvas";
@@ -293,7 +293,7 @@ class HydraRenderer {
 
   _initThree (webgl, css2DElement, css3DElement) {
     window.THREE = THREE;
-    Object.assign(window, utils);
+    Object.assign(window, globals);
 
     const options = {
       canvas: this.canvas,
