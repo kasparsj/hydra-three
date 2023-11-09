@@ -84,6 +84,7 @@ const cameraMixin = {
             case 'screen':
             case 'normalized':
                 if (type === 'screen') {
+                    // todo: listen for resize?
                     width || (width = window.innerWidth);
                     height || (height = window.innerHeight);
                 }

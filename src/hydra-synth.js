@@ -27,6 +27,7 @@ import * as el from "./el.js";
 import * as utils from "./three/utils.js";
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
+import { initCanvas } from "./canvas";
 
 const Mouse = MouseTools()
 // to do: add ability to pass in certain uniforms and transforms
@@ -59,13 +60,16 @@ class HydraRenderer {
     this.renderAll = false
     this.detectAudio = detectAudio
 
-    this._initCanvas(canvas)
+    this.canvas = initCanvas(canvas, this);
+    this.width = canvas.width
+    this.height = canvas.height
 
     //global.window.test = 'hi'
     // object that contains all properties that will be made available on the global context and during local evaluation
     this.synth = {
       time: 0,
       bpm: 30,
+      canvas: this.canvas,
       width: this.width,
       height: this.height,
       fps: undefined,
@@ -285,29 +289,6 @@ class HydraRenderer {
       //   }
       // }
     })
-  }
-
-  // create main output canvas and add to screen
-  _initCanvas (canvas) {
-    if (canvas) {
-      this.canvas = canvas
-      this.width = canvas.width
-      this.height = canvas.height
-    } else {
-      this.canvas = document.createElement('canvas')
-      this.canvas.width = this.width
-      this.canvas.height = this.height
-      this.canvas.style.width = '100%'
-      this.canvas.style.height = '100%'
-      this.canvas.style.imageRendering = 'pixelated'
-      document.body.appendChild(this.canvas)
-    }
-    this.canvas.addEventListener("click", (event) => { typeof this.synth.click === 'function' && this.synth.click(event) });
-    this.canvas.addEventListener("mousedown", (event) => { typeof this.synth.mousedown === 'function' && this.synth.mousedown(event) });
-    this.canvas.addEventListener("mouseup", (event) => { typeof this.synth.mouseup === 'function' && this.synth.mouseup(event) });
-    this.canvas.addEventListener("mousemove", (event) => { typeof this.synth.mousemove === 'function' && this.synth.mousemove(event) });
-    document.addEventListener("keydown", (event) => { typeof this.synth.keydown === 'function' && this.synth.keydown(event) });
-    document.addEventListener("keyup", (event) => { typeof this.synth.keyup === 'function' && this.synth.keyup(event) });
   }
 
   _initThree (webgl, css2DElement, css3DElement) {
