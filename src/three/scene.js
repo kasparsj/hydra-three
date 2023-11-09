@@ -325,21 +325,19 @@ const sceneMixin = {
         return mesh;
     },
 
-    quad(...args) {
-        args[1] = Object.assign(args[1] || {}, { type: 'quad' });
-        return this.add(...args);
+    quad(material, options) {
+        options = Object.assign(options || {}, { type: 'quad' });
+        return this.add(material, options);
     },
 
-    mesh(...args) {
-        args[1] = args[1] || null;
-        args[2] = Object.assign(args[2] || {}, { type: 'triangles' });
-        return this.add(...args);
+    mesh(geometry, material, options) {
+        options = Object.assign(options || {}, { type: 'triangles' });
+        return this.add(geometry, material, options);
     },
 
-    points(...args) {
-        args[1] = args[1] || null;
-        args[2] = Object.assign(args[2] || {}, { type: 'points' });
-        return this.add(...args);
+    points(geometry, material, options) {
+        options = Object.assign(options || {}, { type: 'points' });
+        return this.add(geometry, material, options);
     },
 
     lines(geometry, material, options) {
@@ -355,16 +353,14 @@ const sceneMixin = {
         return this.lines(geometry, material, options);
     },
 
-    linestrip(...args) {
-        args[1] = args[1] || null;
-        args[2] = Object.assign(args[2] || {}, { type: 'linestrip' });
-        return this.add(...args);
+    linestrip(geometry, material, options) {
+        options = Object.assign(options || {}, { type: 'linestrip' });
+        return this.add(geometry, material, options);
     },
 
-    lineloop(...args) {
-        args[1] = args[1] || null;
-        args[2] = Object.assign(args[2] || {}, { type: 'lineloop' });
-        return this.add(...args);
+    lineloop(geometry, material, options) {
+        options = Object.assign(options || {}, { type: 'lineloop' });
+        return this.add(geometry, material, options);
     },
 
     group(attributes = {}) {
