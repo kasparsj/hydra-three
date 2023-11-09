@@ -2,8 +2,7 @@ import * as THREE from "three";
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { ClearPass } from "three/examples/jsm/postprocessing/ClearPass.js";
 import {HydraUniform} from "./three/HydraUniform.js";
-import { HydraMaterialPass, HydraRenderPass } from "./three/HydraPass.js";
-import {HydraVertexShader, HydraShader} from "./lib/HydraShader.js";
+import { HydraMaterialPass, HydraRenderPass, HydraFadePass } from "./three/HydraPass.js";
 import {cameraMixin, autoClearMixin} from "./lib/mixins.js";
 import * as fx from "./three/fx.js";
 import * as layers from "./three/layers.js";
@@ -120,7 +119,7 @@ Output.prototype._set = function (passes, {cssRenderer = false}) {
         this.composer.addPass(new ClearPass());
       }
       else {
-        this.composer.addPass(this._fadePass({...this._autoClear}));
+        this.composer.addPass(new HydraFadePass(this._autoClear, this.uniforms));
       }
     }
     for (let i=0; i<passes.length; i++) {
@@ -153,7 +152,7 @@ Output.prototype._set = function (passes, {cssRenderer = false}) {
           pass.clear = true;
         }
         else {
-          this.composer.addPass(this._fadePass({...options.autoClear}));
+          this.composer.addPass(new HydraFadePass(options.autoClear, this.uniforms));
         }
       }
       this.composer.addPass(pass);
@@ -176,32 +175,6 @@ Output.prototype.clearNow = function() {
   clear.render(this.composer.renderer, this.composer.writeBuffer, this.composer.readBuffer);
   clear.render(this.composer.renderer, this.composer.readBuffer, this.composer.writeBuffer);
   return this;
-}
-
-Output.prototype._fadePass = function(options) {
-  let amount = options;
-  let camera = false;
-  if (typeof(options) === 'object') {
-    ({amount, camera} = options);
-  }
-  // todo: do we need to fade also temp buffers?
-  const passOptions = {
-    // todo: create class/struct
-    frag: new HydraShader(THREE.GLSL1, ['', `
-      varying vec2 vUv;
-      uniform sampler2D prevBuffer;
-    `], '', `
-      vec4 color = mix(texture2D(prevBuffer, vUv), vec4(0), ${amount});
-      gl_FragColor = color;
-    `),
-    vert: new HydraVertexShader({ glslName: 'clear' }, null, null, {useCamera: camera}),
-    uniforms: Object.assign({
-      prevBuffer: { value: null }
-    }, this.uniforms),
-  };
-  const shaderPass = new HydraMaterialPass(passOptions);
-  shaderPass.needsSwap = false;
-  return shaderPass;
 }
 
 Output.prototype.tick = function () {

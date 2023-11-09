@@ -35,12 +35,7 @@ const cameraMixin = {
         }
         this._camera.position.set(...eye);
         this._camera.lookAt(...target);
-        for (let attr in options) {
-            if (this._camera.hasOwnProperty(attr)) {
-                this._camera[attr] = options[attr];
-                delete options[attr];
-            }
-        }
+        this.setCameraAttrs(options);
         if (options.controls) {
             options = Object.assign({
                 domElement: document.body,
@@ -61,6 +56,16 @@ const cameraMixin = {
         return this;
     },
 
+    setCameraAttrs(options) {
+        for (let attr in options) {
+            if (this._camera.hasOwnProperty(attr)) {
+                this._camera[attr] = options[attr];
+                delete options[attr];
+            }
+        }
+        return this;
+    },
+
     perspective(eye = [0,0,3], target = [0,0,0], options = {}) {
         options = Object.assign({type: 'perspective'}, options);
         return this.camera(eye, target, options);
@@ -69,13 +74,27 @@ const cameraMixin = {
     ortho(eye = [0,0,1], target = [0,0,0], options = {}) {
         options = Object.assign({type: 'ortho'}, options);
         return this.camera(eye, target, options);
+    },
+
+    size(width, height) {
+        const options = {
+            aspect: width / height,
+            left: 0,
+            right: width,
+            top: 0,
+            bottom: height,
+        };
+        this.setCameraAttrs(options);
+        this._camera.updateProjectionMatrix();
+        return this;
     }
 };
 
 const autoClearMixin = {
-    autoClear(amount = 1.0, options = {}) {
+    autoClear(amount = 1.0, color = 0, options = {}) {
         this._autoClear = {
             amount,
+            color,
             ...options,
         };
         return this;

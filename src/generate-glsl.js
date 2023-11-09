@@ -1,4 +1,4 @@
-import formatArguments from './format-arguments.js'
+import {formatArguments} from './format-arguments.js'
 import {typeLookup, getLookup, getTypeLookup, castType, replaceGenType} from "./types.js";
 import GlslSource from "./glsl-source.js";
 import {HydraScene} from "./three/scene.js";

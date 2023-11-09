@@ -32,7 +32,7 @@ const ensure_decimal_dot = (val) => {
 
 
 
-export default function formatArguments(transform, startIndex) {
+function formatArguments(transform, startIndex) {
   const defaultArgs = transform.transform.inputs
   const userArgs = transform.userArgs
   const { generators } = transform.synth
@@ -190,3 +190,5 @@ function getArrayValue(value, input, vecLen = 0) {
     return (context, props, batchId) => arrayUtils.getValue(value)(props)
   }
 }
+
+export { ensure_decimal_dot, formatArguments }

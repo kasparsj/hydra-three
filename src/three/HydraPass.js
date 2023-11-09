@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import {Pass, FullScreenQuad} from "three/examples/jsm/postprocessing/Pass.js";
 import * as mt from "./mt.js";
+import {HydraShader, HydraVertexShader} from "../lib/HydraShader.js";
+import {ensure_decimal_dot} from "../format-arguments.js";
 
 class HydraPass extends Pass {
 
@@ -249,4 +251,36 @@ class HydraRenderPass extends HydraPass {
     }
 }
 
-export { HydraShaderPass, HydraMaterialPass, HydraRenderPass };
+class HydraFadePass extends HydraMaterialPass
+{
+    constructor(options, uniforms) {
+        let amount = options;
+        let color = 0;
+        let camera = false;
+        if (typeof(options) === 'object') {
+            ({amount, color, camera} = options);
+        }
+        if (!color.isColor) {
+            color = new THREE.Color(color);
+        }
+        // todo: do we need to fade also temp buffers?
+        const passOptions = {
+            // todo: create class/struct
+            frag: new HydraShader(THREE.GLSL1, ['', `
+      varying vec2 vUv;
+      uniform sampler2D prevBuffer;
+    `], '', `
+      vec4 color = mix(texture2D(prevBuffer, vUv), vec4(${color.toArray().map(ensure_decimal_dot).join(', ')}, 1.0), ${amount});
+      gl_FragColor = color;
+    `),
+            vert: new HydraVertexShader({ glslName: 'clear' }, null, null, {useCamera: camera}),
+            uniforms: Object.assign({
+                prevBuffer: { value: null }
+            }, uniforms),
+        };
+        super(passOptions);
+        this.needsSwap = false;
+    }
+}
+
+export { HydraShaderPass, HydraMaterialPass, HydraRenderPass, HydraFadePass };
