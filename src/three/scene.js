@@ -11,7 +11,7 @@ import * as lights from "./lights.js";
 import * as world from "./world.js";
 import * as gui from "../gui.js";
 
-const scenes = {}
+const scenes = {};
 const groups = {};
 const meshes = [];
 const namedMeshes = {};
@@ -344,7 +344,6 @@ const sceneMixin = {
 
     lines(geometry, material, options) {
         geometry = geometry || [1, 1];
-        material = material || null;
         options = Object.assign(options || {}, { type: 'lines' });
         return this.add(geometry, material, options);
     },
