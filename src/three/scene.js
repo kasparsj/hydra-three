@@ -190,79 +190,51 @@ const getOrCreatePoints = (attributes) => {
 }
 
 const sceneMixin = {
-    add(...args) {
+    add(geometry, material, options) {
         let object;
-        if (args[0] instanceof THREE.Object3D) {
-            return this._add(...args);
-        }
-        else if (args[0] instanceof GlslSource || (args[1] && args[1].type === 'quad')) {
-            let [material, options] = args;
-            options = Object.assign(options || {}, {type: 'quad'});
-            object = this._createMesh(null, material, options)
+        if (geometry instanceof THREE.Object3D) {
+            object = geometry;
+            return this._add(object);
         }
         else {
-            let [geometry, material, options] = args;
+            if (geometry instanceof GlslSource || (material && material.type === 'quad')) {
+                options = material;
+                material = geometry;
+                geometry = null;
+            }
             const {type} = options || {};
-            if (material instanceof GlslSource) {
-                material = mt.hydra(material, options.material);
-            }
-            if (!geometry) geometry = [];
-            if (!geometry.isBufferGeometry) {
-                if (!Array.isArray(geometry)) geometry = [geometry];
-                if (typeof(geometry[0]) !== 'string') {
-                    geometry.unshift(type);
-                }
-                geometry = new GridGeometry(...geometry);
-            }
+            geometry = this._handleGeometry(geometry);
+            material = this._handleMaterial(geometry, material, options);
             switch (type) {
                 case 'points':
+                    object = getOrCreatePoints(Object.assign({geometry, material}, options));
+                    break;
                 case 'line loop':
                 case 'lineloop':
+                    object = getOrCreateLineLoop(Object.assign({geometry, material}, options));
+                    break;
                 case 'line strip':
                 case 'linestrip':
-                case 'lines':
-                    switch (options.type) {
-                        case 'points':
-                            material = material || mt.squares();
-                            object = getOrCreatePoints(Object.assign({geometry, material}, options));
-                            break;
-                        case 'line loop':
-                        case 'lineloop':
-                            material = material || mt.lineloop();
-                            object = getOrCreateLineLoop(Object.assign({geometry, material}, options));
-                            break;
-                        case 'line strip':
-                        case 'linestrip':
-                            material = material || mt.linestrip();
-                            object = getOrCreateLine(Object.assign({geometry, material}, options))
-                            break;
-                        case 'lines':
-                            // todo: support instanced
-                            // if (options.instanced) {
-                            //     const instanceCount = 10;
-                            //     const instancedGeometry = new THREE.InstancedBufferGeometry();
-                            //     instancedGeometry.attributes.position = geometry.attributes.position;
-                            //
-                            //     const instancePositions = new Float32Array(instanceCount * 3);
-                            //     for (let i = 0; i < instanceCount; i++) {
-                            //         instancePositions[i * 3] = Math.random() * 2 - 1;
-                            //         instancePositions[i * 3 + 1] = Math.random() * 2 - 1;
-                            //         instancePositions[i * 3 + 2] = Math.random() * 2 - 1;
-                            //     }
-                            //     instancedGeometry.setAttribute('instancePosition', new THREE.InstancedBufferAttribute(instancePositions, 3));
-                            // }
-                            if (!material) {
-                                if (geometry instanceof GridGeometry) {
-                                    material = mt.lines();
-                                }
-                                else {
-                                    material = mt.lineBasic();
-                                }
-                            }
-                            object = getOrCreateLineSegments(Object.assign({geometry, material}, options));
-                            break;
-                    }
+                    object = getOrCreateLine(Object.assign({geometry, material}, options))
                     break;
+                case 'lines':
+                    // todo: support instanced
+                    // if (options.instanced) {
+                    //     const instanceCount = 10;
+                    //     const instancedGeometry = new THREE.InstancedBufferGeometry();
+                    //     instancedGeometry.attributes.position = geometry.attributes.position;
+                    //
+                    //     const instancePositions = new Float32Array(instanceCount * 3);
+                    //     for (let i = 0; i < instanceCount; i++) {
+                    //         instancePositions[i * 3] = Math.random() * 2 - 1;
+                    //         instancePositions[i * 3 + 1] = Math.random() * 2 - 1;
+                    //         instancePositions[i * 3 + 2] = Math.random() * 2 - 1;
+                    //     }
+                    //     instancedGeometry.setAttribute('instancePosition', new THREE.InstancedBufferAttribute(instancePositions, 3));
+                    // }
+                    object = getOrCreateLineSegments(Object.assign({geometry, material}, options));
+                    break;
+                case 'quad':
                 default:
                     object = this._createMesh(geometry, material, options);
                     break;
@@ -272,17 +244,74 @@ const sceneMixin = {
         return this;
     },
 
+    _handleGeometry(geometry) {
+        if (!geometry) geometry = [];
+        if (!geometry.isBufferGeometry) {
+            if (!Array.isArray(geometry)) geometry = [geometry];
+            if (typeof(geometry[0]) !== 'string') {
+                geometry.unshift(type);
+            }
+            geometry = new GridGeometry(...geometry);
+        }
+        return geometry;
+    },
+
+    _handleMaterial(geometry, material, options) {
+        const {type} = options || {};
+        if (material === null || typeof material === 'undefined') {
+            material = this._defaultMaterial(geometry, material, options);
+        }
+        else {
+            if (typeof material === 'number' || material.isColor) {
+                const color = material.isColor ? material : new THREE.Color(material);
+                material = this._defaultMaterial(geometry, material, options);
+                material.color = color;
+            }
+            else if (material instanceof GlslSource) {
+                material = this._hydraMaterial(geometry, material, options);
+            }
+        }
+        material.transparent = type !== 'quad';
+        return material;
+    },
+
+    _defaultMaterial(geometry, material, options) {
+        const {type} = options || {};
+        switch (type) {
+            case 'points':
+                return geometry instanceof GridGeometry ? mt.squares() : mt.points();
+            case 'line loop':
+            case 'lineloop':
+                return geometry instanceof GridGeometry ? mt.lineloop() : mt.lineBasic();
+            case 'line strip':
+            case 'linestrip':
+                return geometry instanceof GridGeometry ? mt.linestrip() : mt.lineBasic();
+            case 'lines':
+                return geometry instanceof GridGeometry ? mt.lines() : mt.lineBasic();
+            default:
+                return mt.meshBasic();
+        }
+    },
+
+    _hydraMaterial(geometry, material, options) {
+        const {type} = options || {};
+        switch (type) {
+            case 'points':
+            case 'line loop':
+            case 'lineloop':
+            case 'line strip':
+            case 'linestrip':
+            case 'lines':
+                return mt.hydra(material, options.material);
+            default:
+                return mt.mesh(material, options.material);
+        }
+    },
+
     _createMesh(geometry, material, options = {}) {
         // todo: text
         // todo: plane
         let mesh;
-        const transparent = options.type !== 'quad';
-        if (typeof material === 'undefined' || material === null || material.isColor) {
-            material = mt.meshBasic({color: material || new THREE.Color(), transparent});
-        }
-        else if (!material.isMaterial) {
-            material = mt.mesh(material, {transparent});
-        }
         if (options.type === 'quad') {
             const quad = new FullScreenQuad(material);
             mesh = quad._mesh;
@@ -313,16 +342,23 @@ const sceneMixin = {
         return this.add(...args);
     },
 
+    lines(geometry, material, options) {
+        geometry = geometry || [1, 1];
+        material = material || null;
+        options = Object.assign(options || {}, { type: 'lines' });
+        return this.add(geometry, material, options);
+    },
+
+    line(geometry, material, options) {
+        if (!geometry.isBufferGeometry) {
+            geometry = gm.line(geometry);
+        }
+        return this.lines(geometry, material, options);
+    },
+
     linestrip(...args) {
         args[1] = args[1] || null;
         args[2] = Object.assign(args[2] || {}, { type: 'linestrip' });
-        return this.add(...args);
-    },
-
-    lines(...args) {
-        args[0] = args[0] || [1, 1];
-        args[1] = args[1] || null;
-        args[2] = Object.assign(args[2] || {}, { type: 'lines' });
         return this.add(...args);
     },
 

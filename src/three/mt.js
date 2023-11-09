@@ -40,6 +40,7 @@ const meshPhong = (options) => new THREE.MeshPhongMaterial(options);
 const meshStandard = (options) => new THREE.MeshStandardMaterial(options);
 const meshLambert = (options) => new THREE.MeshLambertMaterial(options);
 const lineBasic = (options) => new THREE.LineBasicMaterial(options);
+const points = (options) => new THREE.PointsMaterial(options);
 
 const worldPosGradientY = (options, uniOptions) => {
     const uniforms = {
@@ -295,7 +296,7 @@ const getBlend = (blendMode) => {
 export {
     basicProps, phongProps, lambertProps,
     meshBasic, meshPhong, meshLambert, meshStandard,
-    lineBasic,
+    lineBasic, points,
     worldPosGradientY,
     hydra,
     dots, squares, lines, linestrip, lineloop, text, mesh,
