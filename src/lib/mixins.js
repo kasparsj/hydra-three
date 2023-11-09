@@ -9,13 +9,9 @@ const cameraMixin = {
         else if (!target.length) target = [0,0,0];
         options = Object.assign({
             fov: 50,
-            aspect: 1,
             near: 0.1,
             far: 100,
-            left: -1,
-            right: 1,
-            top: 1,
-            bottom: -1,
+            ...(this._camBounds || this.toCameraBounds()),
         }, options);
         switch (options.type) {
             case 'perspective':
@@ -76,17 +72,56 @@ const cameraMixin = {
         return this.camera(eye, target, options);
     },
 
-    size(width, height) {
-        const options = {
-            aspect: width / height,
-            left: 0,
-            right: width,
-            top: 0,
-            bottom: height,
-        };
-        this.setCameraAttrs(options);
+    setCameraBounds(type, width, height) {
+        this._camBounds = this.toCameraBounds(type, width, height);
+        this.setCameraAttrs(this._camBounds);
         this._camera.updateProjectionMatrix();
         return this;
+    },
+
+    toCameraBounds(type, width, height) {
+        switch (type) {
+            case 'screen':
+            case 'normalized':
+                if (type === 'screen') {
+                    width || (width = window.innerWidth);
+                    height || (height = window.innerHeight);
+                }
+                else {
+                    width || (width = 1);
+                    height || (height = 1);
+                }
+                return {
+                    aspect: width / height,
+                    left: 0,
+                    right: width,
+                    top: 0,
+                    bottom: height,
+                };
+            case 'cartesian':
+            default:
+                width || (width = 2);
+                height || (height = 2);
+                return {
+                    aspect: width / height,
+                    left: -width/2,
+                    right: width/2,
+                    top: height/2,
+                    bottom: -height/2,
+                };
+        }
+    },
+
+    screenCoords(w, h) {
+        return this.setCameraBounds('screen', w, h);
+    },
+
+    normalizedCoords(w, h) {
+        return this.setCameraBounds('normalized', w, h);
+    },
+
+    cartesianCoords(w, h) {
+        return this.setCameraBounds('cartesian', w, h);
     }
 };
 
