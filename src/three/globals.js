@@ -21,6 +21,8 @@ const vec4 = (x, y, z, w) => {
 const box3 = (min, max) => new THREE.Box3(min, max);
 const quat = (...args) => new THREE.Quaternion(...args);
 const mat4 = (...args) => new THREE.Matrix4(...args);
+
+const euler = (x = 0, y = 0, z = 0, order = THREE.Euler.DEFAULT_ORDER) => new THREE.Euler(x, y, z, order);
 const sx = (x, w = window.innerWidth) => x/w * 2;
 const sy = (y, h = window.innerHeight) => y/h * 2;
 const xy = (x, y, w = window.innerWidth, h = window.innerHeight) => {
@@ -39,4 +41,4 @@ const xyz = (x, y, z, w = window.innerWidth, h = window.innerHeight) => {
     return vec3(-1 + x/w * 2, 1 - y/h * 2, z);
 }
 
-export { color, vec2, vec3, vec4, box3, quat, mat4, sx, sy, xy, xyz }
+export { color, vec2, vec3, vec4, box3, quat, mat4, euler, sx, sy, xy, xyz }

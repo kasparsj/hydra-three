@@ -74,7 +74,7 @@ const cameraMixin = {
 
     setCameraBounds(type, width, height) {
         this._camBounds = this.toCameraBounds(type, width, height);
-        this.setCameraAttrs(this._camBounds);
+        this.setCameraAttrs({...this._camBounds});
         this._camera.updateProjectionMatrix();
         return this;
     },

@@ -44,6 +44,7 @@ const setObject3DAttrs = (object, attributes) => {
         switch (attr) {
             case 'position':
             case 'quaternion':
+            case 'rotation':
                 object[attr].copy(attributes[attr]);
                 break;
             default:

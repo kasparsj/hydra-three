@@ -293,6 +293,7 @@ class HydraRenderer {
 
   _initThree (webgl, css2DElement, css3DElement) {
     window.THREE = THREE;
+    // todo: use sandbox?
     Object.assign(window, globals);
 
     const options = {
