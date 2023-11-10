@@ -6,7 +6,7 @@ window.GridGeometry = GridGeometry;
 
 const box = (width = 1, height = 1, depth = 1, widthSegments = 1, heightSegments = 1, depthSegments = 1) => new THREE.BoxGeometry(width, height, depth, widthSegments, heightSegments, depthSegments);
 const capsule = (radius = 1, length = 1, capSegments = 4, radialSegments = 8) => new THREE.CapsuleGeometry(radius, length, capSegments, radialSegments);
-const circle = (radius = 1, segments = 32, thetaStart = 0, thetaLength = Math.PI * 2) => new THREE.CircleGeometry(radius, segments, thetaStart, thetaLength);
+const circle = (extent = 1, segments = 32, thetaStart = 0, thetaLength = Math.PI * 2) => new THREE.CircleGeometry(extent / 2, segments, thetaStart, thetaLength);
 const cone = (radius = 1, height = 1, radialSegments = 32, heightSegments = 1, openEnded = false, thetaStart = 0, thetaLength = Math.PI * 2) => new THREE.ConeGeometry(radius, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength);
 const cylinder = (radiusTop = 1, radiusBottom = 1, height = 1, radialSegments = 32, heightSegments = 1, openEnded = false, thetaStart = 0, thetaLength = Math.PI * 2) => new THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength);
 const dodecahedron = (...args) => new THREE.DodecahedronGeometry(...args);
@@ -51,11 +51,10 @@ const line = (points) => {
 
 const rect = (...args) => plane(...args);
 
-const ellipse = (width, height, points = 50) => {
-    // todo: this is just the stroke
-    // todo: need triangles
-    const curve = new THREE.EllipseCurve(0, 0, width, height);
-    return new THREE.BufferGeometry().setFromPoints(curve.getPoints(points));
+const ellipse = (width = 1, height = 1) => {
+    const shape = new THREE.Shape();
+    shape.ellipse(0, 0, width / 2, height / 2, 0, 2 * Math.PI, false, 0);
+    return new THREE.ShapeGeometry(shape);
 }
 
 const grid = (...args) => new GridGeometry(...args);

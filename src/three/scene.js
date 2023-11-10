@@ -10,6 +10,7 @@ import * as layers from "./layers.js";
 import * as lights from "./lights.js";
 import * as world from "./world.js";
 import * as gui from "../gui.js";
+import * as gm from "./gm.js";
 
 const scenes = {};
 const groups = {};
@@ -190,6 +191,33 @@ const getOrCreatePoints = (attributes) => {
 }
 
 const sceneMixin = {
+    pushMatrix() {
+        this._matrixStack.push(this.matrix.clone());
+        return this;
+    },
+
+    popMatrix() {
+        if (this._matrixStack.length === 0) {
+            console.warn("Invalid popMatrix! Stack is empty.");
+            return;
+        }
+        this.matrix.copy(this._matrixStack.pop());
+        this.matrix.decompose(this.position, this.quaternion, this.scale);
+        return this;
+    },
+
+    translate(x = 0, y = 0, z = 0) {
+        if (x.isVector4 || x.isVector3 || x.isVector2) {
+            if (!x.isVector2) z = x.z;
+            y = x.y;
+            x = x.x;
+        }
+        this.translateX(x);
+        this.translateY(y);
+        this.translateZ(z);
+        return this;
+    },
+
     add(geometry, material, options) {
         let object;
         if (geometry instanceof THREE.Object3D) {
@@ -346,13 +374,6 @@ const sceneMixin = {
         return this.add(geometry, material, options);
     },
 
-    line(geometry, material, options) {
-        if (!geometry.isBufferGeometry) {
-            geometry = gm.line(geometry);
-        }
-        return this.lines(geometry, material, options);
-    },
-
     linestrip(geometry, material, options) {
         options = Object.assign(options || {}, { type: 'linestrip' });
         return this.add(geometry, material, options);
@@ -361,6 +382,43 @@ const sceneMixin = {
     lineloop(geometry, material, options) {
         options = Object.assign(options || {}, { type: 'lineloop' });
         return this.add(geometry, material, options);
+    },
+
+    line(geometry, material, options) {
+        if (!geometry.isBufferGeometry) {
+            geometry = gm.line(geometry);
+        }
+        return this.lines(geometry, material, options);
+    },
+
+    circle(geometry, material, options) {
+        if (typeof geometry === 'undefined') {
+            geometry = gm.circle();
+        }
+        else if (!geometry.isBufferGeometry) {
+            if (!Array.isArray(geometry)) {
+                geometry = [geometry];
+            }
+            geometry = gm.circle(...geometry);
+        }
+        return this.mesh(geometry, material, options)
+    },
+
+    ellipse(geometry, material, options) {
+        if (typeof geometry === 'undefined') {
+            geometry = gm.ellipse();
+        }
+        else if (!geometry.isBufferGeometry) {
+            if (!Array.isArray(geometry)) {
+                geometry = [geometry];
+            }
+            geometry = gm.ellipse(...geometry);
+        }
+        return this.mesh(geometry, material, options);
+    },
+
+    point(material, options) {
+
     },
 
     group(attributes = {}) {
@@ -405,6 +463,12 @@ const sceneMixin = {
 }
 
 class HydraGroup extends THREE.Group {
+    constructor() {
+        super();
+
+        this._matrixStack = [];
+    }
+
     _add(...args) {
         return super.add(...args);
     }
@@ -420,6 +484,7 @@ class HydraScene extends THREE.Scene {
         this.init(options);
         this._autoClear = {amount: 1};
         this._layers = [];
+        this._matrixStack = [];
     }
 
     _add(...args) {
