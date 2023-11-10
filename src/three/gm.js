@@ -70,9 +70,9 @@ const drawShape = (points) => {
     return new THREE.ShapeGeometry(shape);
 }
 
-const ellipse = (width = 1, height = 1, curveSegments = 24) => {
+const ellipse = (width = 1, height = 1, curveSegments = 24, thetaStart = 0, thetaEnd = 2 * Math.PI) => {
     const shape = new THREE.Shape();
-    shape.ellipse(0, 0, width / 2, height / 2, 0, 2 * Math.PI, false, 0);
+    shape.ellipse(0, 0, width / 2, height / 2, thetaStart, thetaEnd, false, 0);
     return new THREE.ShapeGeometry(shape, curveSegments);
 }
 

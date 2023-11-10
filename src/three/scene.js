@@ -191,21 +191,6 @@ const getOrCreatePoints = (attributes) => {
 }
 
 const sceneMixin = {
-    pushMatrix() {
-        this._matrixStack.push(this.matrix.clone());
-        return this;
-    },
-
-    popMatrix() {
-        if (this._matrixStack.length === 0) {
-            console.warn("Invalid popMatrix! Stack is empty.");
-            return;
-        }
-        this.matrix.copy(this._matrixStack.pop());
-        this.matrix.decompose(this.position, this.quaternion, this.scale);
-        return this;
-    },
-
     translate(x = 0, y = 0, z = 0) {
         if (x.isVector4 || x.isVector3 || x.isVector2) {
             if (!x.isVector2) z = x.z;
@@ -415,10 +400,6 @@ const sceneMixin = {
             geometry = gm.ellipse(...geometry);
         }
         return this.mesh(geometry, material, options);
-    },
-
-    point(material, options) {
-
     },
 
     triangle(geometry, material, options) {
