@@ -98,7 +98,7 @@ const getOrCreateScene = (options, attributes = {}) => {
 
 const getOrCreateMesh = (attributes = {}) => {
     const {name} = attributes;
-    let mesh = meshes[name];
+    let mesh = namedMeshes[name];
     if (!name || !mesh) {
         mesh = new THREE.Mesh();
         const renderer = hydraSynth.renderer;
@@ -117,7 +117,7 @@ const getOrCreateMesh = (attributes = {}) => {
 
 const getOrCreateInstancedMesh = (attributes) => {
     const {name, geometry, material, count} = attributes;
-    let mesh = instancedMeshes[name];
+    let mesh = namedInstancedMeshes[name];
     if (!name || !mesh) {
         mesh = new THREE.InstancedMesh(geometry, material, count);
         const renderer = hydraSynth.renderer;
