@@ -421,6 +421,19 @@ const sceneMixin = {
 
     },
 
+    triangle(geometry, material, options) {
+        if (typeof geometry === 'undefined') {
+            geometry = gm.triangle();
+        }
+        else if (!geometry.isBufferGeometry) {
+            if (!Array.isArray(geometry)) {
+                geometry = [geometry];
+            }
+            geometry = gm.triangle(...geometry);
+        }
+        return this.mesh(geometry, material, options);
+    },
+
     group(attributes = {}) {
         const {name} = attributes;
         let group = groups[name];

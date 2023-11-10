@@ -18,7 +18,6 @@ const octahedron = (...args) => new THREE.OctahedronGeometry(...args);
 const plane = (...args) => new THREE.PlaneGeometry(...args);
 const polyhedron = (vertices = [], indices = [], radius = 1, detail = 0) => new THREE.PolyhedronGeometry(vertices, indices, radius, detail);
 const ring = (...args) => new THREE.RingGeometry(...args);
-const shape = (...args) => new THREE.ShapeGeometry(...args);
 const sphere = (...args) => new THREE.SphereGeometry(...args);
 const tetrahedron = (...args) => new THREE.TetrahedronGeometry(...args);
 const torus = (...args) => new THREE.TorusGeometry(...args);
@@ -51,10 +50,46 @@ const line = (points) => {
 
 const rect = (...args) => plane(...args);
 
-const ellipse = (width = 1, height = 1) => {
+const shape = (shapes, curveSegments = 12) => {
+    return new THREE.ShapeGeometry(shapes, curveSegments);
+}
+const drawShape = (points) => {
+    const _point = (point) => {
+        if (Array.isArray(point)) {
+            return (new THREE.Vector2()).fromArray(point);
+        }
+        return point;
+    }
+    const shape = new THREE.Shape();
+    let point = _point(points[0]);
+    shape.moveTo(point.x, point.y);
+    for (let i= 1; i<points.length; i++) {
+        point = _point(points[i]);
+        shape.lineTo(point.x, point.y);
+    }
+    return new THREE.ShapeGeometry(shape);
+}
+
+const ellipse = (width = 1, height = 1, curveSegments = 24) => {
     const shape = new THREE.Shape();
     shape.ellipse(0, 0, width / 2, height / 2, 0, 2 * Math.PI, false, 0);
-    return new THREE.ShapeGeometry(shape);
+    return new THREE.ShapeGeometry(shape, curveSegments);
+}
+
+const triangle = (...args) => {
+    let p0 = new THREE.Vector2(-0.5, -0.5),
+        p1 = new THREE.Vector2(0, 0.5),
+        p2 = new THREE.Vector2(0.5, -0.5);
+    if (args.length > 3) {
+        const [x0, y0, x1, y1, x2, y2] = args;
+        p0 = new THREE.Vector2(x0, y0);
+        p1 = new THREE.Vector2(x1, y1);
+        p2 = new THREE.Vector2(x2, y2);
+    }
+    else if (args.length) {
+        [p0, p1, p2] = args;
+    }
+    return drawShape([p0, p1, p2]);
 }
 
 const grid = (...args) => new GridGeometry(...args);
@@ -90,9 +125,9 @@ function signedArea(A, B, C) {
 
 export {
     box, capsule, circle, cone, cylinder, dodecahedron, edges, extrude,
-    icosahedron, lathe, octahedron, plane, polyhedron, ring, shape, sphere,
+    icosahedron, lathe, octahedron, plane, polyhedron, ring, sphere,
     tetrahedron, torus, torusKnot, tube, wireframe, points,
-    line, rect, ellipse,
+    shape, drawShape, line, rect, ellipse, triangle,
     grid, text,
     posFromEleAzi, signedArea,
 };
