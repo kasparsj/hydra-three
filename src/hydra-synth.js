@@ -24,7 +24,7 @@ import * as math from "./three/math.js";
 import * as arr from "./three/arr.js";
 import * as gui from "./gui.js";
 import * as el from "./el.js";
-import * as globals from "./three/globals.js";
+import * as threeGlobals from "./three/globals.js";
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 import { initCanvas } from "./canvas";
@@ -171,8 +171,6 @@ class HydraRenderer {
 
     // final argument is properties that the user can set, all others are treated as read-only
     this.sandbox = new Sandbox(this.synth, makeGlobal, ['speed', 'update', 'click', 'mousedown', 'mouseup', 'mousemove', 'keydown', 'keyup', 'bpm', 'fps'])
-
-    this.i = 0
   }
 
   eval(code) {
@@ -292,9 +290,8 @@ class HydraRenderer {
   }
 
   _initThree (webgl, css2DElement, css3DElement) {
-    window.THREE = THREE;
-    // todo: use sandbox?
-    Object.assign(window, globals);
+    this.synth.THREE = THREE;
+    Object.assign(this.synth, threeGlobals);
 
     const options = {
       canvas: this.canvas,
@@ -511,6 +508,7 @@ class HydraRenderer {
     })
   }
 
+  // todo: scene2d and scene3d
   scene(attributes) {
     return scene.getOrCreateScene({
       defaultOutput: this.generator.defaultOutput,
