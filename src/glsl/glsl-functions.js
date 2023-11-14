@@ -370,20 +370,34 @@ export default () => [
   type: 'coord',
   inputs: [
     {
-      type: 'vec2',
+      type: 'float',
       name: 'amount',
       default: 1.5,
     },
     {
-      type: 'vec2',
-      name: 'offset',
+      type: 'float',
+      name: 'xMult',
+      default: 1,
+    },
+    {
+      type: 'float',
+      name: 'yMult',
+      default: 1,
+    },
+    {
+      type: 'float',
+      name: 'offsetX',
+    },
+    {
+      type: 'float',
+      name: 'offsetY',
       default: 0.5,
     },
   ],
   glsl:
-`   vec2 xy = _st - offset;
-   xy*=(1.0/amount);
-   xy+=offset;
+`   vec2 xy = _st - vec2(offsetX, offsetY);
+   xy*=(1.0/vec2(amount*xMult, amount*yMult));
+   xy+=vec2(offsetX, offsetY);
    return xy;
    `
 },
@@ -431,38 +445,67 @@ export default () => [
 },
 {
   name: 'shift',
-  type: 'coord',
+  type: 'color',
   inputs: [
     {
-      type: 'vec4',
-      name: 'val',
+      type: 'float',
+      name: 'r',
       default: 0.5,
     },
+    {
+      type: 'float',
+      name: 'g',
+      default: 0,
+    },
+    {
+      type: 'float',
+      name: 'b',
+      default: 0,
+    },
+    {
+      type: 'float',
+      name: 'a',
+      default: 0,
+    }
   ],
   glsl:
 `   vec4 c2 = vec4(_c0);
-   c2 = fract(c2 + val);
-   return c2;`
+   c2.r = fract(c2.r + r);
+   c2.g = fract(c2.g + g);
+   c2.b = fract(c2.b + b);
+   c2.a = fract(c2.a + a);
+   return vec4(c2.rgba);`
 },
 {
   name: 'repeat',
   type: 'coord',
   inputs: [
     {
-        type: 'vec2',
-        name: 'repeat',
+        type: 'float',
+        name: 'repeatX',
         default: 3,
     },
     {
-        type: 'vec2',
-        name: 'offset',
-        default: 0,
+        type: 'float',
+        name: 'repeatY',
+        default: 3,
     },
+    {
+      type: 'float',
+      name: 'offsetX',
+      default: 0,
+    },
+    {
+      type: 'float',
+      name: 'offsetY',
+      default: 0,
+    }
   ],
   glsl:
-    ` vec2 st = _st * repeat;
-        st += step(1., mod(st,2.0)) * offset;
-        return fract(st);`,
+`   vec2 st = _st * vec2(repeatX, repeatY);
+   st.x += step(1., mod(st.y,2.0)) * offsetX;
+   st.y += step(1., mod(st.x,2.0)) * offsetY;
+   return fract(st);`
 },
 {
   name: 'modulateRepeat',
@@ -875,7 +918,7 @@ export default () => [
 },
 {
   name: 'invert',
-  type: 'coord',
+  type: 'color',
   inputs: [
     {
       type: 'float',
