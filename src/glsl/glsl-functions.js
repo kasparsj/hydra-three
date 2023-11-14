@@ -431,7 +431,7 @@ export default () => [
 },
 {
   name: 'shift',
-  type: 'genType',
+  type: 'coord',
   inputs: [
     {
       type: 'vec4',
@@ -446,41 +446,23 @@ export default () => [
 },
 {
   name: 'repeat',
-  type: 'genType',
+  type: 'coord',
   inputs: [
     {
-      type: 'vec3',
-      name: 'repeat',
-      default: 3,
+        type: 'vec2',
+        name: 'repeat',
+        default: 3,
     },
     {
-      type: 'vec3',
-      name: 'offset',
-      default: 0,
+        type: 'vec2',
+        name: 'offset',
+        default: 0,
     },
   ],
   glsl:
-`   vec3 c2 = _c0.rgb * repeat;
-   c2 += step(1., mod(c2,2.0)) * offset;
-   return vec4(fract(c2), _c0.a);`,
-  coord: {
-      inputs: [
-          {
-              type: 'vec2',
-              name: 'repeat',
-              default: 3,
-          },
-          {
-              type: 'vec2',
-              name: 'offset',
-              default: 0,
-          },
-      ],
-      glsl:
-          ` vec2 st = _st * repeat;
-            st += step(1., mod(st,2.0)) * offset;
-            return fract(st);`,
-  }
+    ` vec2 st = _st * repeat;
+        st += step(1., mod(st,2.0)) * offset;
+        return fract(st);`,
 },
 {
   name: 'modulateRepeat',
@@ -638,65 +620,42 @@ export default () => [
 },
 {
   name: 'scroll',
-  type: 'genType',
+  type: 'coord',
   inputs: [
     {
-      type: 'vec3',
-      name: 'scroll',
-      default: 0.5,
+        type: 'vec2',
+        name: 'scroll',
+        default: 0.5,
     },
     {
-      type: 'vec3',
-      name: 'speed',
-      default: 0,
+        type: 'vec2',
+        name: 'speed',
+        default: 0,
     },
   ],
   glsl:
-`
-   _c0.rgb += scroll + time*speed;
-   return vec4(fract(_c0.rgb), _c0.a);`,
-  coord: {
-      inputs: [
-          {
-              type: 'vec2',
-              name: 'scroll',
-              default: 0.5,
-          },
-          {
-              type: 'vec2',
-              name: 'speed',
-              default: 0,
-          },
-      ],
-      glsl:
-          `
-        _st.xy += scroll + time*speed;
-        return fract(_st);`,
-  }
+    `
+    _st.xy += scroll + time*speed;
+    return fract(_st);`,
 },
 {
   name: 'scrollX',
-  type: 'genType',
+  type: 'coord',
   inputs: [
     {
       type: 'float',
       name: 'scrollX',
       default: 0.5,
     },
-{
+    {
       type: 'float',
       name: 'speed',
       default: 0,
     }
   ],
   glsl:
-`   _c0.x += scrollX + time*speed;
-   return vec4(fract(_c0.x), _c0.y, _c0.z, _c0.a);`,
-  coord: {
-      glsl:
-      `   _st.x += scrollX + time*speed;
-          return fract(_st);`,
-  }
+  `   _st.x += scrollX + time*speed;
+      return fract(_st);`,
 },
 {
   name: 'modulateScrollX',
@@ -719,7 +678,7 @@ export default () => [
 },
 {
   name: 'scrollY',
-  type: 'genType',
+  type: 'coord',
   inputs: [
     {
       type: 'float',
@@ -733,13 +692,8 @@ export default () => [
     }
   ],
   glsl:
-`   _c0.y += scrollY + time*speed;
-   return vec4(_c0.x, fract(_c0.y), _c0.z, _c0.a);`,
-  coord: {
-      glsl:
-      `   _st.y += scrollY + time*speed;
-          return fract(_st);`
-  }
+  `   _st.y += scrollY + time*speed;
+      return fract(_st);`
 },
 {
   name: 'modulateScrollY',
@@ -921,7 +875,7 @@ export default () => [
 },
 {
   name: 'invert',
-  type: 'genType',
+  type: 'coord',
   inputs: [
     {
       type: 'float',
@@ -929,10 +883,7 @@ export default () => [
       default: 1,
     }
   ],
-  glsl: `return vec4((1.0-_c0.rgb)*amount + _c0.rgb*(1.0-amount), _c0.a);`,
-  coord: {
-      glsl: `return (1.0-_st)*amount + _st*(1.0-amount);`,
-  },
+  glsl: `return (1.0-_st)*amount + _st*(1.0-amount);`,
 },
 {
   name: 'contrast',
