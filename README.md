@@ -1,4 +1,4 @@
-### hydra-three
+## hydra-three
 
 ### Status: stable / in-progress
 
