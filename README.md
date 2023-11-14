@@ -1,4 +1,8 @@
-### Hydra-Synth
+### hydra-three
+
+### Status: stable
+
+### Work in progress - hydra rewritten on Three.js
 
 Video synth engine for [hydra](https://github.com/ojack/hydra).
 
