@@ -1189,8 +1189,6 @@ export default () => [
   glsl:
 `   return vec4(_c0.a * scale + offset);`
 },
-// todo: make these genType
-// todo: the question is should genType behave like coord or like color, when piped?
 {
     name: 'map',
     type: 'genType',
