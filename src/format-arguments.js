@@ -1,6 +1,7 @@
 import arrayUtils from './lib/array-utils.js'
 import {getLookup} from "./types.js";
 import Output from "./output.js";
+import Source from "./hydra-source.js";
 
 // [WIP] how to treat different dimensions (?)
 const DEFAULT_CONVERSIONS = {
@@ -88,7 +89,7 @@ function formatArguments(transform, startIndex) {
         typedArg.isUniform = false
       } else if (typedArg.type === 'float' && typeof typedArg.value === 'number') {
         typedArg.value = ensure_decimal_dot(typedArg.value)
-      } else if (typedArg.type.startsWith('vec') && typeof typedArg.value !== 'function' && !typedArg.value.isTexture && !typedArg.value.isRenderTarget && !(typedArg.value instanceof Output)) {
+      } else if (typedArg.type.startsWith('vec') && typeof typedArg.value !== 'function' && !typedArg.value.isTexture && !typedArg.value.isRenderTarget && !(typedArg.value instanceof Output) && !(typedArg.value instanceof Source)) {
         typedArg.isUniform = false
         if (Array.isArray(typedArg.value) || typedArg.value instanceof Float32Array || typedArg.value instanceof Uint8Array) {
           // todo: accept smaller arrays?
@@ -109,7 +110,7 @@ function formatArguments(transform, startIndex) {
         typedArg.isUniform = true
       } else {
         // if passing in a texture reference, when function asks for vec4, convert to vec4
-        if (typedArg.value instanceof Output || typedArg.value.isTexture || typedArg.value.isRenderTarget) {
+        if (typedArg.value instanceof Output || typedArg.value instanceof Source || typedArg.value.isTexture || typedArg.value.isRenderTarget) {
           var x1 = typedArg.value.isRenderTarget ? typedArg.value.texture : typedArg.value
           if (input.type === 'vec4') {
             typedArg.value = src(x1)

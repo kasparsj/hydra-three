@@ -1,4 +1,5 @@
 import Output from "../output.js";
+import Source from "../hydra-source.js";
 
 class HydraUniform
 {
@@ -41,7 +42,7 @@ class HydraUniform
                 const func = acc[key];
                 acc[key] = new HydraUniform(key, null, ()=>func(null, props()));
             }
-            else if (acc[key] instanceof Output) {
+            else if (acc[key] instanceof Output || acc[key] instanceof Source) {
                 const o = acc[key];
                 acc[key] = new HydraUniform(key, null, ()=>o.getTexture());
             }
