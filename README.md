@@ -2,7 +2,7 @@
 
 ### Status: stable / in-progress
 
-### Work in progress - hydra rewritten on Three.js
+Hydra running on [three.js](https://threejs.org/)
 
 Video synth engine for [hydra](https://github.com/ojack/hydra).
 
