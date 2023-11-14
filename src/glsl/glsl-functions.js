@@ -387,6 +387,7 @@ export default () => [
     {
       type: 'float',
       name: 'offsetX',
+      default: 0.5,
     },
     {
       type: 'float',
@@ -666,20 +667,31 @@ export default () => [
   type: 'coord',
   inputs: [
     {
-        type: 'vec2',
-        name: 'scroll',
+        type: 'float',
+        name: 'scrollX',
         default: 0.5,
     },
     {
-        type: 'vec2',
-        name: 'speed',
-        default: 0,
+      type: 'float',
+      name: 'scrollY',
+      default: 0.5,
     },
+    {
+      type: 'float',
+      name: 'speedX',
+      default: 0,
+    },
+    {
+      type: 'float',
+      name: 'speedY',
+      default: 0,
+    }
   ],
   glsl:
-    `
-    _st.xy += scroll + time*speed;
-    return fract(_st);`,
+      `
+   _st.x += scrollX + time*speedX;
+   _st.y += scrollY + time*speedY;
+   return fract(_st);`
 },
 {
   name: 'scrollX',
@@ -926,7 +938,7 @@ export default () => [
       default: 1,
     }
   ],
-  glsl: `return (1.0-_st)*amount + _st*(1.0-amount);`,
+  glsl: `return vec4((1.0-_c0.rgb)*amount + _c0.rgb*(1.0-amount), _c0.a);`,
 },
 {
   name: 'contrast',
@@ -1285,25 +1297,6 @@ export default () => [
         ],
         glsl: `return pow(_st, power);`
     },
-},
-{
-    name: 'scrollZ',
-    type: 'color',
-    inputs: [
-        {
-            type: 'float',
-            name: 'scrollZ',
-            default: 0.5,
-        },
-        {
-            type: 'float',
-            name: 'speed',
-            default: 0,
-        }
-    ],
-    glsl:
-    `   _c0.y += scrollZ + time*speed;
-        return fract(_c0);`,
 },
 {
     name: 'glsl',
