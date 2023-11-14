@@ -1,6 +1,6 @@
 ### hydra-three
 
-### Status: stable
+### Status: stable / in-progress
 
 ### Work in progress - hydra rewritten on Three.js
 
