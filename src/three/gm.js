@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import {GridGeometry} from "../lib/GridGeometry.js";
-import vectorizeText from "vectorize-text";
 
 window.GridGeometry = GridGeometry;
 
@@ -95,19 +94,8 @@ const triangle = (...args) => {
 const grid = (...args) => new GridGeometry(...args);
 
 const text = (text, options = {}) => {
-    options = Object.assign({
-        textAlign: 'center',
-        textBaseline: 'middle',
-        // font: 'arial',
-        // triangles: true, // todo: make it work
-    }, options);
-    const info = vectorizeText(text, options);
     const geom = new THREE.BufferGeometry();
-    // todo: add support vectorizeText?
-    //   attributes.position = []; // todo: should be Float32Array
-    //   geometry.positions.map((v, k) => attributes.position.push(v[0], v[1], 0));
-    //   elements = geometry.edges ? geometry.edges : geometry.cells;
-    //   primitive = geometry.edges ? 'lines' : 'triangles';
+    // todo: implement!
     return geom;
 }
 
