@@ -11,7 +11,6 @@ class HydraSource {
     this.height = height
     this.tex = null
     this.pb = pb
-    this.loader = new THREE.TextureLoader()
   }
 
   init (opts, options = {}) {
@@ -50,7 +49,8 @@ class HydraSource {
   }
 
   initImage (url = '') {
-    this.tex = this.loader.load(url);
+    const loader = new THREE.TextureLoader()
+    this.tex = loader.load(url);
     this.src = url
     this.dynamic = false
   }
@@ -112,16 +112,16 @@ class HydraSource {
           this.tex.width,
           this.tex.height
         )
-        // todo: implement resize
+        // todo: implement resize?
         //this.tex.resize(this.src.videoWidth, this.src.videoHeight)
       }
 
       if (this.src.width && this.src.width !== this.tex.width) {
-        // todo: implement resize
+        // todo: implement resize?
         //this.tex.resize(this.src.width, this.src.height)
       }
 
-      // todo: implement resize
+      // todo: implement resize?
       //this.tex.subimage(this.src)
     }
   }

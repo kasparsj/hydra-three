@@ -217,7 +217,7 @@ const sceneMixin = {
                 geometry = null;
             }
             const {type} = options || {};
-            geometry = this._handleGeometry(geometry);
+            geometry = this._handleGeometry(geometry, options);
             material = this._handleMaterial(geometry, material, options);
             switch (type) {
                 case 'points':
@@ -258,11 +258,12 @@ const sceneMixin = {
         return this;
     },
 
-    _handleGeometry(geometry) {
+    _handleGeometry(geometry, options) {
         if (!geometry) geometry = [];
         if (!geometry.isBufferGeometry) {
             if (!Array.isArray(geometry)) geometry = [geometry];
             if (typeof(geometry[0]) !== 'string') {
+                const {type} = options || {};
                 geometry.unshift(type);
             }
             geometry = new GridGeometry(...geometry);
