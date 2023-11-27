@@ -4,7 +4,7 @@ import * as worldLib from "./three/world.js";
 const guis = {};
 
 const init = async () => {
-    if (!dat.GUI) {
+    if (!window.dat) {
         await loadScript("https://unpkg.com/dat.gui");
     }
     patchDat();
