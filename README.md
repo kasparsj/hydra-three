@@ -2,7 +2,7 @@
 
 ### Status: stable / in-progress
 
-Hydra running on [three.js](https://threejs.org/)
+This is a fork Hydra that is running on [three.js](https://threejs.org/), which brings 3D capabilities to it. Check the [examples](./examples), while documentation is being worked on.
 
 Video synth engine for [hydra](https://github.com/ojack/hydra).
 
