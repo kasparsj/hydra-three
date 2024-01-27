@@ -1,6 +1,6 @@
 await loadScript("/hy/index.js")
 
-o0.ortho([1, 0.5, 1], 0, {controls: true});
+ortho([1, 0.5, 1], 0, {controls: true});
 
 let sc;
 

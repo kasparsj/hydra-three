@@ -1,7 +1,7 @@
 await loadScript("/hy/index.js");
 
 shadowMap();
-o0.ortho([3,5,3], 0, {controls: true})
+ortho([3,5,3], 0, {controls: true})
 
 const sc = scene()
     .lights({gui: true, all: true})

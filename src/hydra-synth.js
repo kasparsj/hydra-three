@@ -91,6 +91,8 @@ class HydraRenderer {
       tick: this.tick.bind(this),
       shadowMap: this.shadowMap.bind(this),
       scene: this.scene.bind(this),
+      ortho: (...args) => this.output.ortho.apply(this.output, args),
+      perspective: (...args) => this.output.perspective.apply(this.output, args),
       tx,
       gm,
       mt,

@@ -10,18 +10,21 @@ const init = async () => {
     patchDat();
 }
 
-const create = (name = "hydra") => {
+const create = async (name = "hydra-three") => {
     if (!guis[name]) {
-        const gui = new dat.GUI({ name, hideable: false });
+        if (!window.dat) {
+            await init();
+        }
+        const gui = guis[name] || (new dat.GUI({ name, hideable: false }));
         gui.useLocalStorage = true;
         guis[name] = gui;
     }
     return guis[name];
 }
 
-const addFolder = (name, settings, setupFn, gui) => {
+const addFolder = async (name, settings, setupFn, gui) => {
     if (!gui) {
-        gui = create();
+        gui = await create();
     }
     gui.remember(settings);
     try {
@@ -36,8 +39,7 @@ const addFolder = (name, settings, setupFn, gui) => {
     return settings;
 }
 
-// todo: better pass scene
-const lights = async (scene, camera, defaults = {}) => {
+const lights = (scene, camera, defaults = {}) => {
     const settings = Object.assign({}, lightsLib.defaults, defaults);
     settings.cam = !!(settings.cam || settings.all);
     settings.sun = !!(settings.sun || settings.all);
@@ -74,7 +76,7 @@ const updateLights = (scene, camera, settings) => {
     lightsLib.update(scene, camera, settings);
 }
 
-const world = async (scene, defaults = {}) => {
+const world = (scene, defaults = {}) => {
     const settings = Object.assign({}, worldLib.defaults, { fogColor: scene.background || 0xffffff }, defaults);
     addFolder("world",
         settings,
