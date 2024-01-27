@@ -117,10 +117,11 @@ const cameraMixin = {
                 };
             case 'cartesian':
             default:
-                let aspect = 1;
+                let aspect;
                 if (!width && !height) {
                     if (window.innerWidth > window.innerHeight)  height = 2;
                     else width = 2;
+                    aspect = width / height;
                 }
                 if (!width || !height) {
                     aspect = window.innerWidth / window.innerHeight;
