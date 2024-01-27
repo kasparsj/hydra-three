@@ -7,11 +7,15 @@ const cameraMixin = {
         else if (!eye.length) eye = null;
         if (!Array.isArray(target)) target = target ? [target] : [0,0,0];
         else if (!target.length) target = [0,0,0];
+        if (!this._camBounds) {
+            this._camBounds = this.toCameraBounds();
+            this._camResizeListener();
+        }
         options = Object.assign({
             fov: 50,
             near: 0.1,
             far: 100,
-            ...(this._camBounds || this.toCameraBounds()),
+            ...this._camBounds,
         }, options);
         switch (options.type) {
             case 'perspective':
@@ -72,17 +76,36 @@ const cameraMixin = {
         return this.camera(eye, target, options);
     },
 
-    setCameraBounds(type, width, height) {
+    _setCameraBounds(type, width, height) {
         this._camBounds = this.toCameraBounds(type, width, height);
         this.setCameraAttrs({...this._camBounds});
         this._camera.updateProjectionMatrix();
+    },
+
+    setCameraBounds(type, width, height) {
+        this._setCameraBounds(type, width, height);
+        this._camResizeListener(type, width, height);
         return this;
+    },
+
+    _camResizeListener(type, width, height) {
+        if (!width || !height) {
+            window.addEventListener('resize', this._camBoundsListener.bind(this));
+            this._camResizeData = {type, width, height};
+        }
+        else {
+            window.removeEventListener('resize', this._camBoundsListener);
+            delete this._camResizeData;
+        }
+    },
+
+    _camBoundsListener() {
+        this._setCameraBounds(this._camResizeData.type, this._camResizeData.width, this._camResizeData.height);
     },
 
     toCameraBounds(type, width, height) {
         switch (type) {
             case 'screen':
-                // todo: listen for resize?
                 width || (width = window.innerWidth);
                 height || (height = window.innerHeight);
                 return {
@@ -94,10 +117,21 @@ const cameraMixin = {
                 };
             case 'cartesian':
             default:
-                width || (width = 2);
-                height || (height = 2);
+                let aspect = 1;
+                if (!width && !height) {
+                    if (window.innerWidth > window.innerHeight)  height = 2;
+                    else width = 2;
+                }
+                if (!width || !height) {
+                    aspect = window.innerWidth / window.innerHeight;
+                    if (!width) width = height * aspect;
+                    else height = width / aspect;
+                }
+                else {
+                    aspect = width / height;
+                }
                 return {
-                    aspect: width / height,
+                    aspect: aspect,
                     left: -width/2,
                     right: width/2,
                     top: height/2,
