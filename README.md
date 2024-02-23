@@ -39,7 +39,7 @@ update = () => {
 ```
 Check other [examples](./examples), while documentation is being worked on.
 
-### New features and 3D APIs
+### New features and 3D APIs (WIP)
 
 #### Camera API
 
