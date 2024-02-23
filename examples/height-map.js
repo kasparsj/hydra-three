@@ -2,7 +2,7 @@
 shadowMap();
 
 // configure orthographic camera
-ortho([0,5,3], 0, {controls: true})
+ortho([0,5,3], 0, {controls: true, autoRotate: true})
 
 // render 500x500 blue dots to a texture and output to o1 (for debug)
 const dotsPos = solid(snoise(10), snoise(20)).map(-1,1,0,1);
@@ -23,7 +23,7 @@ const gui = false;
 
 // create scene with default lighting and world (ground plane and fog)
 const sc = scene()
-    .lights({all: true, gui})
+    .lights({all: true, intensity: 2.5, gui})
     .world({gui})
     .out();
 
