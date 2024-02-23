@@ -1,6 +1,4 @@
-await loadScript("/hy/index.js");
-
-ortho([1, 0.5, 1], 0, {controls: true});
+ortho([3, 0.5, 3], 0, {controls: true});
 
 const w = 0.02;
 const h = 0.02;
@@ -25,6 +23,8 @@ const sc = scene({background: color(1,1,0)})
     )
     .lights()
     .out();
+
+const grid2 = (i, x) => [(i % x), Math.floor(i / x)];
 
 let matrixSet = false;
 update = () => {

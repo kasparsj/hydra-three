@@ -40,6 +40,7 @@ const cameraMixin = {
             options = Object.assign({
                 domElement: document.body,
                 enableZoom: true,
+                target: target.isVector3 ? target : new THREE.Vector3(...target),
             }, options || {});
             if (this._camera.userData.controls) {
                 this._camera.userData.controls.dispose();

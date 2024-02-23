@@ -2,6 +2,7 @@ import glsl from 'glslify'
 
 const pnoiseFrag = glsl("../shaders/pnoise.frag");
 const snoiseFrag = glsl("../shaders/snoise.frag");
+const fbmFrag = glsl("../shaders/fbm.frag");
 
 /*
 Format for adding functions to hydra. For each entry in this file, hydra automatically generates a glsl function and javascript function with the same name. You can also ass functions dynamically using setFunction(object).
@@ -166,6 +167,16 @@ export default () => [
   bb = fract(sin(sn) * c);
   }
   return vec4(rr, gg, bb, 1);`
+},
+{
+  name: 'fbm',
+  type: 'src',
+  inputs: [
+    {name: 'scale', type: 'float', default: 10.0},
+    {name: 'offset', type: 'vec3', default: 0.0},
+    {name: 'octaves', type: 'int', default: 6},
+  ],
+  glsl: fbmFrag,
 },
 {
   name: 'voronoi',

@@ -1,5 +1,3 @@
-await loadScript("/hy/index.js")
-
 ortho([1, 0.5, 1], 0, {controls: true});
 
 let sc;

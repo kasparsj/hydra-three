@@ -1,15 +1,11 @@
-await loadScript("/hy/index.js");
-
 shadowMap();
 ortho([0,5,3], 0, {controls: true})
-
-canvas.setLinear()
 
 const tex = scene({background: color(1,1,1)})
     .points([500, 500], mt.dots(solid(snoise(10), snoise(20)).map(-1,1,0,1), 2, [0,0,1]))
     .tex(o1);
 
-// const tex = solid(1, 1, 1).layer(lines(0.003, 0.001, solid(0,0,1))).tex(o1, {mag: 'liōear', min: 'mipmap', width: 4096, height: 4096});
+// const tex = solid(1, 1, 1).layer(lines(0.003, 0.001, solid(0,0,1))).tex(o1, {mag: 'linear', min: 'mipmap', width: 4096, height: 4096});
 
 const hMap = fbm(0.7, [0.5,-2]).tex(o2);
 

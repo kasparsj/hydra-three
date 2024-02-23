@@ -1,5 +1,3 @@
-await loadScript("/hy/index.js");
-
 shadowMap();
 ortho([3,5,3], 0, {controls: true})
 

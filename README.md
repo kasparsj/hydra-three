@@ -22,12 +22,12 @@ perspective([2,2,3], [0,0,0], {controls: true});
 
 // create geometry and material
 const geom = gm.box(); // cube geometry
-const mat = osc().rotate(noise(1).mult(45)); // use a hydra texture as material
+const mat = osc().rotate(noise(1).mult(45)).phong(); // use a hydra texture mapped onto a phong material
 
 // compose scene
 const sc = scene()
     .lights() // default lighting setup
-    .mesh(geom, mat.phong()) // add mesh to scene
+    .mesh(geom, mat) // add mesh to scene
     .out();
 
 update = () => {
