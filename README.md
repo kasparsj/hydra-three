@@ -4,7 +4,7 @@
 
 This is a fork [Hydra](https://github.com/hydra-synth/hydra-synth) that is running on [three.js](https://threejs.org/), which brings 3D capabilities to it. It's a drop in replacement for the [video synth engine](https://github.com/hydra-synth/hydra-synth) for hydra.
 
-It is [almost](#breaking-changes) fully compatible with the original Hydra, 
+It is fully compatible with the original Hydra, 
 so you can use all the same functions and operators, 
 and it also has some [new features and functions that are specific to 3D](#new-features-and-3d-apis).
 
@@ -62,7 +62,3 @@ Geometry API for creating and manipulating geometries is accessible through the 
 Material API for creating and manipulating materials is accessible through the `mt` object, e.g.
 
 `mt.meshPhong()` - creates a [MeshPhongMaterial](https://threejs.org/docs/#api/en/materials/MeshPhongMaterial) for shiny surfaces with specular highlights.
-
-### Breaking changes
-
-TODO.
