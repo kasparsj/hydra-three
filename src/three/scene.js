@@ -487,13 +487,13 @@ const sceneMixin = {
     css2d(element, attributes = {}) {
         const obj = new CSS2DObject(element);
         setObject3DAttrs(obj, attributes);
-        return this._add(obj);
+        return this._addObject3D(obj);
     },
 
     css3d(element, attributes = {}) {
         const obj = new CSS3DObject(element);
         setObject3DAttrs(obj, attributes);
-        return this._add(obj);
+        return this._addObject3D(obj);
     },
 
     // todo: does having just lights count as empty?
@@ -520,7 +520,7 @@ class HydraGroup extends THREE.Group {
         this._matrixStack = [];
     }
 
-    _add(...args) {
+    _addObject3D(...args) {
         return super.add(...args);
     }
 }
