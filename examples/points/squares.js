@@ -1,5 +1,3 @@
-await loadScript("/dt/index.js");
-
 // sky
 solid(0)
     .layer(
