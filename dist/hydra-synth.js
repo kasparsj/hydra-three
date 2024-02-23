@@ -16195,13 +16195,18 @@ var THREE = _interopRequireWildcard(require("three"));
 var _HydraOrbitControls = require("../three/HydraOrbitControls.js");
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+const PERSPECTIVE = 'perspective';
+const ORTHO = 'ortho';
+const ORTHOGRAPHIC = 'orthographic';
+const SCREEN = 'screen';
+const CARTESIAN = 'cartesian';
 const cameraMixin = {
   camera(eye, target, options = {}) {
     if (!Array.isArray(eye)) eye = eye ? [eye] : null;else if (!eye.length) eye = null;
     if (!Array.isArray(target)) target = target ? [target] : [0, 0, 0];else if (!target.length) target = [0, 0, 0];
-    if (!this._camBounds) {
-      this._camBounds = this.toCameraBounds();
-      this._camResizeListener();
+    if (!this._camBounds || options.width || options.height) {
+      this._camBounds = this.toCameraBounds(CARTESIAN, options.width, options.height);
+      this._camResizeListener(CARTESIAN, options.width, options.height);
     }
     options = Object.assign({
       fov: 50,
@@ -16210,14 +16215,14 @@ const cameraMixin = {
       ...this._camBounds
     }, options);
     switch (options.type) {
-      case 'perspective':
+      case PERSPECTIVE:
         if (!this._camera || !(this._camera instanceof THREE.PerspectiveCamera)) {
           this._camera = new THREE.PerspectiveCamera();
         }
         eye || (eye = [0, 0, 3]);
         break;
-      case 'ortho':
-      case 'orthographic':
+      case ORTHO:
+      case ORTHOGRAPHIC:
       default:
         if (!this._camera || !(this._camera instanceof THREE.OrthographicCamera)) {
           this._camera = new THREE.OrthographicCamera();
@@ -16259,13 +16264,13 @@ const cameraMixin = {
   },
   perspective(eye = [0, 0, 3], target = [0, 0, 0], options = {}) {
     options = Object.assign({
-      type: 'perspective'
+      type: PERSPECTIVE
     }, options);
     return this.camera(eye, target, options);
   },
   ortho(eye = [0, 0, 1], target = [0, 0, 0], options = {}) {
     options = Object.assign({
-      type: 'ortho'
+      type: ORTHO
     }, options);
     return this.camera(eye, target, options);
   },
@@ -16299,7 +16304,7 @@ const cameraMixin = {
   },
   toCameraBounds(type, width, height) {
     switch (type) {
-      case 'screen':
+      case SCREEN:
         width || (width = window.innerWidth);
         height || (height = window.innerHeight);
         return {
@@ -16309,7 +16314,7 @@ const cameraMixin = {
           top: 0,
           bottom: height
         };
-      case 'cartesian':
+      case CARTESIAN:
       default:
         let aspect;
         if (!width && !height) {
@@ -16332,13 +16337,13 @@ const cameraMixin = {
     }
   },
   screenCoords(w, h) {
-    return this.setCameraBounds('screen', w, h);
+    return this.setCameraBounds(SCREEN, w, h);
   },
   normalizedCoords() {
-    return this.setCameraBounds('screen', 1, 1);
+    return this.setCameraBounds(SCREEN, 1, 1);
   },
   cartesianCoords(w, h) {
-    return this.setCameraBounds('cartesian', w, h);
+    return this.setCameraBounds(CARTESIAN, w, h);
   }
 };
 exports.cameraMixin = cameraMixin;

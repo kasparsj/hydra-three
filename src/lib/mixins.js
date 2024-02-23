@@ -1,15 +1,21 @@
 import * as THREE from "three";
 import {HydraOrbitControls} from "../three/HydraOrbitControls.js";
 
+const PERSPECTIVE = 'perspective';
+const ORTHO = 'ortho';
+const ORTHOGRAPHIC = 'orthographic';
+const SCREEN = 'screen';
+const CARTESIAN = 'cartesian';
+
 const cameraMixin = {
     camera(eye, target, options = {}) {
         if (!Array.isArray(eye)) eye = eye ? [eye] : null;
         else if (!eye.length) eye = null;
         if (!Array.isArray(target)) target = target ? [target] : [0,0,0];
         else if (!target.length) target = [0,0,0];
-        if (!this._camBounds) {
-            this._camBounds = this.toCameraBounds();
-            this._camResizeListener();
+        if (!this._camBounds || options.width || options.height) {
+            this._camBounds = this.toCameraBounds(CARTESIAN, options.width, options.height);
+            this._camResizeListener(CARTESIAN, options.width, options.height);
         }
         options = Object.assign({
             fov: 50,
@@ -18,14 +24,14 @@ const cameraMixin = {
             ...this._camBounds,
         }, options);
         switch (options.type) {
-            case 'perspective':
+            case PERSPECTIVE:
                 if (!this._camera || !(this._camera instanceof THREE.PerspectiveCamera)) {
                     this._camera = new THREE.PerspectiveCamera();
                 }
                 eye || (eye = [0,0,3]);
                 break;
-            case 'ortho':
-            case 'orthographic':
+            case ORTHO:
+            case ORTHOGRAPHIC:
             default:
                 if (!this._camera || !(this._camera instanceof THREE.OrthographicCamera)) {
                     this._camera = new THREE.OrthographicCamera();
@@ -68,12 +74,12 @@ const cameraMixin = {
     },
 
     perspective(eye = [0,0,3], target = [0,0,0], options = {}) {
-        options = Object.assign({type: 'perspective'}, options);
+        options = Object.assign({type: PERSPECTIVE}, options);
         return this.camera(eye, target, options);
     },
 
     ortho(eye = [0,0,1], target = [0,0,0], options = {}) {
-        options = Object.assign({type: 'ortho'}, options);
+        options = Object.assign({type: ORTHO}, options);
         return this.camera(eye, target, options);
     },
 
@@ -106,7 +112,7 @@ const cameraMixin = {
 
     toCameraBounds(type, width, height) {
         switch (type) {
-            case 'screen':
+            case SCREEN:
                 width || (width = window.innerWidth);
                 height || (height = window.innerHeight);
                 return {
@@ -116,7 +122,7 @@ const cameraMixin = {
                     top: 0,
                     bottom: height,
                 };
-            case 'cartesian':
+            case CARTESIAN:
             default:
                 let aspect;
                 if (!width && !height) {
@@ -143,15 +149,15 @@ const cameraMixin = {
     },
 
     screenCoords(w, h) {
-        return this.setCameraBounds('screen', w, h);
+        return this.setCameraBounds(SCREEN, w, h);
     },
 
     normalizedCoords() {
-        return this.setCameraBounds('screen', 1, 1);
+        return this.setCameraBounds(SCREEN, 1, 1);
     },
 
     cartesianCoords(w, h) {
-        return this.setCameraBounds('cartesian', w, h);
+        return this.setCameraBounds(CARTESIAN, w, h);
     }
 };
 
