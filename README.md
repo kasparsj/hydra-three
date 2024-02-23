@@ -5,8 +5,8 @@
 This is a fork [Hydra](https://github.com/hydra-synth/hydra-synth) that is running on [three.js](https://threejs.org/), which brings 3D capabilities to it. It's a drop in replacement for the [video synth engine](https://github.com/hydra-synth/hydra-synth) for hydra.
 
 It is fully compatible with the original Hydra, 
-so you can use all the same functions and operators, 
-and it also has some [new features and functions that are specific to 3D](#new-features-and-3d-apis).
+so you can use all the same functions, 
+and it adds [new features and functions that are specific to 3D](#new-features-and-3d-apis).
 
 ### Installation
 Replace the hydra-synth script tag with the hydra-three script tag:
