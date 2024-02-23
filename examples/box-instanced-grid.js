@@ -1,58 +1,77 @@
-ortho([3, 0.5, 3], 0, {controls: true});
+// enable shadow map
+shadowMap();
 
-const w = 0.02;
-const h = 0.02;
-const d = 0.02;
-const count = 50000;
-const drawLines = true;
-let geom, mat;
+// configure orthographic camera
+ortho([3, 3, 3], 0, {controls: true});
+
+const w = 0.02; // width
+const h = 0.02; // height
+const d = 0.02; //  depth
+const count = 50000; // how many instances
+const drawLines = false; // toggle between lines and solid boxes
+
+// create box geometry and material
+let geom = gm.box(w, h, d);
+
+let mat;
 if (drawLines) {
-    geom = gm.edges(gm.box(w, h, d));
+    // convert box to edges
+    geom = gm.edges(geom);
+    // black line basic material
     mat = mt.lineBasic({ color: color(0, 0, 0) });
 }
 else {
-    geom = gm.box(w, h, d);
+    // grey solid color material with lambert shading cached as a texture
     mat = solid(0.5,0.5,0.5).lambert().texMat(o1);
 }
 
+// create scene with yellow background and default lighting setup
 const sc = scene({background: color(1,1,0)})
-    .mesh(
-        geom,
-        mat,
-        {instanced: count}
-    )
     .lights()
     .out();
 
-const grid2 = (i, x) => [(i % x), Math.floor(i / x)];
+// add and return instanced box mesh to scene
+const box = sc._mesh(
+    geom,
+    mat,
+    {instanced: count}
+);
 
-let matrixSet = false;
-update = () => {
-    const box = sc.at(0);
-    if (drawLines) {
-        box.isMesh = false;
-        box.isLine = true;
-        box.isLineSegments = true;
-    }
-    if (box && !matrixSet) {
-        matrixSet = true;
-        const matrix = mat4();
-        for ( let i = 0; i < count; i++ ) {
-            const position = vec3();
-            const quaternion = quat();
-            const scale = vec3(1.0, 1.0, 1.0);
+if (drawLines) {
+    // fix box if drawing lines
+    box.isMesh = false;
+    box.isLine = true;
+    box.isLineSegments = true;
+}
 
-            const [x, z] = grid2( i, Math.sqrt(count) );
-            const t = nse.get2(x, z, -2, 5, 1);
-            const y = t < 0 ? nse.get2(x, z, 0, 20, 0.5, "yellow") : t;
-            scale.y = y;
+const calcHeight = (x, z) => {
+    // get simplex noise between -2 and 5, using zoom 1
+    const simplexNoise = nse.get2(x, z, -2, 5, 1);
+    // get yellow fbm noise between 0 and 20, using zoom 0.5
+    const yellowNoise = nse.get2(x, z, 0, 20, 0.5, nse.YELLOW);
+    // this makes the high rises come from lower regions
+    return simplexNoise < 0 ? yellowNoise : simplexNoise;
+}
 
-            position.x = x * w - Math.sqrt(count) * w / 2;
-            position.z = z * d - Math.sqrt(count) * d / 2;
-            position.y = y * h / 2;
+// set matrix for each instance
+const matrix = mat4(); // THREE.Matrix4
+for ( let i = 0; i < count; i++ ) {
+    const position = vec3(); // THREE.Vector3
+    const quaternion = quat(); // THREE.Quaternion
+    const scale = vec3(1.0, 1.0, 1.0); // THREE.Vector3
 
-            matrix.compose( position, quaternion, scale );
-            box.setMatrixAt( i, matrix );
-        }
-    }
+    const sqr = Math.sqrt(count);
+    const [x, z] = [(i % sqr), Math.floor(i / sqr)];
+    const y = calcHeight(x, z);
+
+    position.x = x * w - sqr * w / 2;
+    position.z = z * d - sqr * d / 2;
+    position.y = y * h / 2;
+    scale.y = y;
+
+    // compose THREE.Matrix4 from position, quaternion and scale
+    matrix.compose( position, quaternion, scale );
+
+    // set matrix for each instance
+    box.setMatrixAt( i, matrix );
 }

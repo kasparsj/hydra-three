@@ -204,11 +204,11 @@ const sceneMixin = {
         return this;
     },
 
-    add(geometry, material, options) {
+    _add(geometry, material, options) {
         let object;
         if (geometry instanceof THREE.Object3D) {
             object = geometry;
-            return this._add(object);
+            return this._addObject3D(object);
         }
         else {
             if (geometry instanceof GlslSource || (material && material.type === 'quad')) {
@@ -255,7 +255,7 @@ const sceneMixin = {
             }
         }
         addChild(this, object);
-        return this;
+        return object;
     },
 
     _handleGeometry(geometry, options) {
@@ -340,45 +340,45 @@ const sceneMixin = {
         return mesh;
     },
 
-    quad(material, options) {
-        options = Object.assign(options || {}, { type: 'quad' });
-        return this.add(material, options);
-    },
-
-    mesh(geometry, material, options) {
+    _mesh(geometry, material, options) {
         options = Object.assign(options || {}, { type: 'triangles' });
-        return this.add(geometry, material, options);
+        return this._add(geometry, material, options);
     },
 
-    points(geometry, material, options) {
+    _quad(material, options) {
+        options = Object.assign(options || {}, { type: 'quad' });
+        return this._add(material, options);
+    },
+
+    _points(geometry, material, options) {
         options = Object.assign(options || {}, { type: 'points' });
-        return this.add(geometry, material, options);
+        return this._add(geometry, material, options);
     },
 
-    lines(geometry, material, options) {
+    _lines(geometry, material, options) {
         geometry = geometry || [1, 1];
         options = Object.assign(options || {}, { type: 'lines' });
-        return this.add(geometry, material, options);
+        return this._add(geometry, material, options);
     },
 
-    linestrip(geometry, material, options) {
+    _linestrip(geometry, material, options) {
         options = Object.assign(options || {}, { type: 'linestrip' });
-        return this.add(geometry, material, options);
+        return this._add(geometry, material, options);
     },
 
-    lineloop(geometry, material, options) {
+    _lineloop(geometry, material, options) {
         options = Object.assign(options || {}, { type: 'lineloop' });
-        return this.add(geometry, material, options);
+        return this._add(geometry, material, options);
     },
 
-    line(geometry, material, options) {
+    _line(geometry, material, options) {
         if (!geometry.isBufferGeometry) {
             geometry = gm.line(geometry);
         }
-        return this.lines(geometry, material, options);
+        return this._lines(geometry, material, options);
     },
 
-    circle(geometry, material, options) {
+    _circle(geometry, material, options) {
         if (typeof geometry === 'undefined') {
             geometry = gm.circle();
         }
@@ -388,10 +388,10 @@ const sceneMixin = {
             }
             geometry = gm.circle(...geometry);
         }
-        return this.mesh(geometry, material, options)
+        return this._mesh(geometry, material, options)
     },
 
-    ellipse(geometry, material, options) {
+    _ellipse(geometry, material, options) {
         if (typeof geometry === 'undefined') {
             geometry = gm.ellipse();
         }
@@ -401,10 +401,10 @@ const sceneMixin = {
             }
             geometry = gm.ellipse(...geometry);
         }
-        return this.mesh(geometry, material, options);
+        return this._mesh(geometry, material, options);
     },
 
-    triangle(geometry, material, options) {
+    _triangle(geometry, material, options) {
         if (typeof geometry === 'undefined') {
             geometry = gm.triangle();
         }
@@ -414,7 +414,62 @@ const sceneMixin = {
             }
             geometry = gm.triangle(...geometry);
         }
-        return this.mesh(geometry, material, options);
+        return this._mesh(geometry, material, options);
+    },
+
+    add(geometry, material, options) {
+        this._add(...arguments);
+        return this;
+    },
+
+    mesh(geometry, material, options) {
+        this._mesh(geometry, material, options);
+        return this;
+    },
+
+    quad(material, options) {
+        this._quad(material, options);
+        return this;
+    },
+
+    points(geometry, material, options) {
+        this._points(geometry, material, options);
+        return this;
+    },
+
+    lines(geometry, material, options) {
+        this._lines(geometry, material, options);
+        return this;
+    },
+
+    linestrip(geometry, material, options) {
+        this._linestrip(geometry, material, options);
+        return this;
+    },
+
+    lineloop(geometry, material, options) {
+        this._lineloop(geometry, material, options);
+        return this;
+    },
+
+    line(geometry, material, options) {
+        this._line(geometry, material, options);
+        return this;
+    },
+
+    circle(geometry, material, options) {
+        this._circle(geometry, material, options);
+        return this;
+    },
+
+    ellipse(geometry, material, options) {
+        this._ellipse(geometry, material, options);
+        return this;
+    },
+
+    triangle(geometry, material, options) {
+        this._triangle(geometry, material, options);
+        return this;
     },
 
     group(attributes = {}) {
@@ -483,7 +538,7 @@ class HydraScene extends THREE.Scene {
         this._matrixStack = [];
     }
 
-    _add(...args) {
+    _addObject3D(...args) {
         return super.add(...args);
     }
 

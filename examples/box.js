@@ -1,3 +1,4 @@
+// configure perspective camera
 perspective([2,2,3], [0,0,0], {controls: true});
 
 // create geometry and material
