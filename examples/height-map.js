@@ -27,8 +27,8 @@ const sc = scene()
     .world({gui})
     .out();
 
-// create a plane mesh with height map displacement and  dots texture
+// create a plane mesh with height map displacement and dots texture
 sc.mesh(
-    gm.plane(2,2,250,250).rotateX(-Math.PI/2),
+    gm.plane(2,2,250,250).rotateX(-Math.PI/2), // rotateX -90 deg to make displacementMap work on Y axis
     mt.meshPhong({displacementMap: heightMap, displacementScale: 2, map: dotsTex}),
 );
