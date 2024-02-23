@@ -16,8 +16,9 @@ Replace the hydra-synth script tag with the hydra-three script tag:
 ```
 
 ### Example
-Rotating a cube with a hydra texture as material:
+Rotating cube with a hydra texture as material:
 ```javascript
+// setup perspective camera, enabling camera controls (alt+click to rotate, alt+scroll to zoom)
 perspective([2,2,3], [0,0,0], {controls: true});
 
 // create geometry and material

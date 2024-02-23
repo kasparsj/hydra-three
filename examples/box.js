@@ -1,4 +1,4 @@
-// configure perspective camera
+// setup perspective camera, enabling camera controls (alt+click to rotate, alt+scroll to zoom)
 perspective([2,2,3], [0,0,0], {controls: true});
 
 // create geometry and material
