@@ -6,7 +6,7 @@ This is a fork [Hydra](https://github.com/hydra-synth/hydra-synth) that is runni
 
 It is [almost](#breaking-changes) fully compatible with the original Hydra, 
 so you can use all the same functions and operators, 
-and it also has some [new features and functions that are specific to 3D](#new-features-and-3d-functions).
+and it also has some [new features and functions that are specific to 3D](#new-features-and-3d-apis).
 
 ### Installation
 Replace the hydra-synth script tag with the hydra-three script tag:
