@@ -65,3 +65,6 @@ typings/
 
 # jetbrains config
 .idea
+
+# pnpm lock file
+pnpm-lock.yaml
