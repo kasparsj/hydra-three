@@ -60,8 +60,6 @@ function generateGlsl (transforms, shaderParams) {
       (uv) => `${generateGlsl(inputs[0].value.transforms, shaderParams)(uv)}` :
       (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
       fragColor = (uv) => `${f0(`${shaderString(`${uv}, ${f1(uv)}`, transform.name, inputs.slice(1), shaderParams)}`)}`
-
-
     }
   })
 //  console.log(fragColor)
