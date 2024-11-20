@@ -46,28 +46,28 @@ function generateGlsl (transforms, shaderParams) {
     if (transform.transform.type === 'src') {
       generator = (c, uv) =>
         `${generateInputs(inputs, shaderParams)(`${c}${i}`,uv)}
-         vec4 ${c} = ${shaderString(`${c}${i}`, uv, transform.name, inputs, shaderParams)}; // ${c}${i}`
+         vec4 ${c} = ${shaderString(`${c}${i}`, uv, transform.name, inputs, shaderParams)};`
     } else if (transform.transform.type === 'color') {
       generator = (c, uv) =>
         `${generateInputs(inputs, shaderParams)(`${c}${i}`,uv)}
          ${prev(c,uv)}
-         ${c} = ${shaderString(`${c}${i}`, `${c}`, transform.name, inputs, shaderParams)}; // ${c}${i}`
+         ${c} = ${shaderString(`${c}${i}`, `${c}`, transform.name, inputs, shaderParams)};`
     } else if (transform.transform.type === 'coord') {
       generator = (c, uv) =>
         `${generateInputs(inputs, shaderParams)(`${c}${i}`,uv)}
-         ${uv} = ${shaderString(`${c}${i}`, `${uv}`, transform.name, inputs, shaderParams)}; // ${c}${i}
+         ${uv} = ${shaderString(`${c}${i}`, `${uv}`, transform.name, inputs, shaderParams)};
          ${prev(c, uv)}`
     } else if (transform.transform.type === 'combine') {
       generator = (c,uv) =>
         // combining two generated shader strings (i.e. for blend, mult, add funtions)
         `${generateInputs(inputs, shaderParams)(`${c}${i}`,uv)}
          ${prev(c,uv)}
-         ${c} = ${shaderString(`${c}${i}`, `${c}`, transform.name, inputs, shaderParams)}; // ${c}${i}`
+         ${c} = ${shaderString(`${c}${i}`, `${c}`, transform.name, inputs, shaderParams)};`
     } else if (transform.transform.type === 'combineCoord') {
       // combining two generated shader strings (i.e. for modulate functions)
       generator = (c,uv) =>
         `${generateInputs(inputs, shaderParams)(`${c}${i}`,uv)}
-         ${uv} = ${shaderString(`${c}${i}`, `${uv}`, transform.name, inputs, shaderParams)}; // ${c}${i}
+         ${uv} = ${shaderString(`${c}${i}`, `${uv}`, transform.name, inputs, shaderParams)};
          ${prev(c,uv)}`
     }
   })
@@ -84,9 +84,8 @@ function generateInputs(inputs, shaderParams) {
       generator = (c, uv) => {
         let ci =  generateInputName(c, i)
         let uvi = generateInputName(`${uv}_${c}`, i)
-        return `// ${c} input #${i}: ${input.name}
-          vec2 ${uvi} = ${uv};${prev(c,uv)}
-          ${generateGlsl(input.value.transforms, shaderParams)(ci,uvi)}`
+        return `vec2 ${uvi} = ${uv};${prev(c,uv)}
+         ${generateGlsl(input.value.transforms, shaderParams)(ci,uvi)}`
       }
     }
   })
