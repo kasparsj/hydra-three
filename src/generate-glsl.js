@@ -24,6 +24,10 @@ export default function (transforms) {
     return shaderParams
 }
 
+function generateInputName(v, index) {
+   return `${v}_i${index}`
+}
+
 function generateGlsl (transforms, shaderParams) {
   var generator = (c, uv) => ''
 
@@ -78,8 +82,8 @@ function generateInputs(inputs, shaderParams) {
     if (input.value.transforms) {
       prev = generator
       generator = (c, uv) => {
-        let ci = `${c}_i${i}${input.name}`
-        let uvi = `${c}_i${i}${input.name}_${uv}`
+        let ci =  generateInputName(c, i)
+        let uvi = generateInputName(`${uv}_${c}`, i)
         return `// ${c} input #${i}: ${input.name}
           vec2 ${uvi} = ${uv};${prev(c,uv)}
           ${generateGlsl(input.value.transforms, shaderParams)(ci,uvi)}`
@@ -98,7 +102,7 @@ function shaderString (c, uv, method, inputs, shaderParams) {
     } else if (input.value && input.value.transforms) {
       // this by definition needs to be a generator
       // use the variable created for generator inputs in `generateInputs`
-      return `${c}_i${i}${input.name}`
+      return generateInputName(c, i)
     }
     return input.value
   }).reduce((p, c) => `${p}, ${c}`, '')
