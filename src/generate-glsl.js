@@ -41,46 +41,48 @@ function generateGlsl (transforms, shaderParams) {
 
     if (transform.transform.type === 'src') {
       generator = (c, uv) =>
-         `vec4 ${c} = ${shaderString(uv, transform.name, inputs, shaderParams)};`
+        `${generateInputs(inputs, shaderParams)(`${c}${i}`,uv)}
+         vec4 ${c} = ${shaderString(`${c}${i}`, uv, transform.name, inputs, shaderParams)}; // ${c}${i}`
     } else if (transform.transform.type === 'color') {
       generator = (c, uv) =>
-         `${prev(c,uv)}
-          ${c} = ${shaderString(`${c}`, transform.name, inputs, shaderParams)};`
+        `${generateInputs(inputs, shaderParams)(`${c}${i}`,uv)}
+         ${prev(c,uv)}
+         ${c} = ${shaderString(`${c}${i}`, `${c}`, transform.name, inputs, shaderParams)}; // ${c}${i}`
     } else if (transform.transform.type === 'coord') {
       generator = (c, uv) =>
-         `${uv} = ${shaderString(`${uv}`, transform.name, inputs, shaderParams)};
-          ${prev(c, uv)}`
+        `${generateInputs(inputs, shaderParams)(`${c}${i}`,uv)}
+         ${uv} = ${shaderString(`${c}${i}`, `${uv}`, transform.name, inputs, shaderParams)}; // ${c}${i}
+         ${prev(c, uv)}`
     } else if (transform.transform.type === 'combine') {
-      generator = (c,uv) => {
+      generator = (c,uv) =>
         // combining two generated shader strings (i.e. for blend, mult, add funtions)
-        let f1 = inputs[0].value && inputs[0].value.transforms ?
-          (c, uv) => generateGlsl(inputs[0].value.transforms, shaderParams)(c, uv) :
-          (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
-
-        let c1 = `${c}_${i}`
-        let uv1 = `${uv}_${i}`;
-
-        return `vec2 ${uv1} = ${uv};
-          ${prev(c,uv)}
-          // ${transform.name} inputs:
-          ${f1(c1, uv1)}
-          ${c} = ${shaderString(`${c}, ${c1}`, transform.name, inputs.slice(1), shaderParams)};`
-      }
+        `${generateInputs(inputs, shaderParams)(`${c}${i}`,uv)}
+         ${prev(c,uv)}
+         ${c} = ${shaderString(`${c}${i}`, `${c}`, transform.name, inputs, shaderParams)}; // ${c}${i}`
     } else if (transform.transform.type === 'combineCoord') {
       // combining two generated shader strings (i.e. for modulate functions)
-      generator = (c,uv) => {
-        let f1 = inputs[0].value && inputs[0].value.transforms ?
-          (c, uv) => generateGlsl(inputs[0].value.transforms, shaderParams)(c, uv) :
-          (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
+      generator = (c,uv) =>
+        `${generateInputs(inputs, shaderParams)(`${c}${i}`,uv)}
+         ${uv} = ${shaderString(`${c}${i}`, `${uv}`, transform.name, inputs, shaderParams)}; // ${c}${i}
+         ${prev(c,uv)}`
+    }
+  })
 
-        let c1 = `${c}_m${i}`
-        let uv1 = `${uv}_${i}`
+  return generator
+}
 
-        return `vec2 ${uv1} = ${uv};
-          // ${transform.name} inputs:
-          ${f1(c1,uv1)}
-          ${uv} = ${shaderString(`${uv}, ${c1}`, transform.name, inputs.slice(1), shaderParams)};
-          ${prev(c,uv)}`
+function generateInputs(inputs, shaderParams) {
+  let generator = (c,uv) => ''
+  var prev = generator
+  inputs.forEach((input,i) => {
+    if (input.value.transforms) {
+      prev = generator
+      generator = (c, uv) => {
+        let ci = `${c}_i${i}${input.name}`
+        let uvi = `${c}_i${i}${input.name}_${uv}`
+        return `// ${c} input #${i}: ${input.name}
+          vec2 ${uvi} = ${uv};${prev(c,uv)}
+          ${generateGlsl(input.value.transforms, shaderParams)(ci,uvi)}`
       }
     }
   })
@@ -89,13 +91,14 @@ function generateGlsl (transforms, shaderParams) {
 }
 
 // assembles a shader string containing the arguments and the function name, i.e. 'osc(uv, frequency)'
-function shaderString (uv, method, inputs, shaderParams) {
-  const str = inputs.map((input) => {
+function shaderString (c, uv, method, inputs, shaderParams) {
+  const str = inputs.map((input, i) => {
     if (input.isUniform) {
       return input.name
     } else if (input.value && input.value.transforms) {
-      // this by definition needs to be a generator, hence we start with 'st' as the initial value for generating the glsl fragment
-      return `${generateGlsl(input.value.transforms, shaderParams)('st')}`
+      // this by definition needs to be a generator
+      // use the variable created for generator inputs in `generateInputs`
+      return `${c}_i${i}${input.name}`
     }
     return input.value
   }).reduce((p, c) => `${p}, ${c}`, '')
