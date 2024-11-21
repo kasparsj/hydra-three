@@ -46,28 +46,28 @@ function generateGlsl (transforms, shaderParams) {
     if (transform.transform.type === 'src') {
       generator = (c, uv) =>
         `${generateInputs(inputs, shaderParams)(`${c}${i}`,uv)}
-         vec4 ${c} = ${shaderString(`${c}${i}`, uv, transform.name, inputs, shaderParams)};`
+         vec4 ${c} = ${shaderString(`${c}${i}`, uv, transform.name, inputs)};`
     } else if (transform.transform.type === 'color') {
       generator = (c, uv) =>
         `${generateInputs(inputs, shaderParams)(`${c}${i}`,uv)}
          ${prev(c,uv)}
-         ${c} = ${shaderString(`${c}${i}`, `${c}`, transform.name, inputs, shaderParams)};`
+         ${c} = ${shaderString(`${c}${i}`, `${c}`, transform.name, inputs)};`
     } else if (transform.transform.type === 'coord') {
       generator = (c, uv) =>
         `${generateInputs(inputs, shaderParams)(`${c}${i}`,uv)}
-         ${uv} = ${shaderString(`${c}${i}`, `${uv}`, transform.name, inputs, shaderParams)};
+         ${uv} = ${shaderString(`${c}${i}`, `${uv}`, transform.name, inputs)};
          ${prev(c, uv)}`
     } else if (transform.transform.type === 'combine') {
       generator = (c,uv) =>
         // combining two generated shader strings (i.e. for blend, mult, add funtions)
         `${generateInputs(inputs, shaderParams)(`${c}${i}`,uv)}
          ${prev(c,uv)}
-         ${c} = ${shaderString(`${c}${i}`, `${c}`, transform.name, inputs, shaderParams)};`
+         ${c} = ${shaderString(`${c}${i}`, `${c}`, transform.name, inputs)};`
     } else if (transform.transform.type === 'combineCoord') {
       // combining two generated shader strings (i.e. for modulate functions)
       generator = (c,uv) =>
         `${generateInputs(inputs, shaderParams)(`${c}${i}`,uv)}
-         ${uv} = ${shaderString(`${c}${i}`, `${uv}`, transform.name, inputs, shaderParams)};
+         ${uv} = ${shaderString(`${c}${i}`, `${uv}`, transform.name, inputs)};
          ${prev(c,uv)}`
     }
   })
@@ -94,7 +94,7 @@ function generateInputs(inputs, shaderParams) {
 }
 
 // assembles a shader string containing the arguments and the function name, i.e. 'osc(uv, frequency)'
-function shaderString (c, uv, method, inputs, shaderParams) {
+function shaderString (c, uv, method, inputs) {
   const str = inputs.map((input, i) => {
     if (input.isUniform) {
       return input.name
