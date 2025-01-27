@@ -151,6 +151,7 @@ function processGlsl(obj) {
       ${obj.glsl}
   }
 `
+    // First input gets handled specially by generator
     obj.inputs = inputs.slice(1);
 
     return Object.assign({}, obj, { glsl: glslFunction})
