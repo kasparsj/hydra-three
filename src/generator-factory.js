@@ -141,11 +141,9 @@ const typeLookup = {
 function processGlsl(obj) {
   let t = typeLookup[obj.type]
   if(t) {
-  let baseArgs = t.args.map((arg) => `${arg.type} ${arg.name}`).join(", ")
-  // @todo: make sure this works for all input types, add validation
-  let customArgs = obj.inputs.map((input) => `${input.type} ${input.name}`).join(', ')
-  let args = `${baseArgs}${customArgs.length > 0 ? ', '+ customArgs: ''}`
-  // console.log('args are ', args)
+    let inputs = t.args.concat(obj.inputs);
+    let args = inputs.map((input) => `${input.type} ${input.name}`).join(', ')
+    // console.log('args are ', args)
 
     let glslFunction =
 `
@@ -153,7 +151,7 @@ function processGlsl(obj) {
       ${obj.glsl}
   }
 `
-    obj.inputs = t.args.slice(1).concat(obj.inputs);
+    obj.inputs = inputs.slice(1);
 
     return Object.assign({}, obj, { glsl: glslFunction})
   } else {
