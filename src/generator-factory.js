@@ -74,23 +74,29 @@ class GeneratorFactory {
 const typeLookup = {
   'src': {
     returnType: 'vec4',
-    args: ['vec2 _st']
+    args: [{ type: 'vec2', name: '_st' }]
   },
   'coord': {
     returnType: 'vec2',
-    args: ['vec2 _st']
+    args: [{ type: 'vec2', name: '_st'}]
   },
   'color': {
     returnType: 'vec4',
-    args: ['vec4 _c0']
+    args: [{ type: 'vec4', name: '_c0'}]
   },
   'combine': {
     returnType: 'vec4',
-    args: ['vec4 _c0', 'vec4 _c1']
+    args: [
+      { type: 'vec4', name: '_c0'},
+      { type: 'vec4', name: '_c1'}
+    ]
   },
   'combineCoord': {
     returnType: 'vec2',
-    args: ['vec2 _st', 'vec4 _c0']
+    args: [
+      { type: 'vec2', name: '_st'},
+      { type: 'vec4', name: '_c0'},
+    ]
   }
 }
 // expects glsl of format
@@ -135,11 +141,9 @@ const typeLookup = {
 function processGlsl(obj) {
   let t = typeLookup[obj.type]
   if(t) {
-  let baseArgs = t.args.map((arg) => arg).join(", ")
-  // @todo: make sure this works for all input types, add validation
-  let customArgs = obj.inputs.map((input) => `${input.type} ${input.name}`).join(', ')
-  let args = `${baseArgs}${customArgs.length > 0 ? ', '+ customArgs: ''}`
-//  console.log('args are ', args)
+    let inputs = t.args.concat(obj.inputs);
+    let args = inputs.map((input) => `${input.type} ${input.name}`).join(', ')
+    // console.log('args are ', args)
 
     let glslFunction =
 `
@@ -147,15 +151,12 @@ function processGlsl(obj) {
       ${obj.glsl}
   }
 `
+    // First input gets handled specially by generator
+    obj.inputs = inputs.slice(1);
 
-  // add extra input to beginning for backward combatibility @todo update compiler so this is no longer necessary
-    if(obj.type === 'combine' || obj.type === 'combineCoord') obj.inputs.unshift({
-        name: 'color',
-        type: 'vec4'
-      })
     return Object.assign({}, obj, { glsl: glslFunction})
   } else {
-    console.warn(`type ${obj.type} not recognized`, obj)
+    console.warn(`type ${obj.type} not recognized`, obj, typeLookup)
   }
 
 }
