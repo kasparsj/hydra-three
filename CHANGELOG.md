@@ -5,6 +5,7 @@
 - hard crashing when inputting invalid texture, fixed by @ojack and @ffd8
 - multiple render passes on the same tick use the same time value by @geikha
 - using `require()` to import by @ilesinge
+- invalid indexing for arrays on initial load by @jacopo-salamina 
 
 ### Added
 - shader optimizations by @glfmn
