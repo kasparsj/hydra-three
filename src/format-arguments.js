@@ -57,6 +57,12 @@ export default function formatArguments(transform, startIndex, synthContext) {
     // if user has input something for this argument
     if (userArgs.length > index) {
       typedArg.value = userArgs[index]
+
+      if (typedArg.type === 'vec4') {
+        if (!(typedArg.value.type === "GlslSource" || typedArg.value.getTexture)) {
+          throw new Error("Arguments must be a texture or GlslSource")
+        }
+      }
       // do something if a composite or transform
 
       if (typeof userArgs[index] === 'function') {
@@ -66,7 +72,7 @@ export default function formatArguments(transform, startIndex, synthContext) {
         typedArg.value = (context, props, batchId) => {
           try {
             const val = userArgs[index](props)
-            if(typeof val === 'number') {
+            if (typeof val === 'number') {
               return val
             } else {
               console.warn('function does not return a number', userArgs[index])
@@ -87,12 +93,12 @@ export default function formatArguments(transform, startIndex, synthContext) {
         //  } else {
         //  console.log("is Array")
         // filter out values that are not a number
-       // const filteredArray = userArgs[index].filter((val) => typeof val === 'number')
-       // typedArg.value = (context, props, batchId) => arrayUtils.getValue(filteredArray)(props)
-       typedArg.value = (context, props, batchId) => arrayUtils.getValue(userArgs[index])(props)
-       typedArg.isUniform = true
+        // const filteredArray = userArgs[index].filter((val) => typeof val === 'number')
+        // typedArg.value = (context, props, batchId) => arrayUtils.getValue(filteredArray)(props)
+        typedArg.value = (context, props, batchId) => arrayUtils.getValue(userArgs[index])(props)
+        typedArg.isUniform = true
         // }
-      } 
+      }
     }
 
     if (startIndex < 0) {
