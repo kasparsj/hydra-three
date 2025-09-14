@@ -1180,7 +1180,14 @@ function formatArguments(transform, startIndex, synthContext) {
 
 
     if (userArgs.length > index) {
-      typedArg.value = userArgs[index]; // do something if a composite or transform
+      typedArg.value = userArgs[index];
+
+      if (typedArg.type === 'vec4') {
+        if (!(typedArg.value.type === "GlslSource" || typedArg.value.getTexture)) {
+          throw new Error("Arguments must be a texture or GlslSource");
+        }
+      } // do something if a composite or transform
+
 
       if (typeof userArgs[index] === 'function') {
         // if (typedArg.vecLen > 0) { // expected input is a vector, not a scalar
@@ -1297,64 +1304,87 @@ function _default(transforms) {
     // list of functions used in shader
     fragColor: ''
   };
-  var gen = generateGlsl(transforms, shaderParams)('st');
+  var gen = generateGlsl(transforms, shaderParams)('c', 'st'); // console.log(gen)
+
   shaderParams.fragColor = gen; // remove uniforms with duplicate names
 
   let uniforms = {};
   shaderParams.uniforms.forEach(uniform => uniforms[uniform.name] = uniform);
   shaderParams.uniforms = Object.values(uniforms);
   return shaderParams;
-} // recursive function for generating shader string from object containing functions and user arguments. Order of functions in string depends on type of function
-// to do: improve variable names
+}
 
+function generateInputName(v, index) {
+  return `${v}_i${index}`;
+}
 
 function generateGlsl(transforms, shaderParams) {
-  // transform function that outputs a shader string corresponding to gl_FragColor
-  var fragColor = () => ''; // var uniforms = []
-  // var glslFunctions = []
+  var generator = (c, uv) => '';
 
-
-  transforms.forEach(transform => {
-    var inputs = (0, _formatArguments.default)(transform, shaderParams.uniforms.length);
+  transforms.forEach((transform, i) => {
+    // Accumulate uniforms to lazily add them to the output shader
+    let inputs = (0, _formatArguments.default)(transform, shaderParams.uniforms.length);
     inputs.forEach(input => {
       if (input.isUniform) shaderParams.uniforms.push(input);
-    }); // add new glsl function to running list of functions
+    }); // Lazily generate glsl function definition
 
-    if (!contains(transform, shaderParams.glslFunctions)) shaderParams.glslFunctions.push(transform); // current function for generating frag color shader code
-
-    var f0 = fragColor;
+    if (!contains(transform, shaderParams.glslFunctions)) shaderParams.glslFunctions.push(transform);
+    var prev = generator;
 
     if (transform.transform.type === 'src') {
-      fragColor = uv => `${shaderString(uv, transform.name, inputs, shaderParams)}`;
-    } else if (transform.transform.type === 'coord') {
-      fragColor = uv => `${f0(`${shaderString(uv, transform.name, inputs, shaderParams)}`)}`;
+      generator = (c, uv) => `${generateInputs(inputs, shaderParams)(`${c}${i}`, uv)}
+         vec4 ${c} = ${shaderString(`${c}${i}`, uv, transform.name, inputs)};`;
     } else if (transform.transform.type === 'color') {
-      fragColor = uv => `${shaderString(`${f0(uv)}`, transform.name, inputs, shaderParams)}`;
+      generator = (c, uv) => `${generateInputs(inputs, shaderParams)(`${c}${i}`, uv)}
+         ${prev(c, uv)}
+         ${c} = ${shaderString(`${c}${i}`, `${c}`, transform.name, inputs)};`;
+    } else if (transform.transform.type === 'coord') {
+      generator = (c, uv) => `${generateInputs(inputs, shaderParams)(`${c}${i}`, uv)}
+         ${uv} = ${shaderString(`${c}${i}`, `${uv}`, transform.name, inputs)};
+         ${prev(c, uv)}`;
     } else if (transform.transform.type === 'combine') {
-      // combining two generated shader strings (i.e. for blend, mult, add funtions)
-      var f1 = inputs[0].value && inputs[0].value.transforms ? uv => `${generateGlsl(inputs[0].value.transforms, shaderParams)(uv)}` : inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value;
-
-      fragColor = uv => `${shaderString(`${f0(uv)}, ${f1(uv)}`, transform.name, inputs.slice(1), shaderParams)}`;
+      generator = (c, uv) => // combining two generated shader strings (i.e. for blend, mult, add funtions)
+      `${generateInputs(inputs, shaderParams)(`${c}${i}`, uv)}
+         ${prev(c, uv)}
+         ${c} = ${shaderString(`${c}${i}`, `${c}`, transform.name, inputs)};`;
     } else if (transform.transform.type === 'combineCoord') {
       // combining two generated shader strings (i.e. for modulate functions)
-      var f1 = inputs[0].value && inputs[0].value.transforms ? uv => `${generateGlsl(inputs[0].value.transforms, shaderParams)(uv)}` : inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value;
-
-      fragColor = uv => `${f0(`${shaderString(`${uv}, ${f1(uv)}`, transform.name, inputs.slice(1), shaderParams)}`)}`;
+      generator = (c, uv) => `${generateInputs(inputs, shaderParams)(`${c}${i}`, uv)}
+         ${uv} = ${shaderString(`${c}${i}`, `${uv}`, transform.name, inputs)};
+         ${prev(c, uv)}`;
     }
-  }); //  console.log(fragColor)
-  //  break;
+  });
+  return generator;
+}
 
-  return fragColor;
+function generateInputs(inputs, shaderParams) {
+  let generator = (c, uv) => '';
+
+  var prev = generator;
+  inputs.forEach((input, i) => {
+    if (input.value.transforms) {
+      prev = generator;
+
+      generator = (c, uv) => {
+        let ci = generateInputName(c, i);
+        let uvi = generateInputName(`${uv}_${c}`, i);
+        return `vec2 ${uvi} = ${uv};${prev(c, uv)}
+         ${generateGlsl(input.value.transforms, shaderParams)(ci, uvi)}`;
+      };
+    }
+  });
+  return generator;
 } // assembles a shader string containing the arguments and the function name, i.e. 'osc(uv, frequency)'
 
 
-function shaderString(uv, method, inputs, shaderParams) {
-  const str = inputs.map(input => {
+function shaderString(c, uv, method, inputs) {
+  const str = inputs.map((input, i) => {
     if (input.isUniform) {
       return input.name;
     } else if (input.value && input.value.transforms) {
-      // this by definition needs to be a generator, hence we start with 'st' as the initial value for generating the glsl fragment
-      return `${generateGlsl(input.value.transforms, shaderParams)('st')}`;
+      // this by definition needs to be a generator
+      // use the variable created for generator inputs in `generateInputs`
+      return generateInputName(c, i);
     }
 
     return input.value;
@@ -1479,23 +1509,44 @@ class GeneratorFactory {
 const typeLookup = {
   'src': {
     returnType: 'vec4',
-    args: ['vec2 _st']
+    args: [{
+      type: 'vec2',
+      name: '_st'
+    }]
   },
   'coord': {
     returnType: 'vec2',
-    args: ['vec2 _st']
+    args: [{
+      type: 'vec2',
+      name: '_st'
+    }]
   },
   'color': {
     returnType: 'vec4',
-    args: ['vec4 _c0']
+    args: [{
+      type: 'vec4',
+      name: '_c0'
+    }]
   },
   'combine': {
     returnType: 'vec4',
-    args: ['vec4 _c0', 'vec4 _c1']
+    args: [{
+      type: 'vec4',
+      name: '_c0'
+    }, {
+      type: 'vec4',
+      name: '_c1'
+    }]
   },
   'combineCoord': {
     returnType: 'vec2',
-    args: ['vec2 _st', 'vec4 _c0']
+    args: [{
+      type: 'vec2',
+      name: '_st'
+    }, {
+      type: 'vec4',
+      name: '_c0'
+    }]
   }
 }; // expects glsl of format
 // {
@@ -1539,26 +1590,21 @@ function processGlsl(obj) {
   let t = typeLookup[obj.type];
 
   if (t) {
-    let baseArgs = t.args.map(arg => arg).join(", "); // @todo: make sure this works for all input types, add validation
-
-    let customArgs = obj.inputs.map(input => `${input.type} ${input.name}`).join(', ');
-    let args = `${baseArgs}${customArgs.length > 0 ? ', ' + customArgs : ''}`; //  console.log('args are ', args)
+    let inputs = t.args.concat(obj.inputs);
+    let args = inputs.map(input => `${input.type} ${input.name}`).join(', '); // console.log('args are ', args)
 
     let glslFunction = `
   ${t.returnType} ${obj.name}(${args}) {
       ${obj.glsl}
   }
-`; // add extra input to beginning for backward combatibility @todo update compiler so this is no longer necessary
+`; // First input gets handled specially by generator
 
-    if (obj.type === 'combine' || obj.type === 'combineCoord') obj.inputs.unshift({
-      name: 'color',
-      type: 'vec4'
-    });
+    obj.inputs = inputs.slice(1);
     return Object.assign({}, obj, {
       glsl: glslFunction
     });
   } else {
-    console.warn(`type ${obj.type} not recognized`, obj);
+    console.warn(`type ${obj.type} not recognized`, obj, typeLookup);
   }
 }
 
@@ -1596,14 +1642,14 @@ GlslSource.prototype.addTransform = function (obj) {
 };
 
 GlslSource.prototype.out = function (_output) {
-  var output = _output || this.defaultOutput;
-  var glsl = this.glsl(output);
-  this.synth.currentFunctions = []; // output.renderPasses(glsl)
+  var output = _output || this.defaultOutput; // output.renderPasses(glsl)
 
   if (output) try {
+    var glsl = this.glsl(output);
+    this.synth.currentFunctions = [];
     output.render(glsl);
   } catch (error) {
-    console.log('shader could not compile', error);
+    console.warn('shader could not compile', error);
   }
 };
 
@@ -1676,9 +1722,10 @@ GlslSource.prototype.compile = function (transforms) {
   }).join('')}
 
   void main () {
-    vec4 c = vec4(1, 0, 0, 1);
     vec2 st = gl_FragCoord.xy/resolution.xy;
-    gl_FragColor = ${shaderInfo.fragColor};
+
+    ${shaderInfo.fragColor}
+    gl_FragColor = c;
   }
   `;
   return {
@@ -1703,7 +1750,7 @@ Format for adding functions to hydra. For each entry in this file, hydra automat
 
 {
   name: 'osc', // name that will be used to access function in js as well as in glsl
-  type: 'src', // can be 'src', 'color', 'combine', 'combineCoords'. see below for more info
+  type: 'src', // can be 'src', 'color', 'combine', 'combineCoord'. see below for more info
   inputs: [
     {
       name: 'freq',
@@ -1746,23 +1793,29 @@ The value in the 'type' field lets the parser know which type the function will 
 const types = {
   'src': {
     returnType: 'vec4',
-    args: ['vec2 _st']
+    args: [{ type: 'vec2', name: '_st' }]
   },
   'coord': {
     returnType: 'vec2',
-    args: ['vec2 _st']
+    args: [{ type: 'vec2', name: '_st'}]
   },
   'color': {
     returnType: 'vec4',
-    args: ['vec4 _c0']
+    args: [{ type: 'vec4', name: '_c0'}]
   },
   'combine': {
     returnType: 'vec4',
-    args: ['vec4 _c0', 'vec4 _c1']
+    args: [
+      { type: 'vec4', name: '_c0'},
+      { type: 'vec4', name: '_c1'}
+    ]
   },
   'combineCoord': {
     returnType: 'vec2',
-    args: ['vec2 _st', 'vec4 _c0']
+    args: [
+      { type: 'vec2', name: '_st'},
+      { type: 'vec4', name: '_c0'},
+    ]
   }
 }
 
@@ -2004,10 +2057,10 @@ var _default = () => [{
     default: 0
   }],
   glsl: `   vec4 c2 = vec4(_c0);
-   c2.r = fract(c2.r + r);
-   c2.g = fract(c2.g + g);
-   c2.b = fract(c2.b + b);
-   c2.a = fract(c2.a + a);
+   c2.r += fract(r);
+   c2.g += fract(g);
+   c2.b += fract(b);
+   c2.a += fract(a);
    return vec4(c2.rgba);`
 }, {
   name: 'repeat',
@@ -2782,6 +2835,33 @@ class HydraSource {
       });
       self.dynamic = true; //  console.log("received screen input")
     }).catch(err => console.log('could not get screen', err));
+  } // cache for the canvases, so we don't create them every time
+
+
+  canvases = {}; // Creates a canvas and returns the 2d context
+
+  initCanvas(width = 1000, height = 1000) {
+    if (this.canvases[this.label] == undefined) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext('2d');
+      if (ctx != null) this.canvases[this.label] = ctx;
+    }
+
+    const ctx = this.canvases[this.label];
+    const canvas = ctx.canvas;
+
+    if (canvas.width !== width && canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    } else {
+      ctx.clearRect(0, 0, width, height);
+    }
+
+    this.init({
+      src: canvas
+    });
+    this.dynamic = true;
+    return ctx;
   }
 
   resize(width, height) {
@@ -2904,6 +2984,8 @@ class HydraRenderer {
       setResolution: this.setResolution.bind(this),
       update: dt => {},
       // user defined update function
+      afterUpdate: dt => {},
+      // user defined function run after update
       hush: this.hush.bind(this),
       tick: this.tick.bind(this)
     };
@@ -2957,7 +3039,7 @@ class HydraRenderer {
     if (detectAudio) this._initAudio();
     if (autoLoop) (0, _rafLoop.default)(this.tick.bind(this)).start(); // final argument is properties that the user can set, all others are treated as read-only
 
-    this.sandbox = new _evalSandbox.default(this.synth, makeGlobal, ['speed', 'update', 'bpm', 'fps']);
+    this.sandbox = new _evalSandbox.default(this.synth, makeGlobal, ['speed', 'update', 'afterUpdate', 'bpm', 'fps']);
   }
 
   eval(code) {
@@ -2979,6 +3061,7 @@ class HydraRenderer {
     this.synth.render(this.o[0]); // this.synth.update = (dt) => {}
 
     this.sandbox.set('update', dt => {});
+    this.sandbox.set('afterUpdate', dt => {});
   }
 
   loadScript(url = "") {
@@ -3263,62 +3346,75 @@ class HydraRenderer {
 
 
   tick(dt, uniforms) {
-    this.sandbox.tick();
-    if (this.detectAudio === true) this.synth.a.tick(); //  let updateInterval = 1000/this.synth.fps // ms
+    try {
+      this.sandbox.tick();
+      if (this.detectAudio === true) this.synth.a.tick(); //  let updateInterval = 1000/this.synth.fps // ms
 
-    this.sandbox.set('time', this.synth.time += dt * 0.001 * this.synth.speed);
-    this.timeSinceLastUpdate += dt;
+      this.sandbox.set('time', this.synth.time += dt * 0.001 * this.synth.speed);
+      this.timeSinceLastUpdate += dt;
 
-    if (!this.synth.fps || this.timeSinceLastUpdate >= 1000 / this.synth.fps) {
-      //  console.log(1000/this.timeSinceLastUpdate)
-      this.synth.stats.fps = Math.ceil(1000 / this.timeSinceLastUpdate);
+      if (!this.synth.fps || this.timeSinceLastUpdate >= 1000 / this.synth.fps) {
+        //  console.log(1000/this.timeSinceLastUpdate)
+        this.synth.stats.fps = Math.ceil(1000 / this.timeSinceLastUpdate);
 
-      if (this.synth.update) {
-        try {
-          this.synth.update(this.timeSinceLastUpdate);
-        } catch (e) {
-          console.log(e);
+        if (this.synth.update) {
+          try {
+            this.synth.update(this.timeSinceLastUpdate);
+          } catch (e) {
+            console.log(e);
+          }
+        } //  console.log(this.synth.speed, this.synth.time)
+
+
+        for (let i = 0; i < this.s.length; i++) {
+          this.s[i].tick(this.synth.time);
+        } //  console.log(this.canvas.width, this.canvas.height)
+
+
+        const currentTime = this.synth.time;
+
+        for (let i = 0; i < this.o.length; i++) {
+          this.o[i].tick({
+            time: currentTime,
+            mouse: this.synth.mouse,
+            bpm: this.synth.bpm,
+            resolution: [this.canvas.width, this.canvas.height]
+          });
         }
-      } //  console.log(this.synth.speed, this.synth.time)
 
+        if (this.isRenderingAll) {
+          this.renderAll({
+            tex0: this.o[0].getCurrent(),
+            tex1: this.o[1].getCurrent(),
+            tex2: this.o[2].getCurrent(),
+            tex3: this.o[3].getCurrent(),
+            resolution: [this.canvas.width, this.canvas.height]
+          });
+        } else {
+          this.renderFbo({
+            tex0: this.output.getCurrent(),
+            resolution: [this.canvas.width, this.canvas.height]
+          });
+        }
 
-      for (let i = 0; i < this.s.length; i++) {
-        this.s[i].tick(this.synth.time);
-      } //  console.log(this.canvas.width, this.canvas.height)
+        if (this.synth.afterUpdate) {
+          try {
+            this.synth.afterUpdate(this.timeSinceLastUpdate);
+          } catch (e) {
+            console.log(e);
+          }
+        }
 
-
-      for (let i = 0; i < this.o.length; i++) {
-        this.o[i].tick({
-          time: this.synth.time,
-          mouse: this.synth.mouse,
-          bpm: this.synth.bpm,
-          resolution: [this.canvas.width, this.canvas.height]
-        });
+        this.timeSinceLastUpdate = 0;
       }
 
-      if (this.isRenderingAll) {
-        this.renderAll({
-          tex0: this.o[0].getCurrent(),
-          tex1: this.o[1].getCurrent(),
-          tex2: this.o[2].getCurrent(),
-          tex3: this.o[3].getCurrent(),
-          resolution: [this.canvas.width, this.canvas.height]
-        });
-      } else {
-        this.renderFbo({
-          tex0: this.output.getCurrent(),
-          resolution: [this.canvas.width, this.canvas.height]
-        });
+      if (this.saveFrame === true) {
+        this.canvasToImage();
+        this.saveFrame = false;
       }
-
-      this.timeSinceLastUpdate = 0;
+    } catch (e) {
+      console.warn('Error during tick():', e); //  this.regl.poll()
     }
-
-    if (this.saveFrame === true) {
-      this.canvasToImage();
-      this.saveFrame = false;
-    } //  this.regl.poll()
-
   }
 
 }
