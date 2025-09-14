@@ -420,6 +420,7 @@ class HydraRenderer {
 
   // dt in ms
   tick (dt, uniforms) {
+    try {
     this.sandbox.tick()
     if(this.detectAudio === true) this.synth.a.tick()
   //  let updateInterval = 1000/this.synth.fps // ms
@@ -465,8 +466,11 @@ class HydraRenderer {
       this.canvasToImage()
       this.saveFrame = false
     }
+  } catch(e) {
+    console.warn('Error during tick():', e)
   //  this.regl.poll()
   }
+}
 
 
 }

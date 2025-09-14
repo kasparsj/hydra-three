@@ -20,13 +20,14 @@ GlslSource.prototype.addTransform = function (obj)  {
 
 GlslSource.prototype.out = function (_output) {
   var output = _output || this.defaultOutput
-  var glsl = this.glsl(output)
-  this.synth.currentFunctions = []
+ 
  // output.renderPasses(glsl)
   if(output) try{
+     var glsl = this.glsl(output)
+    this.synth.currentFunctions = []
     output.render(glsl)
   } catch (error) {
-    console.log('shader could not compile', error)
+    console.warn('shader could not compile', error)
   }
 }
 
