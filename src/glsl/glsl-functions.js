@@ -379,10 +379,10 @@ export default () => [
   ],
   glsl:
 `   vec4 c2 = vec4(_c0);
-   c2.r = fract(c2.r + r);
-   c2.g = fract(c2.g + g);
-   c2.b = fract(c2.b + b);
-   c2.a = fract(c2.a + a);
+   c2.r += fract(r);
+   c2.g += fract(g);
+   c2.b += fract(b);
+   c2.a += fract(a);
    return vec4(c2.rgba);`
 },
 {
