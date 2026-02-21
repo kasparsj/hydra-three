@@ -1,6 +1,6 @@
 {
   "name": "hydra-synth",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "hydra-three: three.js-powered hydra fork for creative coding",
   "type": "module",
   "main": "./dist/hydra-synth.js",

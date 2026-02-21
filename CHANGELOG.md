@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [1.4.1] - 2026-02-21
 ### Added
 - CI workflow for build, smoke testing, and package dry-run checks.
 - Release verification workflow for `v*` tags that uploads npm tarball artifacts.
