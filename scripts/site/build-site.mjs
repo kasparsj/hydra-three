@@ -17,6 +17,11 @@ const docPages = [
     label: "Getting Started",
   },
   {
+    source: "docs/upstream-differences.md",
+    output: "docs/upstream-differences.html",
+    label: "Upstream Differences",
+  },
+  {
     source: "docs/production-checklist.md",
     output: "docs/production-checklist.html",
     label: "Production Checklist",
