@@ -1,8 +1,6 @@
-import glsl from 'glslify'
-
-const pnoiseFrag = glsl("../shaders/pnoise.frag");
-const snoiseFrag = glsl("../shaders/snoise.frag");
-const fbmFrag = glsl("../shaders/fbm.frag");
+import pnoiseFrag from "../shaders/pnoise.frag";
+import snoiseFrag from "../shaders/snoise.frag";
+import fbmFrag from "../shaders/fbm.frag";
 
 /*
 Format for adding functions to hydra. For each entry in this file, hydra automatically generates a glsl function and javascript function with the same name. You can also ass functions dynamically using setFunction(object).

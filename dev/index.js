@@ -1,25 +1,24 @@
-const Hydra = require('./../src/index.js')
+import Hydra from "../src/hydra-synth.js";
 
 function init() {
-  window.hydraSynth = new Hydra({ detectAudio: false, makeGlobal: true })
+  const hydra = new Hydra({ detectAudio: false, makeGlobal: true });
+  const H = hydra.synth;
+  window.hydraSynth = hydra;
 
-  perspective([2,2,3], [0,0,0], {controls: true});
+  H.perspective([2, 2, 3], [0, 0, 0], { controls: true });
 
   // create geometry and material
-  const geom = gm.box();
-  const mat = osc().rotate(noise(1).mult(45)).phong();
+  const geom = H.gm.box();
+  const mat = H.osc().rotate(H.noise(1).mult(45)).phong();
 
   // compose scene
-  const sc = scene()
-      .lights()
-      .mesh(geom, mat)
-      .out();
+  const sc = H.scene().lights().mesh(geom, mat).out();
 
-  update = () => {
+  H.update = () => {
     const box = sc.at(0);
     box.rotation.x += 0.01;
     box.rotation.y += 0.01;
-  }
+  };
 }
 
-window.onload = init
+window.onload = init;

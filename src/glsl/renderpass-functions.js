@@ -4,7 +4,7 @@
 // basic sdf shapes
 // repeat
 // iq color palletes
-import glsl from 'glslify'
+import gaussianFrag from "../shaders/gaussian.frag";
 
 export default {
   blur: {
@@ -20,6 +20,6 @@ export default {
         default: 0.0
       }
     ],
-    frag: glsl('../shaders/gaussian.frag')
+    frag: gaussianFrag
   }
 }

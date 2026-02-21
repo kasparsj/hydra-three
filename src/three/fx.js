@@ -16,12 +16,10 @@ import {BleachBypassShader} from "three/examples/jsm/shaders/BleachBypassShader.
 import { SSAARenderPass } from 'three/examples/jsm/postprocessing/SSAARenderPass.js';
 import { SAOPass } from 'three/examples/jsm/postprocessing/SAOPass.js';
 //import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
-import glsl from "glslify";
 import {HydraUniform} from "./HydraUniform.js";
 import {ShaderMaterial} from "three";
-
-const uvVert = glsl("../shaders/uv.vert");
-const filmFrag = glsl("../shaders/film.frag");
+import uvVert from "../shaders/uv.vert";
+import filmFrag from "../shaders/film.frag";
 
 const add = (options) => {
     const { composer } = options;

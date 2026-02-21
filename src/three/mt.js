@@ -1,23 +1,18 @@
 import * as THREE from "three";
-import glsl from "glslify";
 import GlslSource from "../glsl-source.js";
 import {processFunction} from "../generator-factory.js";
 import { getRuntime } from "./runtime.js";
-
-const worldPosVert = glsl("../shaders/worldPos.vert");
-const worldPosGradientYFrag = glsl("../shaders/worldPosGradientY.frag");
-
-const pointsVert = glsl("../shaders/points.vert");
-const linesVert = glsl("../shaders/lines.vert");
-const linestripVert = glsl("../shaders/linestrip.vert");
-const lineloopVert = glsl("../shaders/lineloop.vert");
-const planeVert = glsl("../shaders/plane.vert");
-
-const dotsFrag = glsl("../shaders/dots.frag");
-const squaresFrag = glsl("../shaders/squares.frag");
-const linesFrag = glsl("../shaders/lines.frag");
-const linestripFrag = glsl("../shaders/linestrip.frag");
-const lineloopFrag = glsl("../shaders/lineloop.frag");
+import worldPosVert from "../shaders/worldPos.vert";
+import worldPosGradientYFrag from "../shaders/worldPosGradientY.frag";
+import pointsVert from "../shaders/points.vert";
+import linesVert from "../shaders/lines.vert";
+import linestripVert from "../shaders/linestrip.vert";
+import lineloopVert from "../shaders/lineloop.vert";
+import dotsFrag from "../shaders/dots.frag";
+import squaresFrag from "../shaders/squares.frag";
+import linesFrag from "../shaders/lines.frag";
+import linestripFrag from "../shaders/linestrip.frag";
+import lineloopFrag from "../shaders/lineloop.frag";
 
 const basicProps = {
     isMeshBasicMaterial: true,

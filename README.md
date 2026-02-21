@@ -104,7 +104,7 @@ npm ci
 npm run dev
 ```
 
-This starts a live-reload dev server using `dev/index.js`.
+This starts a Vite live-reload dev server using `dev/index.html` and `dev/index.js`.
 
 Useful checks:
 

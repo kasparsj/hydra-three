@@ -24,10 +24,10 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "dev-ssl": "budo ./dev/index.js --ssl --open --live --port 8000 --",
-    "dev": "budo ./dev/index.js --open --live --port 8000 -- -p esmify -t glslify",
-    "build": "browserify ./src/index.js -p esmify -t glslify --standalone Hydra > dist/hydra-synth.js",
-    "build:debug": "browserify ./src/index.js --debug -p esmify -t glslify --standalone Hydra > dist/hydra-synth.js",
+    "dev-ssl": "vite --https --open /dev/index.html --port 8000",
+    "dev": "vite --open /dev/index.html --port 8000",
+    "build": "node ./scripts/build/prepare-dist.mjs && vite build",
+    "build:debug": "node ./scripts/build/prepare-dist.mjs && BUILD_SOURCEMAP=true vite build",
     "lint": "eslint --max-warnings=0 \"src/**/*.js\" \"scripts/**/*.mjs\"",
     "format:check": "prettier --check \"scripts/**/*.mjs\" \"docs/**/*.md\" \"README.md\" \"CONTRIBUTING.md\" \"SECURITY.md\"",
     "typecheck": "tsc --noEmit -p ./tsconfig.typecheck.json",
@@ -71,13 +71,11 @@
   },
   "devDependencies": {
     "@types/node": "^25.3.0",
-    "browserify": "^17.0.0",
-    "budo": "^11.8.4",
     "eslint": "^10.0.1",
-    "esmify": "^2.1.1",
-    "glslify": "^7.1.1",
     "playwright": "1.56.1",
     "prettier": "^3.5.3",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vite": "^6.4.1",
+    "vite-plugin-glslify": "^2.3.0"
   }
 }
