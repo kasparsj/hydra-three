@@ -14,11 +14,15 @@ function init() {
   // compose scene
   const sc = H.scene().lights().mesh(geom, mat).out();
 
-  H.update = () => {
+  const animate = () => {
     const box = sc.at(0);
     box.rotation.x += 0.01;
     box.rotation.y += 0.01;
   };
+
+  // In makeGlobal mode, EvalSandbox pulls `update` from window on each tick.
+  window.update = animate;
+  H.update = animate;
 }
 
 window.onload = init;

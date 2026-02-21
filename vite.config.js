@@ -11,6 +11,16 @@ export default defineConfig({
   plugins: glslify({
     transformLiterals: false,
   }),
+  define: {
+    global: "globalThis",
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: "globalThis",
+      },
+    },
+  },
   server: {
     host: "127.0.0.1",
     port: 8000,

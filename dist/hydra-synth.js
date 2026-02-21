@@ -1,5 +1,5 @@
-(function(global2, factory) {
-  typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : (global2 = typeof globalThis !== "undefined" ? globalThis : global2 || self, global2.Hydra = factory());
+(function(global, factory) {
+  typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : (global = typeof globalThis !== "undefined" ? globalThis : global || self, global.Hydra = factory());
 })(this, (function() {
   "use strict";var __defProp = Object.defineProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
@@ -5393,9 +5393,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       function extractFromCache(cache2) {
         const values = [];
         for (const key in cache2) {
-          const data3 = cache2[key];
-          delete data3.metadata;
-          values.push(data3);
+          const data22 = cache2[key];
+          delete data22.metadata;
+          values.push(data22);
         }
         return values;
       }
@@ -10065,8 +10065,8 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       const weights = [];
       let sum2 = 0;
       for (let i = 0; i < MAX_SAMPLES; ++i) {
-        const x3 = i / sigmaPixels;
-        const weight = Math.exp(-x3 * x3 / 2);
+        const x22 = i / sigmaPixels;
+        const weight = Math.exp(-x22 * x22 / 2);
         weights.push(weight);
         if (i === 0) {
           sum2 += weight;
@@ -43751,7 +43751,6 @@ vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
     }
     return texComposer.readBuffer.texture;
   };
-  var commonjsGlobal = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : {};
   function getDefaultExportFromCjs(x2) {
     return x2 && x2.__esModule && Object.prototype.hasOwnProperty.call(x2, "default") ? x2["default"] : x2;
   }
@@ -44011,7 +44010,7 @@ vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
   function requireBrowser() {
     if (hasRequiredBrowser) return browser;
     hasRequiredBrowser = 1;
-    browser = commonjsGlobal.performance && commonjsGlobal.performance.now ? function now2() {
+    browser = globalThis.performance && globalThis.performance.now ? function now2() {
       return performance.now();
     } : Date.now || function now2() {
       return +/* @__PURE__ */ new Date();
@@ -44062,7 +44061,7 @@ vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
   function requireRaf() {
     if (hasRequiredRaf) return raf.exports;
     hasRequiredRaf = 1;
-    var now2 = requirePerformanceNow(), root = typeof window === "undefined" ? commonjsGlobal : window, vendors = ["moz", "webkit"], suffix = "AnimationFrame", raf$1 = root["request" + suffix], caf = root["cancel" + suffix] || root["cancelRequest" + suffix];
+    var now2 = requirePerformanceNow(), root = typeof window === "undefined" ? globalThis : window, vendors = ["moz", "webkit"], suffix = "AnimationFrame", raf$1 = root["request" + suffix], caf = root["cancel" + suffix] || root["cancelRequest" + suffix];
     for (var i = 0; !raf$1 && i < vendors.length; i++) {
       raf$1 = root[vendors[i] + "Request" + suffix];
       caf = root[vendors[i] + "Cancel" + suffix] || root[vendors[i] + "CancelRequest" + suffix];
