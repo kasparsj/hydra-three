@@ -1,5 +1,5 @@
-import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise';
-import { map } from "./math";
+import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js';
+import { map } from "./math.js";
 
 const IMPROVED = "improved";
 const PINK = "pink";

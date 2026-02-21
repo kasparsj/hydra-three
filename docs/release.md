@@ -8,9 +8,7 @@ Run:
 
 ```bash
 npm ci
-npm run build
-npm run test:smoke
-npm run pack:check
+npm run ci:check
 ```
 
 Ensure:
@@ -30,6 +28,8 @@ git tag -a vX.Y.Z -m "vX.Y.Z"
 ```
 
 5. Push commit + tag.
+
+Pushing a `v*` tag triggers `.github/workflows/release-verify.yml`, which reruns checks and uploads an npm tarball artifact.
 
 ### Publish
 

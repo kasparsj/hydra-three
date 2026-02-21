@@ -28,7 +28,9 @@
     "dev": "budo ./dev/index.js --open --live --port 8000 -- -p esmify -t glslify",
     "build": "browserify ./src/index.js -p esmify -t glslify --standalone Hydra > dist/hydra-synth.js",
     "build:debug": "browserify ./src/index.js --debug -p esmify -t glslify --standalone Hydra > dist/hydra-synth.js",
-    "test:smoke": "node ./scripts/smoke/canvas-smoke.mjs",
+    "test:smoke:canvas": "node ./scripts/smoke/canvas-smoke.mjs",
+    "test:smoke:module": "node ./scripts/smoke/module-load-smoke.mjs",
+    "test:smoke": "npm run test:smoke:canvas && npm run test:smoke:module",
     "pack:check": "npm pack --dry-run",
     "ci:check": "npm run build && npm run test:smoke && npm run pack:check"
   },

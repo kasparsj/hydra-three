@@ -3,17 +3,26 @@
 ## [Unreleased]
 ### Added
 - CI workflow for build, smoke testing, and package dry-run checks.
+- Release verification workflow for `v*` tags that uploads npm tarball artifacts.
 - Canvas smoke test script (`npm run test:smoke`).
+- Module-load smoke test (`npm run test:smoke:module`) with strict ESM import coverage.
 - Local dev entrypoint restored at `dev/index.js`.
 - New onboarding and operations docs:
   - `docs/getting-started.md`
   - `docs/production-checklist.md`
   - `docs/release.md`
   - `examples/README.md`
+- Contributor and security docs:
+  - `CONTRIBUTING.md`
+  - `SECURITY.md`
+- Quickstart static example: `examples/quickstart.html`.
 
 ### Fixed
 - Constructor canvas initialization now uses the created canvas safely when no canvas is supplied.
 - Canvas resize helpers no longer rely on implicit global state.
+- ESM import specifiers now use explicit `.js` extensions in internal and `three/examples` imports.
+- Top-level `window.*` assignments are guarded to avoid immediate crashes in non-browser module loading.
+- `arr.image()` now fails with a clear error when `tx` loader is unavailable instead of throwing an unbound reference error.
 
 ## [1.4] - 2025-09-24
 ### Fixed

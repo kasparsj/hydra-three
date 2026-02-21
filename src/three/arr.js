@@ -1,6 +1,6 @@
-import * as noiseLib from "./noise";
-import * as rnd from "./rnd";
-import * as math from "./math";
+import * as noiseLib from "./noise.js";
+import * as rnd from "./rnd.js";
+import * as math from "./math.js";
 
 const create = (len, mapfn) => {
     return Array.from({length: len}, mapfn);
@@ -189,8 +189,12 @@ const grid = (width, height = 1, options = {}) => {
 }
 
 const image = (url) => {
+    const txApi = globalThis.tx;
+    if (!txApi || typeof txApi.load !== 'function') {
+        throw new Error('arr.image() requires a global tx loader with a load(url, callback) function.');
+    }
     const data = new Uint8Array();
-    tx.load(url, (texture) => {
+    txApi.load(url, (texture) => {
         const image = texture.image;
         const canvas = document.createElement('canvas');
         canvas.width = image.width;

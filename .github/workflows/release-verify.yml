@@ -1,0 +1,36 @@
+name: Release Verify
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  verify-tagged-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Verify build and smoke tests
+        run: npm run ci:check
+
+      - name: Create release tarball
+        run: npm pack
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-tarball
+          path: hydra-synth-*.tgz

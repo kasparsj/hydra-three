@@ -14,7 +14,7 @@ This guide is optimized for first success in under 10 minutes.
 </script>
 ```
 
-For production, pin to a tag or commit instead of `@main`.
+For production, pin to a tag or commit (avoid floating `@main`).
 
 #### npm + bundler
 
@@ -52,6 +52,7 @@ const sc = scene().lights().mesh(gm.box(), osc().phong()).out()
 ```bash
 npm ci
 npm run dev
+npm run ci:check
 ```
 
 The repo dev entrypoint is `dev/index.js`.

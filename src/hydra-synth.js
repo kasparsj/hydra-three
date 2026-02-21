@@ -11,7 +11,7 @@ import Sandbox from './eval-sandbox.js'
 import {GeneratorFactory} from './generator-factory.js'
 import * as THREE from "three";
 import {HydraUniform} from "./three/HydraUniform.js"
-import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer";
+import {EffectComposer} from "three/examples/jsm/postprocessing/EffectComposer.js";
 import {ShaderPass} from "three/examples/jsm/postprocessing/ShaderPass.js";
 import * as tx from "./three/tx.js";
 import * as gm from "./three/gm.js";
@@ -27,7 +27,7 @@ import * as el from "./el.js";
 import * as threeGlobals from "./three/globals.js";
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
-import { initCanvas } from "./canvas";
+import { initCanvas } from "./canvas.js";
 
 const Mouse = MouseTools()
 // to do: add ability to pass in certain uniforms and transforms

@@ -1,5 +1,5 @@
-import {BufferGeometry} from "three/src/core/BufferGeometry";
-import {Float32BufferAttribute} from "three/src/core/BufferAttribute";
+import {BufferGeometry} from "three/src/core/BufferGeometry.js";
+import {Float32BufferAttribute} from "three/src/core/BufferAttribute.js";
 
 class GridGeometry extends BufferGeometry {
     constructor(type, width, height, options) {

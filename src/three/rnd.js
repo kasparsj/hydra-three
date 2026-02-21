@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import {lerp} from "./math";
+import {lerp} from "./math.js";
 
 let rndFn = Math.random;
 const _cache = {};

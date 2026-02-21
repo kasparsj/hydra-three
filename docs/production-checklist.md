@@ -21,6 +21,7 @@ Use this checklist before deploying hydra-three in a production creative-coding 
 - Add a recover path for shader compile failures in your host app.
 
 ### Build and release safety
-- Run `npm run build` and `npm run test:smoke` in CI.
+- Run `npm run ci:check` in CI.
 - Keep changelog entries for user-visible behavior changes.
 - Tag every release commit.
+- Ensure security reporting path is documented (see `SECURITY.md`).

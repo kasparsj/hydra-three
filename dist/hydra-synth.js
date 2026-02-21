@@ -13251,7 +13251,9 @@ function processFunction(obj) {
     console.warn(`type ${obj.type} not recognized`, obj);
   }
 }
-window.processFunction = processFunction;
+if (typeof window !== 'undefined') {
+  window.processFunction = processFunction;
+}
 
 },{"./glsl-source.js":68,"./glsl/glsl-functions.js":69,"./types.js":105}],68:[function(require,module,exports){
 "use strict";
@@ -15095,7 +15097,7 @@ var _evalSandbox = _interopRequireDefault(require("./eval-sandbox.js"));
 var _generatorFactory = require("./generator-factory.js");
 var THREE = _interopRequireWildcard(require("three"));
 var _HydraUniform = require("./three/HydraUniform.js");
-var _EffectComposer = require("three/examples/jsm/postprocessing/EffectComposer");
+var _EffectComposer = require("three/examples/jsm/postprocessing/EffectComposer.js");
 var _ShaderPass = require("three/examples/jsm/postprocessing/ShaderPass.js");
 var tx = _interopRequireWildcard(require("./three/tx.js"));
 var gm = _interopRequireWildcard(require("./three/gm.js"));
@@ -15111,7 +15113,7 @@ var el = _interopRequireWildcard(require("./el.js"));
 var threeGlobals = _interopRequireWildcard(require("./three/globals.js"));
 var _CSS2DRenderer = require("three/examples/jsm/renderers/CSS2DRenderer.js");
 var _CSS3DRenderer = require("three/examples/jsm/renderers/CSS3DRenderer.js");
-var _canvas = require("./canvas");
+var _canvas = require("./canvas.js");
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -15605,7 +15607,7 @@ class HydraRenderer {
 var _default = HydraRenderer;
 exports.default = _default;
 
-},{"./canvas":62,"./el.js":63,"./eval-sandbox.js":64,"./generator-factory.js":67,"./gui.js":71,"./hydra-source.js":72,"./lib/array-utils.js":77,"./lib/audio.js":78,"./lib/mouse.js":82,"./lib/video-recorder.js":85,"./output.js":87,"./three/HydraUniform.js":90,"./three/arr.js":91,"./three/cmp.js":92,"./three/globals.js":94,"./three/gm.js":95,"./three/math.js":98,"./three/mt.js":99,"./three/noise.js":100,"./three/rnd.js":101,"./three/scene.js":102,"./three/tx.js":103,"raf-loop":11,"three":14,"three/examples/jsm/postprocessing/EffectComposer":19,"three/examples/jsm/postprocessing/ShaderPass.js":26,"three/examples/jsm/renderers/CSS2DRenderer.js":28,"three/examples/jsm/renderers/CSS3DRenderer.js":29}],74:[function(require,module,exports){
+},{"./canvas.js":62,"./el.js":63,"./eval-sandbox.js":64,"./generator-factory.js":67,"./gui.js":71,"./hydra-source.js":72,"./lib/array-utils.js":77,"./lib/audio.js":78,"./lib/mouse.js":82,"./lib/video-recorder.js":85,"./output.js":87,"./three/HydraUniform.js":90,"./three/arr.js":91,"./three/cmp.js":92,"./three/globals.js":94,"./three/gm.js":95,"./three/math.js":98,"./three/mt.js":99,"./three/noise.js":100,"./three/rnd.js":101,"./three/scene.js":102,"./three/tx.js":103,"raf-loop":11,"three":14,"three/examples/jsm/postprocessing/EffectComposer.js":19,"three/examples/jsm/postprocessing/ShaderPass.js":26,"three/examples/jsm/renderers/CSS2DRenderer.js":28,"three/examples/jsm/renderers/CSS3DRenderer.js":29}],74:[function(require,module,exports){
 "use strict";
 
 var _hydraSynth = _interopRequireDefault(require("./hydra-synth.js"));
@@ -15619,8 +15621,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.GridGeometry = void 0;
-var _BufferGeometry = require("three/src/core/BufferGeometry");
-var _BufferAttribute = require("three/src/core/BufferAttribute");
+var _BufferGeometry = require("three/src/core/BufferGeometry.js");
+var _BufferAttribute = require("three/src/core/BufferAttribute.js");
 class GridGeometry extends _BufferGeometry.BufferGeometry {
   constructor(type, width, height, options) {
     super();
@@ -15744,7 +15746,7 @@ class GridGeometry extends _BufferGeometry.BufferGeometry {
 }
 exports.GridGeometry = GridGeometry;
 
-},{"three/src/core/BufferAttribute":46,"three/src/core/BufferGeometry":47}],76:[function(require,module,exports){
+},{"three/src/core/BufferAttribute.js":46,"three/src/core/BufferGeometry.js":47}],76:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16954,7 +16956,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 var THREE = _interopRequireWildcard(require("three"));
-var _EffectComposer = require("three/examples/jsm/postprocessing/EffectComposer");
+var _EffectComposer = require("three/examples/jsm/postprocessing/EffectComposer.js");
 var _ClearPass = require("three/examples/jsm/postprocessing/ClearPass.js");
 var _HydraUniform = require("./three/HydraUniform.js");
 var _HydraPass = require("./three/HydraPass.js");
@@ -17173,7 +17175,7 @@ Output.prototype.renderTexture = function (options = {}) {
 var _default = Output;
 exports.default = _default;
 
-},{"./lib/mixins.js":80,"./three/HydraPass.js":89,"./three/HydraUniform.js":90,"./three/fx.js":93,"./three/layers.js":96,"./three/tx.js":103,"three":14,"three/examples/jsm/postprocessing/ClearPass.js":18,"three/examples/jsm/postprocessing/EffectComposer":19}],88:[function(require,module,exports){
+},{"./lib/mixins.js":80,"./three/HydraPass.js":89,"./three/HydraUniform.js":90,"./three/fx.js":93,"./three/layers.js":96,"./three/tx.js":103,"three":14,"three/examples/jsm/postprocessing/ClearPass.js":18,"three/examples/jsm/postprocessing/EffectComposer.js":19}],88:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18238,9 +18240,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.uint8 = exports.transpose = exports.sum = exports.random = exports.padTo = exports.normalize = exports.noise = exports.mul = exports.mirror1 = exports.mirror = exports.map = exports.image = exports.grid = exports.float32 = exports.create = exports.concat = exports.avg = void 0;
-var noiseLib = _interopRequireWildcard(require("./noise"));
-var rnd = _interopRequireWildcard(require("./rnd"));
-var math = _interopRequireWildcard(require("./math"));
+var noiseLib = _interopRequireWildcard(require("./noise.js"));
+var rnd = _interopRequireWildcard(require("./rnd.js"));
+var math = _interopRequireWildcard(require("./math.js"));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 const create = (len, mapfn) => {
@@ -18436,8 +18438,12 @@ const grid = (width, height = 1, options = {}) => {
 };
 exports.grid = grid;
 const image = url => {
+  const txApi = globalThis.tx;
+  if (!txApi || typeof txApi.load !== 'function') {
+    throw new Error('arr.image() requires a global tx loader with a load(url, callback) function.');
+  }
   const data = new Uint8Array();
-  tx.load(url, texture => {
+  txApi.load(url, texture => {
     const image = texture.image;
     const canvas = document.createElement('canvas');
     canvas.width = image.width;
@@ -18511,7 +18517,7 @@ const transpose = arr => {
 };
 exports.transpose = transpose;
 
-},{"./math":98,"./noise":100,"./rnd":101}],92:[function(require,module,exports){
+},{"./math.js":98,"./noise.js":100,"./rnd.js":101}],92:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18646,20 +18652,20 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.add = void 0;
 var _Pass = require("three/examples/jsm/postprocessing/Pass.js");
-var _ShaderPass = require("three/examples/jsm/postprocessing/ShaderPass");
-var _HorizontalBlurShader = require("three/examples/jsm/shaders/HorizontalBlurShader");
-var _VerticalBlurShader = require("three/examples/jsm/shaders/VerticalBlurShader");
-var _DotScreenShader = require("three/examples/jsm/shaders/DotScreenShader");
-var _RGBShiftShader = require("three/examples/jsm/shaders/RGBShiftShader");
-var _SepiaShader = require("three/examples/jsm/shaders/SepiaShader");
-var _ColorifyShader = require("three/examples/jsm/shaders/ColorifyShader");
-var _FXAAShader = require("three/examples/jsm/shaders/FXAAShader");
-var _RenderPixelatedPass = require("three/examples/jsm/postprocessing/RenderPixelatedPass");
-var _FilmPass = require("three/examples/jsm/postprocessing/FilmPass");
-var _BloomPass = require("three/examples/jsm/postprocessing/BloomPass");
+var _ShaderPass = require("three/examples/jsm/postprocessing/ShaderPass.js");
+var _HorizontalBlurShader = require("three/examples/jsm/shaders/HorizontalBlurShader.js");
+var _VerticalBlurShader = require("three/examples/jsm/shaders/VerticalBlurShader.js");
+var _DotScreenShader = require("three/examples/jsm/shaders/DotScreenShader.js");
+var _RGBShiftShader = require("three/examples/jsm/shaders/RGBShiftShader.js");
+var _SepiaShader = require("three/examples/jsm/shaders/SepiaShader.js");
+var _ColorifyShader = require("three/examples/jsm/shaders/ColorifyShader.js");
+var _FXAAShader = require("three/examples/jsm/shaders/FXAAShader.js");
+var _RenderPixelatedPass = require("three/examples/jsm/postprocessing/RenderPixelatedPass.js");
+var _FilmPass = require("three/examples/jsm/postprocessing/FilmPass.js");
+var _BloomPass = require("three/examples/jsm/postprocessing/BloomPass.js");
 var _UnrealBloomPass = require("three/examples/jsm/postprocessing/UnrealBloomPass.js");
-var _GammaCorrectionShader = require("three/examples/jsm/shaders/GammaCorrectionShader");
-var _BleachBypassShader = require("three/examples/jsm/shaders/BleachBypassShader");
+var _GammaCorrectionShader = require("three/examples/jsm/shaders/GammaCorrectionShader.js");
+var _BleachBypassShader = require("three/examples/jsm/shaders/BleachBypassShader.js");
 var _SSAARenderPass = require("three/examples/jsm/postprocessing/SSAARenderPass.js");
 var _SAOPass = require("three/examples/jsm/postprocessing/SAOPass.js");
 var _HydraUniform = require("./HydraUniform.js");
@@ -18667,7 +18673,7 @@ var _three = require("three");
 //import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 const glsl = require("glslify");
 const uvVert = glsl(["#define GLSLIFY 1\nvarying vec2 vUv;\n\nvoid main() {\n    vUv = uv;\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n}\n"]);
-const filmFrag = glsl(["#define GLSLIFY 1\n//\n// GLSL textureless classic 3D noise \"cnoise\",\n// with an RSL-style periodic variant \"pnoise\".\n// Author:  Stefan Gustavson (stefan.gustavson@liu.se)\n// Version: 2011-10-11\n//\n// Many thanks to Ian McEwan of Ashima Arts for the\n// ideas for permutation and gradient selection.\n//\n// Copyright (c) 2011 Stefan Gustavson. All rights reserved.\n// Distributed under the MIT license. See LICENSE file.\n// https://github.com/ashima/webgl-noise\n//\n\nvec3 mod289_0(vec3 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289_0(vec4 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute_0(vec4 x)\n{\n  return mod289_0(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt_0(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nvec3 fade(vec3 t) {\n  return t*t*t*(t*(t*6.0-15.0)+10.0);\n}\n\n// Classic Perlin noise, periodic variant\nfloat pnoise(vec3 P, vec3 rep)\n{\n  vec3 Pi0 = mod(floor(P), rep); // Integer part, modulo period\n  vec3 Pi1 = mod(Pi0 + vec3(1.0), rep); // Integer part + 1, mod period\n  Pi0 = mod289_0(Pi0);\n  Pi1 = mod289_0(Pi1);\n  vec3 Pf0 = fract(P); // Fractional part for interpolation\n  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n  vec4 iy = vec4(Pi0.yy, Pi1.yy);\n  vec4 iz0 = Pi0.zzzz;\n  vec4 iz1 = Pi1.zzzz;\n\n  vec4 ixy = permute_0(permute_0(ix) + iy);\n  vec4 ixy0 = permute_0(ixy + iz0);\n  vec4 ixy1 = permute_0(ixy + iz1);\n\n  vec4 gx0 = ixy0 * (1.0 / 7.0);\n  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n  gx0 = fract(gx0);\n  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n  vec4 sz0 = step(gz0, vec4(0.0));\n  gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n  gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n  vec4 gx1 = ixy1 * (1.0 / 7.0);\n  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n  gx1 = fract(gx1);\n  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n  vec4 sz1 = step(gz1, vec4(0.0));\n  gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n  gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n  vec4 norm0 = taylorInvSqrt_0(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n  g000 *= norm0.x;\n  g010 *= norm0.y;\n  g100 *= norm0.z;\n  g110 *= norm0.w;\n  vec4 norm1 = taylorInvSqrt_0(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n  g001 *= norm1.x;\n  g011 *= norm1.y;\n  g101 *= norm1.z;\n  g111 *= norm1.w;\n\n  float n000 = dot(g000, Pf0);\n  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n  float n111 = dot(g111, Pf1);\n\n  vec3 fade_xyz = fade(Pf0);\n  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x);\n  return 2.2 * n_xyz;\n}\n\n//\n// Description : Array and textureless GLSL 2D/3D/4D simplex\n//               noise functions.\n//      Author : Ian McEwan, Ashima Arts.\n//  Maintainer : ijm\n//     Lastmod : 20110822 (ijm)\n//     License : Copyright (C) 2011 Ashima Arts. All rights reserved.\n//               Distributed under the MIT License. See LICENSE file.\n//               https://github.com/ashima/webgl-noise\n//\n\nvec3 mod289_1(vec3 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289_1(vec4 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute_1(vec4 x) {\n     return mod289_1(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt_1(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nfloat snoise(vec3 v)\n  {\n  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;\n  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);\n\n// First corner\n  vec3 i  = floor(v + dot(v, C.yyy) );\n  vec3 x0 =   v - i + dot(i, C.xxx) ;\n\n// Other corners\n  vec3 g_0 = step(x0.yzx, x0.xyz);\n  vec3 l = 1.0 - g_0;\n  vec3 i1 = min( g_0.xyz, l.zxy );\n  vec3 i2 = max( g_0.xyz, l.zxy );\n\n  //   x0 = x0 - 0.0 + 0.0 * C.xxx;\n  //   x1 = x0 - i1  + 1.0 * C.xxx;\n  //   x2 = x0 - i2  + 2.0 * C.xxx;\n  //   x3 = x0 - 1.0 + 3.0 * C.xxx;\n  vec3 x1 = x0 - i1 + C.xxx;\n  vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y\n  vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y\n\n// Permutations\n  i = mod289_1(i);\n  vec4 p = permute_1( permute_1( permute_1(\n             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))\n           + i.y + vec4(0.0, i1.y, i2.y, 1.0 ))\n           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));\n\n// Gradients: 7x7 points over a square, mapped onto an octahedron.\n// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)\n  float n_ = 0.142857142857; // 1.0/7.0\n  vec3  ns = n_ * D.wyz - D.xzx;\n\n  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)\n\n  vec4 x_ = floor(j * ns.z);\n  vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)\n\n  vec4 x = x_ *ns.x + ns.yyyy;\n  vec4 y = y_ *ns.x + ns.yyyy;\n  vec4 h = 1.0 - abs(x) - abs(y);\n\n  vec4 b0 = vec4( x.xy, y.xy );\n  vec4 b1 = vec4( x.zw, y.zw );\n\n  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;\n  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;\n  vec4 s0 = floor(b0)*2.0 + 1.0;\n  vec4 s1 = floor(b1)*2.0 + 1.0;\n  vec4 sh = -step(h, vec4(0.0));\n\n  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;\n  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;\n\n  vec3 p0 = vec3(a0.xy,h.x);\n  vec3 p1 = vec3(a0.zw,h.y);\n  vec3 p2 = vec3(a1.xy,h.z);\n  vec3 p3 = vec3(a1.zw,h.w);\n\n//Normalise gradients\n  vec4 norm = taylorInvSqrt_1(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));\n  p0 *= norm.x;\n  p1 *= norm.y;\n  p2 *= norm.z;\n  p3 *= norm.w;\n\n// Mix final noise value\n  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);\n  m = m * m;\n  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1),\n                                dot(p2,x2), dot(p3,x3) ) );\n  }\n\nfloat grain(vec2 texCoord, vec2 resolution, float frame, float multiplier) {\n    vec2 mult = texCoord * resolution;\n    float offset = snoise(vec3(mult / multiplier, frame));\n    float n1 = pnoise(vec3(mult, offset), vec3(1.0/texCoord * resolution, 1.0));\n    return n1 / 2.0 + 0.5;\n}\n\nfloat grain(vec2 texCoord, vec2 resolution, float frame) {\n    return grain(texCoord, resolution, frame, 2.5);\n}\n\nfloat grain(vec2 texCoord, vec2 resolution) {\n    return grain(texCoord, resolution, 0.0);\n}\n\n// control parameter\nuniform float time;\n\nuniform bool grayscale;\n\n// noise effect intensity value (0 = no effect, 1 = full effect)\nuniform float nIntensity;\n\n// scanlines effect intensity value (0 = no effect, 1 = full effect)\nuniform float sIntensity;\n\n// scanlines effect count value (0 = no effect, 4096 = full effect)\nuniform float sCount;\n\nuniform sampler2D tDiffuse;\n\nuniform vec2 uResolution;\n\nuniform float uGrainSize;\n\nvarying vec2 vUv;\n\nvoid main() {\n\n    // sample the source\n    vec4 cTextureScreen = texture2D( tDiffuse, vUv );\n\n    // make some noise\n    // float dx = rand( vUv + time );\n    float dx = grain(vUv, uResolution / uGrainSize, time);\n\n    // add noise\n    vec3 cResult = cTextureScreen.rgb + cTextureScreen.rgb * clamp( 0.1 + dx, 0.0, 1.0 );\n\n    // get us a sine and cosine\n    vec2 sc = vec2( sin( vUv.y * sCount ), cos( vUv.y * sCount ) );\n\n    // add scanlines\n    cResult += cTextureScreen.rgb * vec3( sc.x, sc.y, sc.x ) * sIntensity;\n\n    // interpolate between source and result by intensity\n    cResult = cTextureScreen.rgb + clamp( nIntensity, 0.0,1.0 ) * ( cResult - cTextureScreen.rgb );\n\n    // convert to grayscale if desired\n    if( grayscale ) {\n\n        cResult = vec3( cResult.r * 0.3 + cResult.g * 0.59 + cResult.b * 0.11 );\n\n    }\n\n    gl_FragColor =  vec4( cResult, cTextureScreen.a );\n\n}"]);
+const filmFrag = glsl(["#define GLSLIFY 1\n//\n// GLSL textureless classic 3D noise \"cnoise\",\n// with an RSL-style periodic variant \"pnoise\".\n// Author:  Stefan Gustavson (stefan.gustavson@liu.se)\n// Version: 2011-10-11\n//\n// Many thanks to Ian McEwan of Ashima Arts for the\n// ideas for permutation and gradient selection.\n//\n// Copyright (c) 2011 Stefan Gustavson. All rights reserved.\n// Distributed under the MIT license. See LICENSE file.\n// https://github.com/ashima/webgl-noise\n//\n\nvec3 mod289_1(vec3 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289_1(vec4 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute_1(vec4 x)\n{\n  return mod289_1(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt_1(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nvec3 fade(vec3 t) {\n  return t*t*t*(t*(t*6.0-15.0)+10.0);\n}\n\n// Classic Perlin noise, periodic variant\nfloat pnoise(vec3 P, vec3 rep)\n{\n  vec3 Pi0 = mod(floor(P), rep); // Integer part, modulo period\n  vec3 Pi1 = mod(Pi0 + vec3(1.0), rep); // Integer part + 1, mod period\n  Pi0 = mod289_1(Pi0);\n  Pi1 = mod289_1(Pi1);\n  vec3 Pf0 = fract(P); // Fractional part for interpolation\n  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n  vec4 iy = vec4(Pi0.yy, Pi1.yy);\n  vec4 iz0 = Pi0.zzzz;\n  vec4 iz1 = Pi1.zzzz;\n\n  vec4 ixy = permute_1(permute_1(ix) + iy);\n  vec4 ixy0 = permute_1(ixy + iz0);\n  vec4 ixy1 = permute_1(ixy + iz1);\n\n  vec4 gx0 = ixy0 * (1.0 / 7.0);\n  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n  gx0 = fract(gx0);\n  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n  vec4 sz0 = step(gz0, vec4(0.0));\n  gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n  gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n  vec4 gx1 = ixy1 * (1.0 / 7.0);\n  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n  gx1 = fract(gx1);\n  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n  vec4 sz1 = step(gz1, vec4(0.0));\n  gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n  gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n  vec4 norm0 = taylorInvSqrt_1(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n  g000 *= norm0.x;\n  g010 *= norm0.y;\n  g100 *= norm0.z;\n  g110 *= norm0.w;\n  vec4 norm1 = taylorInvSqrt_1(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n  g001 *= norm1.x;\n  g011 *= norm1.y;\n  g101 *= norm1.z;\n  g111 *= norm1.w;\n\n  float n000 = dot(g000, Pf0);\n  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n  float n111 = dot(g111, Pf1);\n\n  vec3 fade_xyz = fade(Pf0);\n  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x);\n  return 2.2 * n_xyz;\n}\n\n//\n// Description : Array and textureless GLSL 2D/3D/4D simplex\n//               noise functions.\n//      Author : Ian McEwan, Ashima Arts.\n//  Maintainer : ijm\n//     Lastmod : 20110822 (ijm)\n//     License : Copyright (C) 2011 Ashima Arts. All rights reserved.\n//               Distributed under the MIT License. See LICENSE file.\n//               https://github.com/ashima/webgl-noise\n//\n\nvec3 mod289_0(vec3 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289_0(vec4 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute_0(vec4 x) {\n     return mod289_0(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt_0(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nfloat snoise(vec3 v)\n  {\n  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;\n  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);\n\n// First corner\n  vec3 i  = floor(v + dot(v, C.yyy) );\n  vec3 x0 =   v - i + dot(i, C.xxx) ;\n\n// Other corners\n  vec3 g_0 = step(x0.yzx, x0.xyz);\n  vec3 l = 1.0 - g_0;\n  vec3 i1 = min( g_0.xyz, l.zxy );\n  vec3 i2 = max( g_0.xyz, l.zxy );\n\n  //   x0 = x0 - 0.0 + 0.0 * C.xxx;\n  //   x1 = x0 - i1  + 1.0 * C.xxx;\n  //   x2 = x0 - i2  + 2.0 * C.xxx;\n  //   x3 = x0 - 1.0 + 3.0 * C.xxx;\n  vec3 x1 = x0 - i1 + C.xxx;\n  vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y\n  vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y\n\n// Permutations\n  i = mod289_0(i);\n  vec4 p = permute_0( permute_0( permute_0(\n             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))\n           + i.y + vec4(0.0, i1.y, i2.y, 1.0 ))\n           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));\n\n// Gradients: 7x7 points over a square, mapped onto an octahedron.\n// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)\n  float n_ = 0.142857142857; // 1.0/7.0\n  vec3  ns = n_ * D.wyz - D.xzx;\n\n  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)\n\n  vec4 x_ = floor(j * ns.z);\n  vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)\n\n  vec4 x = x_ *ns.x + ns.yyyy;\n  vec4 y = y_ *ns.x + ns.yyyy;\n  vec4 h = 1.0 - abs(x) - abs(y);\n\n  vec4 b0 = vec4( x.xy, y.xy );\n  vec4 b1 = vec4( x.zw, y.zw );\n\n  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;\n  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;\n  vec4 s0 = floor(b0)*2.0 + 1.0;\n  vec4 s1 = floor(b1)*2.0 + 1.0;\n  vec4 sh = -step(h, vec4(0.0));\n\n  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;\n  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;\n\n  vec3 p0 = vec3(a0.xy,h.x);\n  vec3 p1 = vec3(a0.zw,h.y);\n  vec3 p2 = vec3(a1.xy,h.z);\n  vec3 p3 = vec3(a1.zw,h.w);\n\n//Normalise gradients\n  vec4 norm = taylorInvSqrt_0(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));\n  p0 *= norm.x;\n  p1 *= norm.y;\n  p2 *= norm.z;\n  p3 *= norm.w;\n\n// Mix final noise value\n  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);\n  m = m * m;\n  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1),\n                                dot(p2,x2), dot(p3,x3) ) );\n  }\n\nfloat grain(vec2 texCoord, vec2 resolution, float frame, float multiplier) {\n    vec2 mult = texCoord * resolution;\n    float offset = snoise(vec3(mult / multiplier, frame));\n    float n1 = pnoise(vec3(mult, offset), vec3(1.0/texCoord * resolution, 1.0));\n    return n1 / 2.0 + 0.5;\n}\n\nfloat grain(vec2 texCoord, vec2 resolution, float frame) {\n    return grain(texCoord, resolution, frame, 2.5);\n}\n\nfloat grain(vec2 texCoord, vec2 resolution) {\n    return grain(texCoord, resolution, 0.0);\n}\n\n// control parameter\nuniform float time;\n\nuniform bool grayscale;\n\n// noise effect intensity value (0 = no effect, 1 = full effect)\nuniform float nIntensity;\n\n// scanlines effect intensity value (0 = no effect, 1 = full effect)\nuniform float sIntensity;\n\n// scanlines effect count value (0 = no effect, 4096 = full effect)\nuniform float sCount;\n\nuniform sampler2D tDiffuse;\n\nuniform vec2 uResolution;\n\nuniform float uGrainSize;\n\nvarying vec2 vUv;\n\nvoid main() {\n\n    // sample the source\n    vec4 cTextureScreen = texture2D( tDiffuse, vUv );\n\n    // make some noise\n    // float dx = rand( vUv + time );\n    float dx = grain(vUv, uResolution / uGrainSize, time);\n\n    // add noise\n    vec3 cResult = cTextureScreen.rgb + cTextureScreen.rgb * clamp( 0.1 + dx, 0.0, 1.0 );\n\n    // get us a sine and cosine\n    vec2 sc = vec2( sin( vUv.y * sCount ), cos( vUv.y * sCount ) );\n\n    // add scanlines\n    cResult += cTextureScreen.rgb * vec3( sc.x, sc.y, sc.x ) * sIntensity;\n\n    // interpolate between source and result by intensity\n    cResult = cTextureScreen.rgb + clamp( nIntensity, 0.0,1.0 ) * ( cResult - cTextureScreen.rgb );\n\n    // convert to grayscale if desired\n    if( grayscale ) {\n\n        cResult = vec3( cResult.r * 0.3 + cResult.g * 0.59 + cResult.b * 0.11 );\n\n    }\n\n    gl_FragColor =  vec4( cResult, cTextureScreen.a );\n\n}"]);
 const add = options => {
   const {
     composer
@@ -18838,7 +18844,7 @@ const addPass = (type, options) => {
   return pass;
 };
 
-},{"./HydraUniform.js":90,"glslify":6,"three":14,"three/examples/jsm/postprocessing/BloomPass":17,"three/examples/jsm/postprocessing/FilmPass":20,"three/examples/jsm/postprocessing/Pass.js":22,"three/examples/jsm/postprocessing/RenderPixelatedPass":23,"three/examples/jsm/postprocessing/SAOPass.js":24,"three/examples/jsm/postprocessing/SSAARenderPass.js":25,"three/examples/jsm/postprocessing/ShaderPass":26,"three/examples/jsm/postprocessing/UnrealBloomPass.js":27,"three/examples/jsm/shaders/BleachBypassShader":30,"three/examples/jsm/shaders/ColorifyShader":31,"three/examples/jsm/shaders/DotScreenShader":35,"three/examples/jsm/shaders/FXAAShader":36,"three/examples/jsm/shaders/GammaCorrectionShader":38,"three/examples/jsm/shaders/HorizontalBlurShader":39,"three/examples/jsm/shaders/RGBShiftShader":41,"three/examples/jsm/shaders/SepiaShader":43,"three/examples/jsm/shaders/VerticalBlurShader":44}],94:[function(require,module,exports){
+},{"./HydraUniform.js":90,"glslify":6,"three":14,"three/examples/jsm/postprocessing/BloomPass.js":17,"three/examples/jsm/postprocessing/FilmPass.js":20,"three/examples/jsm/postprocessing/Pass.js":22,"three/examples/jsm/postprocessing/RenderPixelatedPass.js":23,"three/examples/jsm/postprocessing/SAOPass.js":24,"three/examples/jsm/postprocessing/SSAARenderPass.js":25,"three/examples/jsm/postprocessing/ShaderPass.js":26,"three/examples/jsm/postprocessing/UnrealBloomPass.js":27,"three/examples/jsm/shaders/BleachBypassShader.js":30,"three/examples/jsm/shaders/ColorifyShader.js":31,"three/examples/jsm/shaders/DotScreenShader.js":35,"three/examples/jsm/shaders/FXAAShader.js":36,"three/examples/jsm/shaders/GammaCorrectionShader.js":38,"three/examples/jsm/shaders/HorizontalBlurShader.js":39,"three/examples/jsm/shaders/RGBShiftShader.js":41,"three/examples/jsm/shaders/SepiaShader.js":43,"three/examples/jsm/shaders/VerticalBlurShader.js":44}],94:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18913,7 +18919,9 @@ var THREE = _interopRequireWildcard(require("three"));
 var _GridGeometry = require("../lib/GridGeometry.js");
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
-window.GridGeometry = _GridGeometry.GridGeometry;
+if (typeof window !== 'undefined') {
+  window.GridGeometry = _GridGeometry.GridGeometry;
+}
 const box = (width = 1, height = 1, depth = 1, widthSegments = 1, heightSegments = 1, depthSegments = 1) => new THREE.BoxGeometry(width, height, depth, widthSegments, heightSegments, depthSegments);
 exports.box = box;
 const capsule = (radius = 1, length = 1, capSegments = 4, radialSegments = 8) => new THREE.CapsuleGeometry(radius, length, capSegments, radialSegments);
@@ -19051,7 +19059,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.restoreMaterials = exports.render = exports.darkenMaterials = exports.create = void 0;
 var THREE = _interopRequireWildcard(require("three"));
-var _EffectComposer = require("three/examples/jsm/postprocessing/EffectComposer");
+var _EffectComposer = require("three/examples/jsm/postprocessing/EffectComposer.js");
 var fx = _interopRequireWildcard(require("./fx.js"));
 var _HydraUniform = require("./HydraUniform.js");
 var _HydraPass = require("./HydraPass.js");
@@ -19171,7 +19179,7 @@ const restoreMaterials = scene => {
 };
 exports.restoreMaterials = restoreMaterials;
 
-},{"./HydraPass.js":89,"./HydraUniform.js":90,"./fx.js":93,"three":14,"three/examples/jsm/postprocessing/EffectComposer":19}],97:[function(require,module,exports){
+},{"./HydraPass.js":89,"./HydraUniform.js":90,"./fx.js":93,"three":14,"three/examples/jsm/postprocessing/EffectComposer.js":19}],97:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -19794,8 +19802,8 @@ exports.get2 = get2;
 exports.get3 = get3;
 exports.get4 = get4;
 exports.yellow = exports.types = exports.pink = exports.options = exports.init = exports.improved = void 0;
-var _ImprovedNoise = require("three/examples/jsm/math/ImprovedNoise");
-var _math = require("./math");
+var _ImprovedNoise = require("three/examples/jsm/math/ImprovedNoise.js");
+var _math = require("./math.js");
 const IMPROVED = "improved";
 const PINK = "pink";
 exports.PINK = PINK;
@@ -19918,7 +19926,7 @@ function fbm(noiseFn, H, opts = {}) {
   // return redistributed / max;
 }
 
-},{"./math":98,"three/examples/jsm/math/ImprovedNoise":15}],101:[function(require,module,exports){
+},{"./math.js":98,"three/examples/jsm/math/ImprovedNoise.js":15}],101:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -19926,7 +19934,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.setfn = exports.num = exports.int = exports.gaussMinMax = exports.gauss = exports.exp = exports.color = exports.choice = exports.cacheNum = exports.cacheGaussMinMax = exports.cacheGauss = exports.cacheBool = exports.cache = exports.bool = exports.arr = void 0;
 var THREE = _interopRequireWildcard(require("three"));
-var _math = require("./math");
+var _math = require("./math.js");
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 let rndFn = Math.random;
@@ -20034,7 +20042,7 @@ const color = () => {
 };
 exports.color = color;
 
-},{"./math":98,"three":14}],102:[function(require,module,exports){
+},{"./math.js":98,"three":14}],102:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21100,8 +21108,8 @@ exports.getReliefAt = getReliefAt;
 exports.update = exports.groupName = void 0;
 var THREE = _interopRequireWildcard(require("three"));
 var _Sky = require("three/examples/jsm/objects/Sky.js");
-var gm = _interopRequireWildcard(require("./gm"));
-var mt = _interopRequireWildcard(require("./mt"));
+var gm = _interopRequireWildcard(require("./gm.js"));
+var mt = _interopRequireWildcard(require("./mt.js"));
 var nse = _interopRequireWildcard(require("./noise.js"));
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
@@ -21311,7 +21319,7 @@ const update = (scene, options) => {
 };
 exports.update = update;
 
-},{"./gm":95,"./mt":99,"./noise.js":100,"three":14,"three/examples/jsm/objects/Sky.js":16}],105:[function(require,module,exports){
+},{"./gm.js":95,"./mt.js":99,"./noise.js":100,"three":14,"three/examples/jsm/objects/Sky.js":16}],105:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {

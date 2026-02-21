@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { Sky } from 'three/examples/jsm/objects/Sky.js';
-import * as gm from "./gm";
-import * as mt from "./mt";
+import * as gm from "./gm.js";
+import * as mt from "./mt.js";
 import * as nse from "./noise.js";
 
 const groupName = '__world';

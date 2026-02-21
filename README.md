@@ -19,7 +19,7 @@ Use jsDelivr from this repository:
 </script>
 ```
 
-For production, pin to a tag or commit instead of `@main`.
+For production, pin to a release tag or commit (do not use floating `@main`).
 
 Success criteria:
 - You see animated output immediately.
@@ -67,9 +67,7 @@ This starts a live-reload dev server using `dev/index.js`.
 Useful checks:
 
 ```bash
-npm run build
-npm run test:smoke
-npm run pack:check
+npm run ci:check
 ```
 
 ## Example
@@ -120,6 +118,13 @@ Use these docs before shipping:
 - Getting started: [`docs/getting-started.md`](./docs/getting-started.md)
 - Production checklist: [`docs/production-checklist.md`](./docs/production-checklist.md)
 - Release process: [`docs/release.md`](./docs/release.md)
+- Security policy: [`SECURITY.md`](./SECURITY.md)
+- Contribution guide: [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+
+## Trust signals
+
+- CI runs build + smoke + package checks on Node 20 and 22.
+- Release tags (`v*`) run verification and attach an npm tarball artifact.
 
 ## License
 

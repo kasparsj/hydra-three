@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { ClearPass } from "three/examples/jsm/postprocessing/ClearPass.js";
 import {HydraUniform} from "./three/HydraUniform.js";
 import { HydraMaterialPass, HydraRenderPass, HydraFadePass } from "./three/HydraPass.js";
