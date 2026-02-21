@@ -89,10 +89,41 @@ page.on('console', (msg) => {
   }
 })
 
+const collectDiagnostics = async () => {
+  try {
+    return await page.evaluate(() => ({
+      readyState: document.readyState,
+      hydraType: typeof window.Hydra,
+      oscType: typeof window.osc,
+      canvasCount: document.querySelectorAll('canvas').length
+    }))
+  } catch (error) {
+    return { diagnosticsError: error instanceof Error ? error.message : String(error) }
+  }
+}
+
+const waitForGlobalFunction = async (name) => {
+  try {
+    await page.waitForFunction(
+      (globalName) => typeof window[globalName] === 'function',
+      name,
+      { timeout: READY_TIMEOUT_MS, polling: 100 }
+    )
+  } catch (error) {
+    const diagnostics = await collectDiagnostics()
+    const errorDetails = errors.length ? errors.join('\n') : 'none'
+    const diagnosticDetails = JSON.stringify(diagnostics)
+    throw new Error(
+      `Timed out waiting for window.${name} in ${browserName}. diagnostics=${diagnosticDetails}. runtimeErrors=\n${errorDetails}`,
+      { cause: error }
+    )
+  }
+}
+
 try {
   await page.goto(url, { waitUntil: 'load', timeout: PAGE_LOAD_TIMEOUT_MS })
-  await page.waitForFunction(() => typeof window.Hydra === 'function', undefined, { timeout: READY_TIMEOUT_MS })
-  await page.waitForFunction(() => typeof window.osc === 'function', undefined, { timeout: READY_TIMEOUT_MS })
+  await waitForGlobalFunction('Hydra')
+  await waitForGlobalFunction('osc')
   await page.waitForSelector('canvas', { timeout: READY_TIMEOUT_MS })
 
   const canvas = await page.evaluate(() => {
