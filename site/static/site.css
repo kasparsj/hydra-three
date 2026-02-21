@@ -26,7 +26,11 @@ body {
   margin: 0;
   min-height: 100%;
   background:
-    radial-gradient(circle at 85% 8%, rgba(31, 142, 169, 0.22), transparent 32%),
+    radial-gradient(
+      circle at 85% 8%,
+      rgba(31, 142, 169, 0.22),
+      transparent 32%
+    ),
     radial-gradient(circle at 12% 85%, rgba(224, 91, 47, 0.2), transparent 38%),
     linear-gradient(160deg, var(--bg) 0%, var(--bg-alt) 100%);
   color: var(--ink);
@@ -92,6 +96,14 @@ pre code {
   padding: 0.75rem 1rem;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -139,6 +151,32 @@ pre code {
   color: #7f2f16;
 }
 
+.version-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.version-picker label {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.version-picker select {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.18rem 0.34rem;
+}
+
 .page {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -155,7 +193,11 @@ pre code {
 .doc-sidebar {
   padding: 1rem;
   border-right: 1px solid var(--line);
-  background: linear-gradient(180deg, rgba(31, 142, 169, 0.06), transparent 65%);
+  background: linear-gradient(
+    180deg,
+    rgba(31, 142, 169, 0.06),
+    transparent 65%
+  );
 }
 
 .doc-sidebar h2 {
@@ -240,7 +282,11 @@ pre code {
   padding: 1.05rem 1.15rem;
   border-radius: var(--radius-md);
   border: 1px solid rgba(31, 142, 169, 0.24);
-  background: linear-gradient(130deg, rgba(31, 142, 169, 0.14), rgba(224, 91, 47, 0.1));
+  background: linear-gradient(
+    130deg,
+    rgba(31, 142, 169, 0.14),
+    rgba(224, 91, 47, 0.1)
+  );
 }
 
 .hero h1,
@@ -327,7 +373,11 @@ pre code {
 .example-head {
   border-bottom: 1px solid var(--line);
   padding: 0.9rem 1rem;
-  background: linear-gradient(120deg, rgba(224, 91, 47, 0.09), rgba(31, 142, 169, 0.11));
+  background: linear-gradient(
+    120deg,
+    rgba(224, 91, 47, 0.09),
+    rgba(31, 142, 169, 0.11)
+  );
 }
 
 .example-head h1 {
@@ -410,6 +460,11 @@ pre code {
   .topbar-inner {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .doc-main {

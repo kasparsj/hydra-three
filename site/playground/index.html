@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>hydra-three playground</title>
+    <link rel="stylesheet" href="../assets/site.css" />
+    <style>
+      .playground-layout {
+        display: grid;
+        grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.1fr);
+        gap: 0.9rem;
+      }
+
+      .play-panel {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: var(--surface-strong);
+        padding: 0.9rem;
+      }
+
+      .panel-title {
+        margin: 0 0 0.6rem;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.65rem;
+      }
+
+      .toolbar select,
+      .toolbar button {
+        font: inherit;
+      }
+
+      .toolbar button {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        padding: 0.35rem 0.6rem;
+        cursor: pointer;
+      }
+
+      #share-status {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--ink-muted);
+      }
+
+      #share-status[data-state="error"] {
+        color: #8d1e1e;
+      }
+
+      #status[data-state="error"] {
+        color: #8d1e1e;
+        font-weight: 600;
+      }
+
+      #code-editor {
+        width: 100%;
+        min-height: 340px;
+        font-family: var(--mono);
+        font-size: 13px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 0.75rem;
+        resize: vertical;
+        background: #121316;
+        color: #f2f2f2;
+      }
+
+      #controls {
+        display: grid;
+        gap: 0.5rem;
+      }
+
+      .param-row {
+        display: grid;
+        gap: 0.2rem;
+        grid-template-columns: 1fr;
+      }
+
+      .param-row label {
+        font-size: 0.9rem;
+        color: var(--ink-muted);
+      }
+
+      .param-row input[type="range"] {
+        width: 100%;
+      }
+
+      .param-row input[type="number"] {
+        width: 120px;
+      }
+
+      .viewer {
+        min-height: 560px;
+        display: grid;
+        grid-template-rows: 1fr auto;
+        gap: 0.55rem;
+      }
+
+      #playground-canvas {
+        width: 100%;
+        height: 100%;
+        min-height: 480px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: #000;
+      }
+
+      #error {
+        margin: 0;
+        padding: 0.6rem;
+        border-radius: 8px;
+        border: 1px solid #efb0b0;
+        background: #fff0f0;
+        color: #7f1515;
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+
+      @media (max-width: 980px) {
+        .playground-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .viewer {
+          min-height: 440px;
+        }
+
+        #playground-canvas {
+          min-height: 360px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="topbar">
+        <div class="topbar-inner">
+          <a class="brand" href="../index.html">
+            <span class="brand-dot" aria-hidden="true"></span>
+            <span>hydra-three</span>
+          </a>
+          <nav class="nav">
+            <a href="../index.html">Home</a>
+            <a href="../docs/getting-started.html">Start</a>
+            <a href="../docs/api.html">API</a>
+            <a class="active" href="./index.html">Playground</a>
+            <a href="../examples/index.html">Examples</a>
+            <a class="repo" href="https://github.com/kasparsj/hydra-three"
+              >GitHub</a
+            >
+          </nav>
+        </div>
+      </header>
+
+      <main class="page doc-main">
+        <section class="hero">
+          <h1>Interactive Playground</h1>
+          <p>
+            Edit code, tweak parameters, and re-render instantly. This runs
+            hydra-three in-browser with non-persistent runtime resets for
+            repeatable experimentation.
+          </p>
+        </section>
+
+        <section class="playground-layout">
+          <article class="play-panel">
+            <h2 class="panel-title">Sketch</h2>
+            <div class="toolbar">
+              <label for="example-select">Example:</label>
+              <select id="example-select"></select>
+              <button id="run-btn" type="button">Run</button>
+              <button id="reset-btn" type="button">Reset</button>
+              <button id="copy-link-btn" type="button">Copy Link</button>
+              <span id="status">Idle</span>
+              <span id="share-status" aria-live="polite"></span>
+            </div>
+            <textarea id="code-editor" spellcheck="false"></textarea>
+          </article>
+
+          <article class="play-panel viewer">
+            <div>
+              <h2 class="panel-title">Parameters</h2>
+              <div id="controls"></div>
+            </div>
+            <div>
+              <canvas id="playground-canvas"></canvas>
+              <pre id="error" hidden></pre>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script src="../dist/hydra-synth.js"></script>
+    <script type="module" src="./playground.js"></script>
+  </body>
+</html>

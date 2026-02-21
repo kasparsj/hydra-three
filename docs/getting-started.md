@@ -76,6 +76,8 @@ const sc = scene().lights().mesh(gm.box(), osc().phong()).out();
 ```
 
 You can also run examples from the GitHub Pages site examples gallery.
+For parameter-editable sketches, use the interactive playground at
+`https://kasparsj.github.io/hydra-three/playground/index.html`.
 
 ### 4. Local project setup
 
@@ -108,3 +110,16 @@ See:
 
 - <https://github.com/vitejs/vite/discussions/5912#discussioncomment-1724947>
 - <https://github.com/vitejs/vite/discussions/5912#discussioncomment-2908994>
+
+## 6. Continue with core docs
+
+- API reference: [`docs/api.md`](./api.md)
+- Hydra to 3D model: [`docs/concepts/hydra-to-3d-mental-model.md`](./concepts/hydra-to-3d-mental-model.md)
+- Scene graph guide: [`docs/concepts/scene-graph.md`](./concepts/scene-graph.md)
+- Rendering pipeline guide: [`docs/concepts/rendering-pipeline.md`](./concepts/rendering-pipeline.md)
+- Chaining patterns: [`docs/concepts/chaining-composition.md`](./concepts/chaining-composition.md)
+- Parameter reference: [`docs/reference/parameter-reference.md`](./reference/parameter-reference.md)
+- Semantic clarifications: [`docs/reference/semantic-clarifications.md`](./reference/semantic-clarifications.md)
+- Common recipes: [`docs/recipes/common-recipes.md`](./recipes/common-recipes.md)
+- Playground guide: [`docs/playground.md`](./playground.md)
+- Advanced performance: [`docs/performance/advanced-performance.md`](./performance/advanced-performance.md)

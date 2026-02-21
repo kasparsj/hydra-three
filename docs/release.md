@@ -10,6 +10,9 @@ Run:
 ```bash
 npm ci
 npm run release:verify-meta
+npm run docs:verify-sync
+npm run docs:verify-coverage
+npm run docs:check-links
 npm run lint
 npm run typecheck
 npm run ci:check
@@ -53,6 +56,7 @@ Primary distribution paths for this fork:
 ### Site deployment
 
 - The site is generated with `npm run site:build`.
+- Versioned docs payload for deployment is generated with `npm run site:build:versioned`.
 - Output directory is `site-dist/`.
 - `.github/workflows/pages.yml` deploys the generated site on pushes to `main`.
 

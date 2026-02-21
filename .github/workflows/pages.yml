@@ -41,8 +41,8 @@ jobs:
       - name: Build Hydra Bundle
         run: npm run build
 
-      - name: Build Site
-        run: npm run site:build
+      - name: Build Versioned Site
+        run: npm run site:build:versioned
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3

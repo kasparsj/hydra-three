@@ -32,6 +32,15 @@ jobs:
         if: matrix.node-version == 20
         run: npx playwright install --with-deps chromium firefox
 
+      - name: Verify Docs Sync
+        run: npm run docs:verify-sync
+
+      - name: Verify Docs Coverage
+        run: npm run docs:verify-coverage
+
+      - name: Check Docs Links
+        run: npm run docs:check-links
+
       - name: Lint
         run: npm run lint
 

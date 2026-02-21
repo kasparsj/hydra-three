@@ -1,0 +1,355 @@
+{
+  "transforms": [
+    {
+      "name": "a",
+      "type": "color"
+    },
+    {
+      "name": "b",
+      "type": "color"
+    },
+    {
+      "name": "brightness",
+      "type": "color"
+    },
+    {
+      "name": "color",
+      "type": "color"
+    },
+    {
+      "name": "colorama",
+      "type": "color"
+    },
+    {
+      "name": "contrast",
+      "type": "color"
+    },
+    {
+      "name": "g",
+      "type": "color"
+    },
+    {
+      "name": "hue",
+      "type": "color"
+    },
+    {
+      "name": "invert",
+      "type": "color"
+    },
+    {
+      "name": "luma",
+      "type": "color"
+    },
+    {
+      "name": "posterize",
+      "type": "color"
+    },
+    {
+      "name": "r",
+      "type": "color"
+    },
+    {
+      "name": "saturate",
+      "type": "color"
+    },
+    {
+      "name": "shift",
+      "type": "color"
+    },
+    {
+      "name": "sum",
+      "type": "color"
+    },
+    {
+      "name": "thresh",
+      "type": "color"
+    },
+    {
+      "name": "add",
+      "type": "combine"
+    },
+    {
+      "name": "blend",
+      "type": "combine"
+    },
+    {
+      "name": "diff",
+      "type": "combine"
+    },
+    {
+      "name": "layer",
+      "type": "combine"
+    },
+    {
+      "name": "mask",
+      "type": "combine"
+    },
+    {
+      "name": "mult",
+      "type": "combine"
+    },
+    {
+      "name": "sub",
+      "type": "combine"
+    },
+    {
+      "name": "modulate",
+      "type": "combineCoord"
+    },
+    {
+      "name": "modulateHue",
+      "type": "combineCoord"
+    },
+    {
+      "name": "modulateKaleid",
+      "type": "combineCoord"
+    },
+    {
+      "name": "modulatePixelate",
+      "type": "combineCoord"
+    },
+    {
+      "name": "modulateRepeat",
+      "type": "combineCoord"
+    },
+    {
+      "name": "modulateRepeatX",
+      "type": "combineCoord"
+    },
+    {
+      "name": "modulateRepeatY",
+      "type": "combineCoord"
+    },
+    {
+      "name": "modulateRotate",
+      "type": "combineCoord"
+    },
+    {
+      "name": "modulateScale",
+      "type": "combineCoord"
+    },
+    {
+      "name": "modulateScrollX",
+      "type": "combineCoord"
+    },
+    {
+      "name": "modulateScrollY",
+      "type": "combineCoord"
+    },
+    {
+      "name": "kaleid",
+      "type": "coord"
+    },
+    {
+      "name": "pixelate",
+      "type": "coord"
+    },
+    {
+      "name": "repeat",
+      "type": "coord"
+    },
+    {
+      "name": "repeatX",
+      "type": "coord"
+    },
+    {
+      "name": "repeatY",
+      "type": "coord"
+    },
+    {
+      "name": "rotate",
+      "type": "coord"
+    },
+    {
+      "name": "scale",
+      "type": "coord"
+    },
+    {
+      "name": "scroll",
+      "type": "coord"
+    },
+    {
+      "name": "scrollX",
+      "type": "coord"
+    },
+    {
+      "name": "scrollY",
+      "type": "coord"
+    },
+    {
+      "name": "atan",
+      "type": "genType"
+    },
+    {
+      "name": "cos",
+      "type": "genType"
+    },
+    {
+      "name": "map",
+      "type": "genType"
+    },
+    {
+      "name": "pow",
+      "type": "genType"
+    },
+    {
+      "name": "sin",
+      "type": "genType"
+    },
+    {
+      "name": "tan",
+      "type": "genType"
+    },
+    {
+      "name": "glsl",
+      "type": "glsl"
+    },
+    {
+      "name": "cnoise",
+      "type": "src"
+    },
+    {
+      "name": "fbm",
+      "type": "src"
+    },
+    {
+      "name": "gradient",
+      "type": "src"
+    },
+    {
+      "name": "hex",
+      "type": "src"
+    },
+    {
+      "name": "noise",
+      "type": "src"
+    },
+    {
+      "name": "osc",
+      "type": "src"
+    },
+    {
+      "name": "pnoise",
+      "type": "src"
+    },
+    {
+      "name": "prev",
+      "type": "src"
+    },
+    {
+      "name": "shape",
+      "type": "src"
+    },
+    {
+      "name": "snoise",
+      "type": "src"
+    },
+    {
+      "name": "solid",
+      "type": "src"
+    },
+    {
+      "name": "solid2",
+      "type": "src"
+    },
+    {
+      "name": "solid3",
+      "type": "src"
+    },
+    {
+      "name": "src",
+      "type": "src"
+    },
+    {
+      "name": "voronoi",
+      "type": "src"
+    },
+    {
+      "name": "wnoise",
+      "type": "src"
+    }
+  ],
+  "byType": {
+    "color": [
+      "a",
+      "b",
+      "brightness",
+      "color",
+      "colorama",
+      "contrast",
+      "g",
+      "hue",
+      "invert",
+      "luma",
+      "posterize",
+      "r",
+      "saturate",
+      "shift",
+      "sum",
+      "thresh"
+    ],
+    "combine": [
+      "add",
+      "blend",
+      "diff",
+      "layer",
+      "mask",
+      "mult",
+      "sub"
+    ],
+    "combineCoord": [
+      "modulate",
+      "modulateHue",
+      "modulateKaleid",
+      "modulatePixelate",
+      "modulateRepeat",
+      "modulateRepeatX",
+      "modulateRepeatY",
+      "modulateRotate",
+      "modulateScale",
+      "modulateScrollX",
+      "modulateScrollY"
+    ],
+    "coord": [
+      "kaleid",
+      "pixelate",
+      "repeat",
+      "repeatX",
+      "repeatY",
+      "rotate",
+      "scale",
+      "scroll",
+      "scrollX",
+      "scrollY"
+    ],
+    "genType": [
+      "atan",
+      "cos",
+      "map",
+      "pow",
+      "sin",
+      "tan"
+    ],
+    "glsl": [
+      "glsl"
+    ],
+    "src": [
+      "cnoise",
+      "fbm",
+      "gradient",
+      "hex",
+      "noise",
+      "osc",
+      "pnoise",
+      "prev",
+      "shape",
+      "snoise",
+      "solid",
+      "solid2",
+      "solid3",
+      "src",
+      "voronoi",
+      "wnoise"
+    ]
+  }
+}

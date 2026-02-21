@@ -13,6 +13,9 @@ Run this exact sequence:
 
 ```bash
 npm run release:verify-meta
+npm run docs:verify-sync
+npm run docs:verify-coverage
+npm run docs:check-links
 npm run build
 npm run site:build
 npm run test:smoke
@@ -33,6 +36,7 @@ npm run ci:check
 - Avoid public API changes unless there is a concrete correctness or safety reason.
 - Update docs when behavior changes.
 - Add a changelog entry under `## [Unreleased]` for user-visible changes.
+- If API surface changes, run `npm run docs:generate` and commit updated `docs/.generated/*` and `docs/api.md`.
 
 ## Commit and release hygiene
 

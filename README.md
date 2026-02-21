@@ -25,12 +25,15 @@ three.js-powered fork of [hydra-synth](https://github.com/hydra-synth/hydra-synt
 ## Project Site
 
 - GitHub Pages publishes docs and runnable examples from this repository.
+- Interactive playground: `https://kasparsj.github.io/hydra-three/playground/index.html`
+- Versioned docs are published under `/docs/latest/` and `/docs/vX.Y.Z/`.
 - Local site build output: `site-dist/`
 - Build locally:
 
 ```bash
 npm run build
 npm run site:build
+npm run site:build:versioned
 ```
 
 ## 10-minute quickstart
@@ -175,7 +178,16 @@ More examples: [`examples/README.md`](./examples/README.md)
 Use these docs before shipping:
 
 - Getting started: [`docs/getting-started.md`](./docs/getting-started.md)
-- API reference: [`docs/api.md`](./docs/api.md)
+- API reference (generated from source): [`docs/api.md`](./docs/api.md)
+- Hydra -> 3D mental model: [`docs/concepts/hydra-to-3d-mental-model.md`](./docs/concepts/hydra-to-3d-mental-model.md)
+- Scene graph guide: [`docs/concepts/scene-graph.md`](./docs/concepts/scene-graph.md)
+- Rendering pipeline guide: [`docs/concepts/rendering-pipeline.md`](./docs/concepts/rendering-pipeline.md)
+- Chaining patterns: [`docs/concepts/chaining-composition.md`](./docs/concepts/chaining-composition.md)
+- Parameter reference tables: [`docs/reference/parameter-reference.md`](./docs/reference/parameter-reference.md)
+- Semantic clarifications: [`docs/reference/semantic-clarifications.md`](./docs/reference/semantic-clarifications.md)
+- Common creative recipes: [`docs/recipes/common-recipes.md`](./docs/recipes/common-recipes.md)
+- Playground guide: [`docs/playground.md`](./docs/playground.md)
+- Advanced performance notes: [`docs/performance/advanced-performance.md`](./docs/performance/advanced-performance.md)
 - Upstream fork differences: [`docs/upstream-differences.md`](./docs/upstream-differences.md)
 - Production checklist: [`docs/production-checklist.md`](./docs/production-checklist.md)
 - Release process: [`docs/release.md`](./docs/release.md)
@@ -188,6 +200,7 @@ Use these docs before shipping:
 - CI runs build + smoke + package checks on Node 20 and 22.
 - CI runs real Chromium and Firefox smoke tests of `examples/quickstart.html` on Node 20.
 - CI runs non-global and multi-instance 3D browser smoke tests on Chromium and Firefox.
+- CI validates all source examples for syntax integrity and runs generated examples + playground preset browser smoke coverage in Chromium.
 - Release tags (`v*`) run version/changelog/tag metadata verification and attach tarball + checksum artifacts.
 - GitHub Pages deploys generated docs and runnable examples from repository sources on every push to `main`.
 

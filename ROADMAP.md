@@ -1,9 +1,7 @@
 # Hydra-Three Leftover Roadmap
 
 ## Product/Release Strategy
-- Decide long-term package identity strategy for registry distribution:
-  - keep GitHub-only/private package, or
-  - publish a scoped npm package.
+- Decide long-term package identity strategy for registry distribution (keep GitHub-only/private package, or publish a scoped npm package).
 
 ## API/Type Surface
 - Strengthen dynamic transform typing in `/Users/kasparsj/Work2/hydra/hydra-three/src/index.d.ts` to reduce index-signature ambiguity.

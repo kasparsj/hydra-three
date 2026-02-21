@@ -14,6 +14,7 @@ Use this checklist before deploying hydra-three in a production creative-coding 
 - Verify both `makeGlobal: true` and `makeGlobal: false` modes for your host integration.
 - Verify resize behavior under your embedding layout.
 - Verify GPU-heavy patches at expected frame budget.
+- Apply guidance in [`docs/performance/advanced-performance.md`](./performance/advanced-performance.md) before raising visual complexity.
 
 ### Browser support
 
@@ -29,6 +30,10 @@ Use this checklist before deploying hydra-three in a production creative-coding 
 ### Build and release safety
 
 - Run `npm run ci:check` in CI.
+- Run docs quality gates in CI:
+  - `npm run docs:verify-sync`
+  - `npm run docs:verify-coverage`
+  - `npm run docs:check-links`
 - Run `npm run lint` and `npm run typecheck` in CI.
 - Run `npm run site:build` in CI to ensure docs/examples site generation stays healthy.
 - Run `npm run test:smoke:browser` in CI (with Playwright Chromium and Firefox installed).

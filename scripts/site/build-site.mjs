@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..", "..");
-const outDir = path.join(rootDir, "site-dist");
+const outDir = path.resolve(rootDir, process.env.SITE_OUT_DIR || "site-dist");
 const githubRepoUrl = "https://github.com/kasparsj/hydra-three";
 
 const docPages = [
@@ -15,6 +15,56 @@ const docPages = [
     source: "docs/getting-started.md",
     output: "docs/getting-started.html",
     label: "Getting Started",
+  },
+  {
+    source: "docs/api.md",
+    output: "docs/api.html",
+    label: "API Reference",
+  },
+  {
+    source: "docs/concepts/hydra-to-3d-mental-model.md",
+    output: "docs/concepts/hydra-to-3d-mental-model.html",
+    label: "Hydra to 3D",
+  },
+  {
+    source: "docs/concepts/scene-graph.md",
+    output: "docs/concepts/scene-graph.html",
+    label: "Scene Graph",
+  },
+  {
+    source: "docs/concepts/rendering-pipeline.md",
+    output: "docs/concepts/rendering-pipeline.html",
+    label: "Rendering Pipeline",
+  },
+  {
+    source: "docs/concepts/chaining-composition.md",
+    output: "docs/concepts/chaining-composition.html",
+    label: "Chaining Patterns",
+  },
+  {
+    source: "docs/reference/parameter-reference.md",
+    output: "docs/reference/parameter-reference.html",
+    label: "Parameter Reference",
+  },
+  {
+    source: "docs/reference/semantic-clarifications.md",
+    output: "docs/reference/semantic-clarifications.html",
+    label: "Semantic Clarifications",
+  },
+  {
+    source: "docs/recipes/common-recipes.md",
+    output: "docs/recipes/common-recipes.html",
+    label: "Common Recipes",
+  },
+  {
+    source: "docs/playground.md",
+    output: "docs/playground.html",
+    label: "Playground Guide",
+  },
+  {
+    source: "docs/performance/advanced-performance.md",
+    output: "docs/performance/advanced-performance.html",
+    label: "Performance Notes",
   },
   {
     source: "docs/upstream-differences.md",
@@ -299,9 +349,25 @@ const renderLayout = ({ title, outputPath, activeKey, content }) => {
   const navItems = [
     { key: "overview", label: "Home", output: "index.html" },
     {
-      key: "getting-started",
-      label: "Getting Started",
+      key: "start",
+      label: "Start",
       output: "docs/getting-started.html",
+    },
+    {
+      key: "concepts",
+      label: "Concepts",
+      output: "docs/concepts/hydra-to-3d-mental-model.html",
+    },
+    { key: "api", label: "API", output: "docs/api.html" },
+    {
+      key: "playground",
+      label: "Playground",
+      output: "playground/index.html",
+    },
+    {
+      key: "recipes",
+      label: "Recipes",
+      output: "docs/recipes/common-recipes.html",
     },
     { key: "examples", label: "Examples", output: "examples/index.html" },
     {
@@ -313,6 +379,10 @@ const renderLayout = ({ title, outputPath, activeKey, content }) => {
   ];
 
   const cssHref = relativeHref(normalize(outputPath), "assets/site.css");
+  const versionsHref = relativeHref(
+    normalize(outputPath),
+    "docs/versions.json",
+  );
   const navHtml = navItems
     .map((item) => {
       const href = relativeHref(normalize(outputPath), item.output);
@@ -323,6 +393,47 @@ const renderLayout = ({ title, outputPath, activeKey, content }) => {
 
   const repoLink =
     '<a class="repo" href="https://github.com/kasparsj/hydra-three">GitHub</a>';
+
+  const versionScript = `
+      <script>
+        (function () {
+          const picker = document.getElementById("docs-version-picker");
+          const select = document.getElementById("docs-version-select");
+          if (!picker || !select) return;
+
+          const versionsUrl = new URL("${escapeAttr(versionsHref)}", window.location.href);
+          const currentPath = window.location.pathname;
+          const currentMatch = currentPath.match(/\\/docs\\/(latest|v[^/]+)\\//);
+          const currentVersion = currentMatch ? currentMatch[1] : "latest";
+
+          fetch(versionsUrl.toString())
+            .then((response) => {
+              if (!response.ok) throw new Error("versions manifest unavailable");
+              return response.json();
+            })
+            .then((manifest) => {
+              const versions = Array.isArray(manifest.versions) ? manifest.versions : [];
+              if (!versions.length) throw new Error("versions list is empty");
+
+              select.innerHTML = versions
+                .map((version) => '<option value="' + version + '">' + version + "</option>")
+                .join("");
+              select.value = versions.includes(currentVersion)
+                ? currentVersion
+                : versions[0];
+
+              const baseHref = versionsUrl.toString().replace(/docs\\/versions\\.json$/, "");
+              select.addEventListener("change", function () {
+                const target = new URL("docs/" + select.value + "/index.html", baseHref);
+                window.location.href = target.toString();
+              });
+            })
+            .catch(function () {
+              picker.style.display = "none";
+            });
+        })();
+      </script>
+  `;
 
   return `<!doctype html>
 <html lang="en">
@@ -340,18 +451,43 @@ const renderLayout = ({ title, outputPath, activeKey, content }) => {
             <span class="brand-dot" aria-hidden="true"></span>
             <span>hydra-three</span>
           </a>
-          <nav class="nav">
-            ${navHtml}
-            ${repoLink}
-          </nav>
+          <div class="topbar-actions">
+            <nav class="nav">
+              ${navHtml}
+              ${repoLink}
+            </nav>
+            <div class="version-picker" id="docs-version-picker">
+              <label for="docs-version-select">Docs Version</label>
+              <select id="docs-version-select" aria-label="Select documentation version">
+                <option value="latest">latest</option>
+              </select>
+            </div>
+          </div>
         </div>
       </header>
       ${content}
       <p class="footer-note">Generated from repository docs and examples.</p>
     </div>
+    ${versionScript}
   </body>
 </html>
 `;
+};
+
+const resolveActiveKey = (outputPath) => {
+  const normalized = normalize(outputPath);
+  if (normalized.includes("/playground")) return "playground";
+  if (normalized.includes("/concepts/")) return "concepts";
+  if (normalized.endsWith("/api.html") || normalized.includes("/api."))
+    return "api";
+  if (normalized.includes("/reference/")) return "api";
+  if (normalized.includes("/recipes/")) return "recipes";
+  if (normalized.includes("/performance/")) return "production";
+  if (normalized.includes("/examples")) return "examples";
+  if (normalized.includes("release")) return "release";
+  if (normalized.includes("production")) return "production";
+  if (normalized.includes("getting-started")) return "start";
+  return "overview";
 };
 
 const buildDocPages = async (exampleOutputBySource) => {
@@ -391,15 +527,7 @@ const buildDocPages = async (exampleOutputBySource) => {
     const html = renderLayout({
       title: page.label,
       outputPath: page.output,
-      activeKey: page.output.includes("examples")
-        ? "examples"
-        : page.output.includes("release")
-          ? "release"
-          : page.output.includes("production")
-            ? "production"
-            : page.output.includes("getting-started")
-              ? "getting-started"
-              : "overview",
+      activeKey: resolveActiveKey(page.output),
       content,
     });
 
@@ -604,6 +732,24 @@ const copyStaticAssets = async () => {
   await fs.copyFile(
     path.join(rootDir, "dist/hydra-synth.js"),
     path.join(outDir, "dist/hydra-synth.js"),
+  );
+
+  try {
+    await fs.mkdir(path.join(outDir, "docs"), { recursive: true });
+    await fs.copyFile(
+      path.join(rootDir, "docs", "versions.json"),
+      path.join(outDir, "docs", "versions.json"),
+    );
+  } catch (_error) {
+    // Optional local versions manifest for non-versioned builds.
+  }
+
+  await fs.cp(
+    path.join(rootDir, "site", "playground"),
+    path.join(outDir, "playground"),
+    {
+      recursive: true,
+    },
   );
 };
 
