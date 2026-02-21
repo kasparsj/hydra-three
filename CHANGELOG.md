@@ -2,8 +2,15 @@
 
 ## [Unreleased]
 ### Added
-- Real browser smoke test (`npm run test:smoke:browser`) using Playwright Chromium against `examples/quickstart.html`.
-- CI and release workflows now run the browser smoke test in addition to existing build/module/package checks.
+- Cross-browser smoke tests (`npm run test:smoke:browser`) using Playwright Chromium and Firefox against `examples/quickstart.html`.
+- Release metadata verification script (`npm run release:verify-meta`) for changelog/version/tag consistency.
+- Release checksum generation script (`npm run release:checksums`) that writes `release-checksums.txt`.
+- CI and release workflows now run cross-browser smoke tests and upload tarball + checksum artifacts on tags.
+- Issue templates for bug, performance regression, and creative regression triage.
+
+### Changed
+- Distribution docs now define this fork's release channel as Git tags + GitHub artifacts.
+- Quickstart install snippets are pinned to release tag `v1.4.1` instead of floating branch refs.
 
 ## [1.4.1] - 2026-02-21
 ### Added

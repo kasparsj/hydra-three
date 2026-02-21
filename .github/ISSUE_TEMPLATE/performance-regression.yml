@@ -1,0 +1,61 @@
+name: Performance Regression
+description: Report a measurable FPS/latency regression.
+title: "[Perf]: "
+labels:
+  - performance
+body:
+  - type: markdown
+    attributes:
+      value: "Use this template for regressions in FPS, frame time, startup, or memory."
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Scenario
+      description: Describe the scene/patch and workload.
+    validations:
+      required: true
+  - type: input
+    id: before
+    attributes:
+      label: Previous Performance
+      placeholder: "e.g. 60 FPS (16ms frame time)"
+    validations:
+      required: true
+  - type: input
+    id: after
+    attributes:
+      label: Current Performance
+      placeholder: "e.g. 32 FPS (31ms frame time)"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Regression Introduced In
+      placeholder: "tag or commit range"
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser + Version
+    validations:
+      required: true
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU + Driver
+      placeholder: "Apple M2, RTX 3070 + driver version"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS + Version
+    validations:
+      required: true
+  - type: textarea
+    id: profile
+    attributes:
+      label: Profiling Data / Evidence
+      description: Share screenshots, traces, or FPS logs.

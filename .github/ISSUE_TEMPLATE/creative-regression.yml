@@ -1,0 +1,60 @@
+name: Creative Regression
+description: Report visual/output regressions in creative coding behavior.
+title: "[Creative Regression]: "
+labels:
+  - regression
+body:
+  - type: markdown
+    attributes:
+      value: "Use this template when output visuals changed unexpectedly across versions."
+  - type: textarea
+    id: sketch
+    attributes:
+      label: Sketch / Patch
+      description: Include minimal code that demonstrates the regression.
+      render: javascript
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Visual Behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Visual Behavior
+    validations:
+      required: true
+  - type: input
+    id: good
+    attributes:
+      label: Last Known Good Version
+      placeholder: "v1.4.0"
+    validations:
+      required: true
+  - type: input
+    id: bad
+    attributes:
+      label: First Known Bad Version
+      placeholder: "v1.4.1"
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser + Version
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS + Version
+    validations:
+      required: true
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshots / Video / Links
+      description: Attach visual evidence if possible.

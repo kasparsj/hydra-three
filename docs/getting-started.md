@@ -1,25 +1,26 @@
 ## Getting Started
 
 This guide is optimized for first success in under 10 minutes.
+Official distribution for this fork is via pinned Git tags and artifacts in this repository.
 
 ### 1. Choose your runtime path
 
 #### Script tag (fastest)
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/kasparsj/hydra-three@main/dist/hydra-synth.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/kasparsj/hydra-three@v1.4.1/dist/hydra-synth.js"></script>
 <script>
   const hydra = new Hydra({ detectAudio: false })
   osc(8, 0.1, 0.8).out()
 </script>
 ```
 
-For production, pin to a tag or commit (avoid floating `@main`).
+For production, pin to a tag or commit (avoid floating refs).
 
 #### npm + bundler
 
 ```bash
-npm i github:kasparsj/hydra-three#main three
+npm i github:kasparsj/hydra-three#v1.4.1 three
 ```
 
 ```js
@@ -53,6 +54,8 @@ const sc = scene().lights().mesh(gm.box(), osc().phong()).out()
 npm ci
 npm run dev
 npm run ci:check
+npx playwright install chromium firefox
+npm run test:smoke:browser
 ```
 
 The repo dev entrypoint is `dev/index.js`.

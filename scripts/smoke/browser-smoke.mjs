@@ -3,11 +3,24 @@ import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { chromium } from 'playwright'
+import { chromium, firefox } from 'playwright'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const rootDir = path.resolve(__dirname, '..', '..')
+const browserArg = process.argv.find((arg) => arg.startsWith('--browser='))
+const browserName = browserArg ? browserArg.replace('--browser=', '').toLowerCase() : 'chromium'
+const PAGE_LOAD_TIMEOUT_MS = 30000
+const READY_TIMEOUT_MS = 60000
+
+const launchers = {
+  chromium,
+  firefox
+}
+
+if (!launchers[browserName]) {
+  throw new Error(`Unsupported browser "${browserName}". Use one of: ${Object.keys(launchers).join(', ')}`)
+}
 
 const contentTypes = {
   '.html': 'text/html; charset=utf-8',
@@ -65,7 +78,7 @@ const closeServer = () =>
 const port = await listen()
 const url = `http://127.0.0.1:${port}/examples/quickstart.html`
 
-const browser = await chromium.launch({ headless: true })
+const browser = await launchers[browserName].launch({ headless: true })
 const page = await browser.newPage()
 const errors = []
 
@@ -77,10 +90,10 @@ page.on('console', (msg) => {
 })
 
 try {
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 })
-  await page.waitForFunction(() => typeof window.Hydra === 'function', { timeout: 10000 })
-  await page.waitForFunction(() => typeof window.osc === 'function', { timeout: 10000 })
-  await page.waitForSelector('canvas', { timeout: 10000 })
+  await page.goto(url, { waitUntil: 'load', timeout: PAGE_LOAD_TIMEOUT_MS })
+  await page.waitForFunction(() => typeof window.Hydra === 'function', { timeout: READY_TIMEOUT_MS })
+  await page.waitForFunction(() => typeof window.osc === 'function', { timeout: READY_TIMEOUT_MS })
+  await page.waitForSelector('canvas', { timeout: READY_TIMEOUT_MS })
 
   const canvas = await page.evaluate(() => {
     const el = document.querySelector('canvas')
@@ -102,4 +115,4 @@ try {
   await closeServer()
 }
 
-console.log('browser smoke test passed')
+console.log(`${browserName} browser smoke test passed`)

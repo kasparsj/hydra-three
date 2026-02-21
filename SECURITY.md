@@ -7,6 +7,7 @@ Only the latest tagged release is considered supported for security fixes.
 ## Reporting a vulnerability
 
 - For sensitive issues, open a private GitHub security advisory for this repository.
+- Preferred path: <https://github.com/kasparsj/hydra-three/security/advisories/new>
 - For non-sensitive issues, open a public GitHub issue with reproduction details.
 
 Include:

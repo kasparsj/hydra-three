@@ -23,8 +23,8 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium firefox
 
       - name: Verify build and smoke tests
         run: npm run ci:check
@@ -35,8 +35,13 @@ jobs:
       - name: Create release tarball
         run: npm pack
 
+      - name: Generate release checksums
+        run: npm run release:checksums
+
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-tarball
-          path: hydra-synth-*.tgz
+          name: release-artifacts
+          path: |
+            hydra-synth-*.tgz
+            release-checksums.txt

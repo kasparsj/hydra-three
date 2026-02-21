@@ -1,6 +1,7 @@
 ## Release Process
 
 This project should release from `main` only.
+Official release channel for this fork is Git tags + GitHub release artifacts from this repository.
 
 ### Pre-release checks
 
@@ -8,8 +9,9 @@ Run:
 
 ```bash
 npm ci
+npm run release:verify-meta
 npm run ci:check
-npx playwright install chromium
+npx playwright install chromium firefox
 npm run test:smoke:browser
 ```
 
@@ -31,17 +33,18 @@ git tag -a vX.Y.Z -m "vX.Y.Z"
 
 5. Push commit + tag.
 
-Pushing a `v*` tag triggers `.github/workflows/release-verify.yml`, which reruns checks and uploads an npm tarball artifact.
+Pushing a `v*` tag triggers `.github/workflows/release-verify.yml`, which reruns checks and uploads:
+- npm tarball artifact
+- sha256 checksum file (`release-checksums.txt`)
 
-### Publish
+### Distribution
 
-Publish from a clean checkout of the tagged commit.
-
-```bash
-npm publish
-```
+Primary distribution paths for this fork:
+- GitHub tag + release artifacts
+- jsDelivr pinned to this repository's release tag
 
 ### Post-release
 - Verify package contents and installability.
 - Verify CDN URL for the new version.
+- Verify checksum file matches uploaded tarball.
 - Announce release notes.

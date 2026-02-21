@@ -12,9 +12,12 @@ npm run dev
 Run this exact sequence:
 
 ```bash
+npm run release:verify-meta
 npm run build
 npm run test:smoke
 npm run pack:check
+npx playwright install chromium firefox
+npm run test:smoke:browser
 ```
 
 Or run all with:

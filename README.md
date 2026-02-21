@@ -6,20 +6,26 @@ three.js-powered fork of [hydra-synth](https://github.com/hydra-synth/hydra-synt
 - Experimental, actively maintained.
 - API goal: remain compatible with core Hydra patterns and add 3D-specific capabilities.
 
+## Distribution Model
+
+- Official distribution for this fork is via GitHub tags and release artifacts from this repository.
+- CDN usage should reference a pinned tag in this repository.
+- The npm package name `hydra-synth` is owned upstream; this fork does not rely on upstream npm publishing for releases.
+
 ## 10-minute quickstart
 
 ### Option A: Browser script tag (fastest)
 Use jsDelivr from this repository:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/kasparsj/hydra-three@main/dist/hydra-synth.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/kasparsj/hydra-three@v1.4.1/dist/hydra-synth.js"></script>
 <script>
   const hydra = new Hydra({ detectAudio: false })
   osc(8, 0.1, 0.8).out()
 </script>
 ```
 
-For production, pin to a release tag or commit (do not use floating `@main`).
+For production, pin to a release tag or commit (do not use floating refs).
 
 Success criteria:
 - You see animated output immediately.
@@ -28,7 +34,7 @@ Success criteria:
 ### Option B: npm + bundler
 
 ```bash
-npm i github:kasparsj/hydra-three#main three
+npm i github:kasparsj/hydra-three#v1.4.1 three
 ```
 
 ```js
@@ -68,7 +74,7 @@ Useful checks:
 
 ```bash
 npm run ci:check
-npx playwright install chromium
+npx playwright install chromium firefox
 npm run test:smoke:browser
 ```
 
@@ -122,12 +128,13 @@ Use these docs before shipping:
 - Release process: [`docs/release.md`](./docs/release.md)
 - Security policy: [`SECURITY.md`](./SECURITY.md)
 - Contribution guide: [`CONTRIBUTING.md`](./CONTRIBUTING.md)
+- Issue templates: [`.github/ISSUE_TEMPLATE`](./.github/ISSUE_TEMPLATE)
 
 ## Trust signals
 
 - CI runs build + smoke + package checks on Node 20 and 22.
-- CI runs a real Chromium smoke test of `examples/quickstart.html` on Node 20.
-- Release tags (`v*`) run verification and attach an npm tarball artifact.
+- CI runs real Chromium and Firefox smoke tests of `examples/quickstart.html` on Node 20.
+- Release tags (`v*`) run version/changelog/tag metadata verification and attach tarball + checksum artifacts.
 
 ## License
 
