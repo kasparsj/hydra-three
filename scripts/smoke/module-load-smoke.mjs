@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
+import { spawnSync } from 'node:child_process'
 
 class FakeEventTarget {
   constructor() {
@@ -115,6 +116,13 @@ const restoreGlobal = (name, descriptor) => {
 validateImportSpecifiers()
 
 const windowTarget = new FakeEventTarget()
+windowTarget.innerWidth = 1280
+windowTarget.innerHeight = 720
+windowTarget.location = { search: '' }
+windowTarget.URL = {
+  createObjectURL: () => 'blob:fake',
+  revokeObjectURL: () => {}
+}
 const documentTarget = new FakeEventTarget()
 documentTarget.body = new FakeElement('body')
 documentTarget.head = new FakeElement('head')
@@ -136,6 +144,44 @@ try {
   restoreGlobal('window', originalDescriptors.window)
   restoreGlobal('document', originalDescriptors.document)
   restoreGlobal('navigator', originalDescriptors.navigator)
+}
+
+const packageEntryCheck = spawnSync(
+  process.execPath,
+  [
+    '--input-type=module',
+    '--eval',
+    `
+      class FakeEventTarget { addEventListener() {} removeEventListener() {} }
+      const windowTarget = new FakeEventTarget()
+      windowTarget.innerWidth = 1280
+      windowTarget.innerHeight = 720
+      windowTarget.location = { search: '' }
+      windowTarget.URL = { createObjectURL: () => 'blob:fake', revokeObjectURL: () => {} }
+      const documentTarget = new FakeEventTarget()
+      documentTarget.body = { appendChild() {}, removeChild() {} }
+      documentTarget.head = { appendChild() {} }
+      documentTarget.createElement = () => ({ style: {}, addEventListener() {}, removeEventListener() {} })
+      windowTarget.document = documentTarget
+      Object.defineProperty(globalThis, 'window', { configurable: true, value: windowTarget })
+      Object.defineProperty(globalThis, 'document', { configurable: true, value: documentTarget })
+      Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { platform: '', maxTouchPoints: 0 } })
+      const mod = await import('./src/package-entry.js')
+      if (typeof mod.default !== 'function') {
+        throw new Error('package entry default export is not a function')
+      }
+    `
+  ],
+  {
+    cwd: path.resolve(new URL('../../', import.meta.url).pathname),
+    encoding: 'utf8'
+  }
+)
+
+if (packageEntryCheck.status !== 0) {
+  throw new Error(
+    `package entry smoke test failed:\n${packageEntryCheck.stdout}${packageEntryCheck.stderr}`
+  )
 }
 
 console.log('module load smoke test passed')

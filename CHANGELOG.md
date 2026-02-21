@@ -23,6 +23,7 @@
 - ESM import specifiers now use explicit `.js` extensions in internal and `three/examples` imports.
 - Top-level `window.*` assignments are guarded to avoid immediate crashes in non-browser module loading.
 - `arr.image()` now fails with a clear error when `tx` loader is unavailable instead of throwing an unbound reference error.
+- Package `import` entry now loads from a stable bundled wrapper (`src/package-entry.js`) instead of raw source modules.
 
 ## [1.4] - 2025-09-24
 ### Fixed

@@ -6,7 +6,7 @@
   "main": "./dist/hydra-synth.js",
   "exports": {
     ".": {
-      "import": "./src/hydra-synth.js",
+      "import": "./src/package-entry.js",
       "require": "./dist/hydra-synth.js"
     },
     "./src/glsl/glsl-functions.js": {
