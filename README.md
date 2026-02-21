@@ -12,6 +12,8 @@ three.js-powered fork of [hydra-synth](https://github.com/hydra-synth/hydra-synt
 - Official distribution for this fork is via GitHub tags and release artifacts from this repository.
 - CDN usage should reference a pinned tag in this repository.
 - The npm package name `hydra-synth` is owned upstream; this fork does not rely on upstream npm publishing for releases.
+- Do not use `npm i hydra-synth` for this fork unless you intentionally want upstream hydra-synth.
+- For this fork, install from this repository tag: `npm i github:kasparsj/hydra-three#v1.0.0 three`.
 
 ## Runtime Contract
 
@@ -56,6 +58,8 @@ Success criteria:
 ```bash
 npm i github:kasparsj/hydra-three#v1.0.0 three
 ```
+
+Do not replace this with `npm i hydra-synth`; that resolves to the upstream package, not this fork.
 
 ```js
 import Hydra from "hydra-synth";

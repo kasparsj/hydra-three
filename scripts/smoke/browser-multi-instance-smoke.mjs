@@ -39,7 +39,11 @@ const smokeHtml = `<!doctype html>
         error: null,
         globalHelpersInstalled: null,
         globalHelpersPersistAfterFirstDispose: null,
-        globalHelpersRestored: null
+        globalHelpersRestored: null,
+        mathHelpersInstalled: null,
+        mathHelpersPersistAfterFirstDispose: null,
+        mathHelpersRestored: null,
+        guiFallbackUsed: null
       };
       (async () => {
         const root = document.getElementById('root');
@@ -53,45 +57,6 @@ const smokeHtml = `<!doctype html>
         const A = hydraA.synth;
         const B = hydraB.synth;
 
-        const createFakeDat = () => {
-          class FakeGUI {
-            constructor() {
-              this.useLocalStorage = false;
-            }
-            remember() {}
-            addFolder() {
-              const chain = { onChange() {} };
-              return {
-                add() {
-                  return chain;
-                },
-                addColor() {
-                  return chain;
-                },
-              };
-            }
-          }
-          return {
-            GUI: FakeGUI,
-            controllers: {
-              NumberControllerBox: {
-                prototype: {
-                  updateDisplay() {
-                    return this;
-                  },
-                },
-              },
-            },
-            dom: {
-              dom: {
-                isActive() {
-                  return false;
-                },
-              },
-            },
-          };
-        };
-
         const originalAppendChild = document.head.appendChild.bind(document.head);
         window.dat = undefined;
         window.loadScript = undefined;
@@ -102,16 +67,16 @@ const smokeHtml = `<!doctype html>
             typeof node.src === 'string' &&
             node.src.includes('dat.gui')
           ) {
-            window.dat = createFakeDat();
-            if (typeof node.onload === 'function') node.onload();
+            if (typeof node.onerror === 'function') node.onerror(new Error('mock dat.gui load error'));
             return node;
           }
           return originalAppendChild(node);
         };
         await A.gui.init();
-        if (!window.dat || !window.dat.__hydraPatched) {
-          throw new Error('GUI init fallback did not patch dat.gui');
+        if (!window.dat || !window.dat.__hydraFallback || !window.dat.__hydraPatched) {
+          throw new Error('GUI init did not install patched fallback dat gui');
         }
+        window.__smoke.guiFallbackUsed = true;
         document.head.appendChild = originalAppendChild;
 
         A.osc(6, 0.1, 0.6).out();
@@ -156,6 +121,8 @@ const smokeHtml = `<!doctype html>
         root.appendChild(globalCanvasB);
         const originalLoadScript = window.loadScript;
         const originalGetCode = window.getCode;
+        const originalGridGeometry = window.GridGeometry;
+        const originalMathMap = Math.map;
         const hydraGlobalA = new Hydra({
           detectAudio: false,
           makeGlobal: true,
@@ -170,15 +137,21 @@ const smokeHtml = `<!doctype html>
         });
         window.__smoke.globalHelpersInstalled =
           typeof window.loadScript === 'function' &&
-          typeof window.getCode === 'function';
+          typeof window.getCode === 'function' &&
+          typeof window.GridGeometry === 'function';
+        window.__smoke.mathHelpersInstalled = typeof Math.map === 'function';
         hydraGlobalA.dispose();
         window.__smoke.globalHelpersPersistAfterFirstDispose =
           typeof window.loadScript === 'function' &&
-          typeof window.getCode === 'function';
+          typeof window.getCode === 'function' &&
+          typeof window.GridGeometry === 'function';
+        window.__smoke.mathHelpersPersistAfterFirstDispose = typeof Math.map === 'function';
         hydraGlobalB.dispose();
         window.__smoke.globalHelpersRestored =
           window.loadScript === originalLoadScript &&
-          window.getCode === originalGetCode;
+          window.getCode === originalGetCode &&
+          window.GridGeometry === originalGridGeometry;
+        window.__smoke.mathHelpersRestored = Math.map === originalMathMap;
 
         window.__smoke.ready = true;
         window.__smoke.disposedState = hydraA._disposed === true && hydraB._disposed === false;
@@ -288,17 +261,37 @@ try {
   assert.equal(
     diagnostics.globalHelpersInstalled,
     true,
-    "Expected global-mode helper globals to install",
+    "Expected global-mode helper globals to install (including GridGeometry)",
   );
   assert.equal(
     diagnostics.globalHelpersPersistAfterFirstDispose,
     true,
-    "Expected helper globals to persist while one global instance remains",
+    "Expected helper globals to persist while one global instance remains (including GridGeometry)",
   );
   assert.equal(
     diagnostics.globalHelpersRestored,
     true,
-    "Expected helper globals to restore after all global instances dispose",
+    "Expected helper globals to restore after all global instances dispose (including GridGeometry)",
+  );
+  assert.equal(
+    diagnostics.mathHelpersInstalled,
+    true,
+    "Expected Math helper bindings to install in global mode",
+  );
+  assert.equal(
+    diagnostics.mathHelpersPersistAfterFirstDispose,
+    true,
+    "Expected Math helper bindings to persist while one global instance remains",
+  );
+  assert.equal(
+    diagnostics.mathHelpersRestored,
+    true,
+    "Expected Math helper bindings to restore after all global instances dispose",
+  );
+  assert.equal(
+    diagnostics.guiFallbackUsed,
+    true,
+    "Expected gui.init() to succeed with fallback when dat.gui script cannot load",
   );
   assert.ok(
     diagnostics.canvasCount >= 2,

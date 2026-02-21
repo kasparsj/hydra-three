@@ -38385,9 +38385,6 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       }
     });
   };
-  if (typeof window !== "undefined") {
-    window.GridGeometry = GridGeometry;
-  }
   const box = (width = 1, height = 1, depth = 1, widthSegments = 1, heightSegments = 1, depthSegments = 1) => new BoxGeometry(width, height, depth, widthSegments, heightSegments, depthSegments);
   const capsule = (radius = 1, length = 1, capSegments = 4, radialSegments = 8) => new CapsuleGeometry(radius, length, capSegments, radialSegments);
   const circle$1 = (extent = 1, segments = 32, thetaStart = 0, thetaLength = Math.PI * 2) => new CircleGeometry(extent / 2, segments, thetaStart, thetaLength);
@@ -38482,6 +38479,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
   }
   const gm = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
     __proto__: null,
+    GridGeometry,
     box,
     capsule,
     circle: circle$1,
@@ -39532,17 +39530,117 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     });
   };
   const guis = {};
+  const DAT_GUI_URLS = [
+    "/vendor/dat.gui.min.js",
+    "https://unpkg.com/dat.gui"
+  ];
+  const createNoopController = () => ({
+    onChange() {
+      return this;
+    },
+    listen() {
+      return this;
+    },
+    name() {
+      return this;
+    },
+    min() {
+      return this;
+    },
+    max() {
+      return this;
+    },
+    step() {
+      return this;
+    },
+    updateDisplay() {
+      return this;
+    }
+  });
+  const createNoopFolder = () => ({
+    add() {
+      return createNoopController();
+    },
+    addColor() {
+      return createNoopController();
+    },
+    addFolder() {
+      return createNoopFolder();
+    },
+    open() {
+      return this;
+    },
+    close() {
+      return this;
+    }
+  });
+  const createFallbackDatApi = () => {
+    class FallbackGUI {
+      constructor() {
+        this.useLocalStorage = false;
+      }
+      remember() {
+      }
+      add() {
+        return createNoopController();
+      }
+      addColor() {
+        return createNoopController();
+      }
+      addFolder() {
+        return createNoopFolder();
+      }
+      destroy() {
+      }
+    }
+    return {
+      GUI: FallbackGUI,
+      controllers: {
+        NumberControllerBox: {
+          prototype: {
+            updateDisplay() {
+              return this;
+            }
+          }
+        }
+      },
+      dom: {
+        dom: {
+          isActive() {
+            return false;
+          }
+        }
+      },
+      __hydraFallback: true
+    };
+  };
+  const tryLoadDatScript = async (url) => {
+    try {
+      if (typeof window.loadScript === "function") {
+        await window.loadScript(url);
+      } else {
+        await loadScript(url);
+      }
+      return !!window.dat;
+    } catch (_error) {
+      return false;
+    }
+  };
   const ensureDat = async () => {
     if (window.dat) {
       return window.dat;
     }
-    if (typeof window.loadScript === "function") {
-      await window.loadScript("https://unpkg.com/dat.gui");
-    } else {
-      await loadScript("https://unpkg.com/dat.gui");
+    for (let i = 0; i < DAT_GUI_URLS.length; i++) {
+      const loaded = await tryLoadDatScript(DAT_GUI_URLS[i]);
+      if (loaded) {
+        return window.dat;
+      }
     }
     if (!window.dat) {
-      throw new Error("gui.init() could not initialize dat.gui.");
+      window.dat = createFallbackDatApi();
+      console.warn(
+        "[hydra-three] dat.gui script unavailable; using fallback no-op GUI."
+      );
     }
     return window.dat;
   };
@@ -45194,6 +45292,8 @@ vec4 _mod289(vec4 x)
   const Mouse = mouseListen();
   const MISSING_HELPER_GLOBAL = Symbol("hydra-missing-helper-global");
   const helperGlobalBindings = /* @__PURE__ */ new Map();
+  const MISSING_MATH_HELPER = Symbol("hydra-missing-math-helper");
+  const mathHelperBindings = /* @__PURE__ */ new Map();
   const installHelperGlobal = (key, owner, value) => {
     if (typeof window === "undefined") {
       return;
@@ -45230,6 +45330,36 @@ vec4 _mod289(vec4 x)
     }
     helperGlobalBindings.delete(key);
   };
+  const installMathHelper = (key, owner, value) => {
+    let state = mathHelperBindings.get(key);
+    if (!state) {
+      const hasOwn = Object.prototype.hasOwnProperty.call(Math, key);
+      state = {
+        base: hasOwn ? Math[key] : MISSING_MATH_HELPER,
+        owners: []
+      };
+      mathHelperBindings.set(key, state);
+    }
+    state.owners.push({ owner, value });
+    Math[key] = value;
+  };
+  const restoreMathHelper = (key, owner) => {
+    const state = mathHelperBindings.get(key);
+    if (!state) {
+      return;
+    }
+    state.owners = state.owners.filter((entry) => entry.owner !== owner);
+    if (state.owners.length > 0) {
+      Math[key] = state.owners[state.owners.length - 1].value;
+      return;
+    }
+    if (state.base === MISSING_MATH_HELPER) {
+      delete Math[key];
+    } else {
+      Math[key] = state.base;
+    }
+    mathHelperBindings.delete(key);
+  };
   class HydraRenderer {
     constructor({
       pb = null,
@@ -45259,6 +45389,7 @@ vec4 _mod289(vec4 x)
       this._disposed = false;
       this._loop = null;
       this._globalHelpersInstalled = false;
+      this._mathHelpersInstalled = false;
       this.canvas = initCanvas(canvas, this);
       this.width = this.canvas.width;
       this.height = this.canvas.height;
@@ -45305,7 +45436,7 @@ vec4 _mod289(vec4 x)
         cartesianCoords: (w, h) => this.output.cartesianCoords(w, h)
       };
       init$1();
-      Object.assign(Math, math);
+      this.synth.math = math;
       this.modules = {
         tx: bindRuntimeModule(tx, this),
         gm: bindRuntimeModule(gm, this),
@@ -45328,6 +45459,7 @@ vec4 _mod289(vec4 x)
       this.synth.el = this.modules.el;
       if (makeGlobal) {
         this._installGlobalHelpers();
+        this._installMathHelpers();
       }
       this.timeSinceLastUpdate = 0;
       this._time = 0;
@@ -45418,6 +45550,7 @@ vec4 _mod289(vec4 x)
       };
       installHelperGlobal("loadScript", this, loadScriptHelper);
       installHelperGlobal("getCode", this, getCodeHelper);
+      installHelperGlobal("GridGeometry", this, GridGeometry);
       this._globalHelpersInstalled = true;
     }
     _restoreGlobalHelpers() {
@@ -45426,7 +45559,26 @@ vec4 _mod289(vec4 x)
       }
       restoreHelperGlobal("loadScript", this);
       restoreHelperGlobal("getCode", this);
+      restoreHelperGlobal("GridGeometry", this);
       this._globalHelpersInstalled = false;
+    }
+    _installMathHelpers() {
+      if (this._mathHelpersInstalled) {
+        return;
+      }
+      Object.keys(math).forEach((key) => {
+        installMathHelper(key, this, math[key]);
+      });
+      this._mathHelpersInstalled = true;
+    }
+    _restoreMathHelpers() {
+      if (!this._mathHelpersInstalled) {
+        return;
+      }
+      Object.keys(math).forEach((key) => {
+        restoreMathHelper(key, this);
+      });
+      this._mathHelpersInstalled = false;
     }
     setResolution(width, height) {
       console.log("setResolution", width, height);
@@ -45749,6 +45901,7 @@ vec4 _mod289(vec4 x)
         this.sandbox.destroy();
       }
       this._restoreGlobalHelpers();
+      this._restoreMathHelpers();
       clearSceneRuntime(this);
       clearRuntime(this);
     }

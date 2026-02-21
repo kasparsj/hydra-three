@@ -60,6 +60,7 @@ const originalDescriptors = {
   navigator: Object.getOwnPropertyDescriptor(globalThis, "navigator"),
   MediaSource: Object.getOwnPropertyDescriptor(globalThis, "MediaSource"),
   tx: Object.getOwnPropertyDescriptor(globalThis, "tx"),
+  dat: Object.getOwnPropertyDescriptor(globalThis, "dat"),
 };
 
 const setGlobal = (name, value) => {
@@ -252,6 +253,7 @@ try {
   restoreGlobal("navigator", originalDescriptors.navigator);
   restoreGlobal("MediaSource", originalDescriptors.MediaSource);
   restoreGlobal("tx", originalDescriptors.tx);
+  restoreGlobal("dat", originalDescriptors.dat);
 }
 
 console.log("regression smoke test passed");

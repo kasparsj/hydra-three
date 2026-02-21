@@ -25,6 +25,8 @@ For production, pin to a tag or commit (avoid floating refs).
 npm i github:kasparsj/hydra-three#v1.0.0 three
 ```
 
+Important: `npm i hydra-synth` installs upstream hydra-synth, not this fork.
+
 ```js
 import Hydra from "hydra-synth";
 

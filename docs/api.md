@@ -69,7 +69,8 @@ Hydra generator methods:
 `makeGlobal: true`:
 
 - Synth methods are installed on `window` (for example `window.osc`).
-- Helper globals `window.loadScript` and `window.getCode` are installed while at least one global-mode instance is active, then restored on `dispose()`.
+- Helper globals `window.loadScript`, `window.getCode`, and `window.GridGeometry` are installed while at least one global-mode instance is active, then restored on `dispose()`.
+- Math helpers are installed on `Math` in global mode and restored on `dispose()` when global instances are gone.
 
 `makeGlobal: false`:
 
@@ -93,3 +94,4 @@ Current declarations include:
 - typed transform definition input for `setFunction(...)`
 - typed chain shape for generator outputs (`out`, `phong`, `lambert`, `basic`, `tex`)
 - typed scene API baseline (`scene().mesh(...).out()`, `scene().lights(...)`, `scene().world(...)`)
+- typed module contracts for `tx`, `gm`, and `gui`

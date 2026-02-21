@@ -1,10 +1,6 @@
 import * as THREE from "three";
 import {GridGeometry} from "../lib/GridGeometry.js";
 
-if (typeof window !== 'undefined') {
-    window.GridGeometry = GridGeometry;
-}
-
 const box = (width = 1, height = 1, depth = 1, widthSegments = 1, heightSegments = 1, depthSegments = 1) => new THREE.BoxGeometry(width, height, depth, widthSegments, heightSegments, depthSegments);
 const capsule = (radius = 1, length = 1, capSegments = 4, radialSegments = 8) => new THREE.CapsuleGeometry(radius, length, capSegments, radialSegments);
 const circle = (extent = 1, segments = 32, thetaStart = 0, thetaLength = Math.PI * 2) => new THREE.CircleGeometry(extent / 2, segments, thetaStart, thetaLength);
@@ -119,5 +115,6 @@ export {
     tetrahedron, torus, torusKnot, tube, wireframe, points,
     shape, drawShape, line, rect, ellipse, triangle,
     grid, text,
+    GridGeometry,
     posFromEleAzi, signedArea,
 };

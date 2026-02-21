@@ -3,18 +3,102 @@ import * as worldLib from "./three/world.js";
 import { loadScript } from "./lib/load-script.js";
 
 const guis = {};
+const DAT_GUI_URLS = [
+    "/vendor/dat.gui.min.js",
+    "https://unpkg.com/dat.gui",
+];
+
+const createNoopController = () => ({
+    onChange() { return this; },
+    listen() { return this; },
+    name() { return this; },
+    min() { return this; },
+    max() { return this; },
+    step() { return this; },
+    updateDisplay() { return this; },
+});
+
+const createNoopFolder = () => ({
+    add() { return createNoopController(); },
+    addColor() { return createNoopController(); },
+    addFolder() { return createNoopFolder(); },
+    open() { return this; },
+    close() { return this; },
+});
+
+const createFallbackDatApi = () => {
+    class FallbackGUI {
+        constructor() {
+            this.useLocalStorage = false;
+        }
+
+        remember() {}
+
+        add() {
+            return createNoopController();
+        }
+
+        addColor() {
+            return createNoopController();
+        }
+
+        addFolder() {
+            return createNoopFolder();
+        }
+
+        destroy() {}
+    }
+
+    return {
+        GUI: FallbackGUI,
+        controllers: {
+            NumberControllerBox: {
+                prototype: {
+                    updateDisplay() {
+                        return this;
+                    },
+                },
+            },
+        },
+        dom: {
+            dom: {
+                isActive() {
+                    return false;
+                },
+            },
+        },
+        __hydraFallback: true,
+    };
+};
+
+const tryLoadDatScript = async (url) => {
+    try {
+        if (typeof window.loadScript === "function") {
+            await window.loadScript(url);
+        } else {
+            await loadScript(url);
+        }
+        return !!window.dat;
+    } catch (_error) {
+        return false;
+    }
+};
 
 const ensureDat = async () => {
     if (window.dat) {
         return window.dat;
     }
-    if (typeof window.loadScript === 'function') {
-        await window.loadScript("https://unpkg.com/dat.gui");
-    } else {
-        await loadScript("https://unpkg.com/dat.gui");
+    for (let i = 0; i < DAT_GUI_URLS.length; i++) {
+        const loaded = await tryLoadDatScript(DAT_GUI_URLS[i]);
+        if (loaded) {
+            return window.dat;
+        }
     }
     if (!window.dat) {
-        throw new Error('gui.init() could not initialize dat.gui.');
+        window.dat = createFallbackDatApi();
+        console.warn(
+            "[hydra-three] dat.gui script unavailable; using fallback no-op GUI.",
+        );
     }
     return window.dat;
 }

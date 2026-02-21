@@ -144,7 +144,11 @@ try {
   await import("../../src/three/noise.js");
   await import("../../src/three/gm.js");
   const arr = await import("../../src/three/arr.js");
-  assert.equal(typeof window.GridGeometry, "function");
+  assert.equal(
+    typeof window.GridGeometry,
+    "undefined",
+    "Importing gm.js should not mutate window.GridGeometry",
+  );
   assert.throws(
     () => arr.image("mock://image.png"),
     /requires a global tx loader/,

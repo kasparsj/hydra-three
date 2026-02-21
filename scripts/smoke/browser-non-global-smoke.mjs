@@ -53,12 +53,18 @@ const smokeHtml = `<!doctype html>
         hasGlobalOsc: null,
         hasLoadScript: null,
         hasGetCode: null,
+        hasGridGeometry: null,
         hasProcessFunction: null,
+        hasMathMap: null,
         hasLoadScriptAfterDispose: null,
         hasGetCodeAfterDispose: null,
+        hasGridGeometryAfterDispose: null,
+        hasMathMapAfterDispose: null,
         fadeNeedsSwap: null,
         scenePassRenderTargetCleared: null,
         terminalPassRenderTargetApplied: null,
+        edgeChainFirstSegmentTargetApplied: null,
+        edgeChainSecondSceneTargetIsolated: null,
         canvasCount: 0
       };
       try {
@@ -91,22 +97,61 @@ const smokeHtml = `<!doctype html>
             renderTarget: outputRenderTarget
           }
         ], {})
+        const singlePassPipeline = output.composer.passes
+        const singlePassScene = singlePassPipeline.find((pass) => !!pass.scene)
+        const singlePassTerminal = singlePassPipeline[singlePassPipeline.length - 1]
+        window.__smoke.fadeNeedsSwap = !!(singlePassPipeline[0] && singlePassPipeline[0].needsSwap === true)
+        window.__smoke.scenePassRenderTargetCleared = !!(singlePassScene && singlePassScene.renderTarget == null)
+        window.__smoke.terminalPassRenderTargetApplied = !!(singlePassTerminal && singlePassTerminal.renderTarget === outputRenderTarget)
+        const edgeRenderTarget = H.tx.fbo({ width: 32, height: 32 })
+        const edgeSceneA = H.scene({ name: '__edgePipelineA' }).mesh(H.gm.box(), H.solid(0.2, 0.3, 0.8).phong())
+        const edgeSceneB = H.scene({ name: '__edgePipelineB' }).mesh(H.gm.sphere(), H.solid(0.8, 0.2, 0.3).phong())
+        output._set([
+          {
+            scene: edgeSceneA,
+            camera: output._camera,
+            autoClear: { amount: 1 },
+            layers: [],
+            fx: { sepia: 0.1, rgbShift: 0.0005 },
+            renderTarget: edgeRenderTarget
+          },
+          {
+            scene: edgeSceneB,
+            camera: output._camera,
+            autoClear: { amount: 1 },
+            layers: []
+          }
+        ], {})
         hydra.tick(16)
         hydra.tick(16)
         const pipelinePasses = output.composer.passes
-        const scenePass = pipelinePasses.find((pass) => !!pass.scene)
-        const terminalPass = pipelinePasses[pipelinePasses.length - 1]
-        window.__smoke.fadeNeedsSwap = !!(pipelinePasses[0] && pipelinePasses[0].needsSwap === true)
-        window.__smoke.scenePassRenderTargetCleared = !!(scenePass && scenePass.renderTarget == null)
-        window.__smoke.terminalPassRenderTargetApplied = !!(terminalPass && terminalPass.renderTarget === outputRenderTarget)
+        const scenePassIndexes = pipelinePasses
+          .map((pass, index) => (pass && pass.scene ? index : -1))
+          .filter((index) => index >= 0)
+        if (scenePassIndexes.length >= 2) {
+          const betweenFirstAndSecondScene = pipelinePasses.slice(scenePassIndexes[0] + 1, scenePassIndexes[1])
+          const firstEdgeScenePass = pipelinePasses[scenePassIndexes[0]]
+          const secondEdgeScenePass = pipelinePasses[scenePassIndexes[1]]
+          window.__smoke.edgeChainFirstSegmentTargetApplied =
+            betweenFirstAndSecondScene.some((pass) => pass && pass.renderTarget === edgeRenderTarget) &&
+            firstEdgeScenePass.renderTarget == null
+          window.__smoke.edgeChainSecondSceneTargetIsolated = secondEdgeScenePass.renderTarget == null
+        } else {
+          window.__smoke.edgeChainFirstSegmentTargetApplied = false
+          window.__smoke.edgeChainSecondSceneTargetIsolated = false
+        }
         window.__smoke.hasGlobalOsc = typeof window.osc === 'function'
         window.__smoke.hasLoadScript = typeof window.loadScript === 'function'
         window.__smoke.hasGetCode = typeof window.getCode === 'function'
+        window.__smoke.hasGridGeometry = typeof window.GridGeometry === 'function'
         window.__smoke.hasProcessFunction = typeof window.processFunction === 'function'
+        window.__smoke.hasMathMap = typeof Math.map === 'function'
         window.__smoke.canvasCount = document.querySelectorAll('canvas').length
         hydra.dispose()
         window.__smoke.hasLoadScriptAfterDispose = typeof window.loadScript === 'function'
         window.__smoke.hasGetCodeAfterDispose = typeof window.getCode === 'function'
+        window.__smoke.hasGridGeometryAfterDispose = typeof window.GridGeometry === 'function'
+        window.__smoke.hasMathMapAfterDispose = typeof Math.map === 'function'
         window.__smoke.ready = true
       } catch (error) {
         window.__smoke.error = error && error.stack ? error.stack : String(error)
@@ -217,9 +262,19 @@ try {
     "Expected makeGlobal:false to avoid installing window.getCode",
   );
   assert.equal(
+    diagnostics.hasGridGeometry,
+    false,
+    "Expected makeGlobal:false to avoid installing window.GridGeometry",
+  );
+  assert.equal(
     diagnostics.hasProcessFunction,
     false,
     "Expected non-global runtime to avoid leaking window.processFunction",
+  );
+  assert.equal(
+    diagnostics.hasMathMap,
+    false,
+    "Expected makeGlobal:false to avoid mutating Math helpers",
   );
   assert.equal(
     diagnostics.hasLoadScriptAfterDispose,
@@ -230,6 +285,16 @@ try {
     diagnostics.hasGetCodeAfterDispose,
     false,
     "Expected no window.getCode after non-global dispose",
+  );
+  assert.equal(
+    diagnostics.hasGridGeometryAfterDispose,
+    false,
+    "Expected no window.GridGeometry after non-global dispose",
+  );
+  assert.equal(
+    diagnostics.hasMathMapAfterDispose,
+    false,
+    "Expected no Math helper leakage after non-global dispose",
   );
   assert.equal(
     diagnostics.fadeNeedsSwap,
@@ -245,6 +310,16 @@ try {
     diagnostics.terminalPassRenderTargetApplied,
     true,
     "Expected terminal pass to receive explicit renderTarget",
+  );
+  assert.equal(
+    diagnostics.edgeChainFirstSegmentTargetApplied,
+    true,
+    "Expected explicit renderTarget to stay within first pass segment when chained",
+  );
+  assert.equal(
+    diagnostics.edgeChainSecondSceneTargetIsolated,
+    true,
+    "Expected second scene pass in chained pipeline to remain target-isolated",
   );
   assert.deepEqual(
     errors,

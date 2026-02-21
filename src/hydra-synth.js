@@ -39,6 +39,8 @@ import { initCanvas } from "./canvas.js";
 const Mouse = MouseTools()
 const MISSING_HELPER_GLOBAL = Symbol('hydra-missing-helper-global')
 const helperGlobalBindings = new Map()
+const MISSING_MATH_HELPER = Symbol('hydra-missing-math-helper')
+const mathHelperBindings = new Map()
 
 const installHelperGlobal = (key, owner, value) => {
   if (typeof window === 'undefined') {
@@ -77,6 +79,38 @@ const restoreHelperGlobal = (key, owner) => {
   }
   helperGlobalBindings.delete(key)
 }
+
+const installMathHelper = (key, owner, value) => {
+  let state = mathHelperBindings.get(key)
+  if (!state) {
+    const hasOwn = Object.prototype.hasOwnProperty.call(Math, key)
+    state = {
+      base: hasOwn ? Math[key] : MISSING_MATH_HELPER,
+      owners: [],
+    }
+    mathHelperBindings.set(key, state)
+  }
+  state.owners.push({ owner, value })
+  Math[key] = value
+}
+
+const restoreMathHelper = (key, owner) => {
+  const state = mathHelperBindings.get(key)
+  if (!state) {
+    return
+  }
+  state.owners = state.owners.filter((entry) => entry.owner !== owner)
+  if (state.owners.length > 0) {
+    Math[key] = state.owners[state.owners.length - 1].value
+    return
+  }
+  if (state.base === MISSING_MATH_HELPER) {
+    delete Math[key]
+  } else {
+    Math[key] = state.base
+  }
+  mathHelperBindings.delete(key)
+}
 // to do: add ability to pass in certain uniforms and transforms
 class HydraRenderer {
 
@@ -110,6 +144,7 @@ class HydraRenderer {
     this._disposed = false
     this._loop = null
     this._globalHelpersInstalled = false
+    this._mathHelpersInstalled = false
 
     this.canvas = initCanvas(canvas, this);
     this.width = this.canvas.width
@@ -151,7 +186,7 @@ class HydraRenderer {
     }
 
     nse.init();
-    Object.assign(Math, math);
+    this.synth.math = math
 
     this.modules = {
       tx: bindRuntimeModule(tx, this),
@@ -176,6 +211,7 @@ class HydraRenderer {
 
     if (makeGlobal) {
       this._installGlobalHelpers()
+      this._installMathHelpers()
     }
 
 
@@ -291,6 +327,7 @@ class HydraRenderer {
     }
     installHelperGlobal('loadScript', this, loadScriptHelper)
     installHelperGlobal('getCode', this, getCodeHelper)
+    installHelperGlobal('GridGeometry', this, gm.GridGeometry)
     this._globalHelpersInstalled = true
   }
 
@@ -300,7 +337,28 @@ class HydraRenderer {
     }
     restoreHelperGlobal('loadScript', this)
     restoreHelperGlobal('getCode', this)
+    restoreHelperGlobal('GridGeometry', this)
     this._globalHelpersInstalled = false
+  }
+
+  _installMathHelpers() {
+    if (this._mathHelpersInstalled) {
+      return
+    }
+    Object.keys(math).forEach((key) => {
+      installMathHelper(key, this, math[key])
+    })
+    this._mathHelpersInstalled = true
+  }
+
+  _restoreMathHelpers() {
+    if (!this._mathHelpersInstalled) {
+      return
+    }
+    Object.keys(math).forEach((key) => {
+      restoreMathHelper(key, this)
+    })
+    this._mathHelpersInstalled = false
   }
 
   setResolution(width, height) {
@@ -663,6 +721,7 @@ class HydraRenderer {
     }
 
     this._restoreGlobalHelpers()
+    this._restoreMathHelpers()
     scene.clearSceneRuntime(this)
     clearRuntime(this)
   }
