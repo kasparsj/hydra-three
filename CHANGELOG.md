@@ -1,4 +1,17 @@
 # Changelog
+
+## [1.4] - 2025-09-24
+### Fixed
+- hard crashing when inputting invalid texture, fixed by @ojack and @ffd8
+- multiple render passes on the same tick use the same time value by @geikha
+- using `require()` to import by @ilesinge
+- invalid indexing for arrays on initial load by @jacopo-salamina 
+
+### Added
+- shader optimizations by @glfmn
+- `initCanvas` function by @recter
+- updated meyda
+
 ## [1.3.29] - 2023-08-16
 ### Fixed
 - skip accessing parent object, fixing [iframe issue](https://github.com/hydra-synth/hydra-synth/issues/139#issuecomment-1523755523)

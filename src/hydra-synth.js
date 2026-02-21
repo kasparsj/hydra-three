@@ -87,6 +87,7 @@ class HydraRenderer {
       mousemove: (event) => {},
       keydown: (event) => {},
       keyup: (event) => {},
+      afterUpdate: (dt) => {},// user defined function run after update
       hush: this.hush.bind(this),
       tick: this.tick.bind(this),
       shadowMap: this.shadowMap.bind(this),
@@ -175,7 +176,7 @@ class HydraRenderer {
     if(autoLoop) loop(this.tick.bind(this)).start()
 
     // final argument is properties that the user can set, all others are treated as read-only
-    this.sandbox = new Sandbox(this.synth, makeGlobal, ['speed', 'update', 'click', 'mousedown', 'mouseup', 'mousemove', 'keydown', 'keyup', 'bpm', 'fps'])
+    this.sandbox = new Sandbox(this.synth, makeGlobal, ['speed', 'update', 'afterUpdate', 'click', 'mousedown', 'mouseup', 'mousemove', 'keydown', 'keyup', 'bpm', 'fps'])
   }
 
   eval(code) {
@@ -202,6 +203,7 @@ class HydraRenderer {
     this.sandbox.set('mousemove', (event) => {})
     this.sandbox.set('keydown', (event) => {})
     this.sandbox.set('keyup', (event) => {})
+    this.sandbox.set('afterUpdate', (dt) => {})
   }
 
   loadScript(url = "", once = true) {
@@ -469,6 +471,7 @@ class HydraRenderer {
 
   // dt in ms
   tick (dt, uniforms) {
+    try {
     this.sandbox.tick()
     if(this.detectAudio === true) this.synth.a.tick()
   //  let updateInterval = 1000/this.synth.fps // ms
@@ -494,14 +497,20 @@ class HydraRenderer {
         this.renderAll.enabled = false;
       }
       this.composer.render();
+      if(this.synth.afterUpdate) {
+        try { this.synth.afterUpdate(this.timeSinceLastUpdate) } catch (e) { console.log(e) }
+      }
       this.timeSinceLastUpdate = 0
     }
     if(this.saveFrame === true) {
       this.canvasToImage()
       this.saveFrame = false
     }
+  } catch(e) {
+    console.warn('Error during tick():', e)
   //  this.regl.poll()
   }
+}
 
   shadowMap(options) {
     options = options || {

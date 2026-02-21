@@ -84,6 +84,32 @@ class HydraSource {
       .catch(err => console.log('could not get screen', err))
   }
 
+  // cache for the canvases, so we don't create them every time
+  canvases = {}
+
+  // Creates a canvas and returns the 2d context
+  initCanvas (width = 1000, height = 1000) {
+    if (this.canvases[this.label] == undefined) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext('2d')
+      if(ctx != null)
+        this.canvases[this.label] = ctx
+    }
+
+    const ctx = this.canvases[this.label]
+    const canvas = ctx.canvas
+    if (canvas.width !== width && canvas.height !== height) {
+      canvas.width = width
+      canvas.height = height
+    } else {
+      ctx.clearRect(0, 0, width, height)
+    }
+    this.init({ src: canvas })
+
+    this.dynamic = true
+    return ctx
+  }
+
   resize (width, height) {
     this.width = width
     this.height = height
@@ -104,7 +130,7 @@ class HydraSource {
 
   tick (time) {
     //  console.log(this.src, this.tex.width, this.tex.height)
-    if (this.src !== null && this.dynamic === true) {
+    if (this.src && this.dynamic === true) {
       if (this.src.videoWidth && this.src.videoWidth !== this.tex.width) {
         console.log(
           this.src.videoWidth,

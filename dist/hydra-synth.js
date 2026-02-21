@@ -2088,7 +2088,7 @@ parameters.mapUv?'#define MAP_UV '+parameters.mapUv:'',parameters.alphaMapUv?'#d
 parameters.vertexTangents&&parameters.flatShading===false?'#define USE_TANGENT':'',parameters.vertexColors?'#define USE_COLOR':'',parameters.vertexAlphas?'#define USE_COLOR_ALPHA':'',parameters.vertexUv1s?'#define USE_UV1':'',parameters.vertexUv2s?'#define USE_UV2':'',parameters.vertexUv3s?'#define USE_UV3':'',parameters.pointsUvs?'#define USE_POINTS_UV':'',parameters.flatShading?'#define FLAT_SHADED':'',parameters.skinning?'#define USE_SKINNING':'',parameters.morphTargets?'#define USE_MORPHTARGETS':'',parameters.morphNormals&&parameters.flatShading===false?'#define USE_MORPHNORMALS':'',parameters.morphColors&&parameters.isWebGL2?'#define USE_MORPHCOLORS':'',parameters.morphTargetsCount>0&&parameters.isWebGL2?'#define MORPHTARGETS_TEXTURE':'',parameters.morphTargetsCount>0&&parameters.isWebGL2?'#define MORPHTARGETS_TEXTURE_STRIDE '+parameters.morphTextureStride:'',parameters.morphTargetsCount>0&&parameters.isWebGL2?'#define MORPHTARGETS_COUNT '+parameters.morphTargetsCount:'',parameters.doubleSided?'#define DOUBLE_SIDED':'',parameters.flipSided?'#define FLIP_SIDED':'',parameters.shadowMapEnabled?'#define USE_SHADOWMAP':'',parameters.shadowMapEnabled?'#define '+shadowMapTypeDefine:'',parameters.sizeAttenuation?'#define USE_SIZEATTENUATION':'',parameters.numLightProbes>0?'#define USE_LIGHT_PROBES':'',parameters.useLegacyLights?'#define LEGACY_LIGHTS':'',parameters.logarithmicDepthBuffer?'#define USE_LOGDEPTHBUF':'',parameters.logarithmicDepthBuffer&&parameters.rendererExtensionFragDepth?'#define USE_LOGDEPTHBUF_EXT':'','uniform mat4 modelMatrix;','uniform mat4 modelViewMatrix;','uniform mat4 projectionMatrix;','uniform mat4 viewMatrix;','uniform mat3 normalMatrix;','uniform vec3 cameraPosition;','uniform bool isOrthographic;','#ifdef USE_INSTANCING','	attribute mat4 instanceMatrix;','#endif','#ifdef USE_INSTANCING_COLOR','	attribute vec3 instanceColor;','#endif','attribute vec3 position;','attribute vec3 normal;','attribute vec2 uv;','#ifdef USE_UV1','	attribute vec2 uv1;','#endif','#ifdef USE_UV2','	attribute vec2 uv2;','#endif','#ifdef USE_UV3','	attribute vec2 uv3;','#endif','#ifdef USE_TANGENT','	attribute vec4 tangent;','#endif','#if defined( USE_COLOR_ALPHA )','	attribute vec4 color;','#elif defined( USE_COLOR )','	attribute vec3 color;','#endif','#if ( defined( USE_MORPHTARGETS ) && ! defined( MORPHTARGETS_TEXTURE ) )','	attribute vec3 morphTarget0;','	attribute vec3 morphTarget1;','	attribute vec3 morphTarget2;','	attribute vec3 morphTarget3;','	#ifdef USE_MORPHNORMALS','		attribute vec3 morphNormal0;','		attribute vec3 morphNormal1;','		attribute vec3 morphNormal2;','		attribute vec3 morphNormal3;','	#else','		attribute vec3 morphTarget4;','		attribute vec3 morphTarget5;','		attribute vec3 morphTarget6;','		attribute vec3 morphTarget7;','	#endif','#endif','#ifdef USE_SKINNING','	attribute vec4 skinIndex;','	attribute vec4 skinWeight;','#endif','\n'].filter(filterEmptyLine).join('\n');prefixFragment=[customExtensions,generatePrecision(parameters),'#define SHADER_TYPE '+parameters.shaderType,'#define SHADER_NAME '+parameters.shaderName,customDefines,parameters.useFog&&parameters.fog?'#define USE_FOG':'',parameters.useFog&&parameters.fogExp2?'#define FOG_EXP2':'',parameters.map?'#define USE_MAP':'',parameters.matcap?'#define USE_MATCAP':'',parameters.envMap?'#define USE_ENVMAP':'',parameters.envMap?'#define '+envMapTypeDefine:'',parameters.envMap?'#define '+envMapModeDefine:'',parameters.envMap?'#define '+envMapBlendingDefine:'',envMapCubeUVSize?'#define CUBEUV_TEXEL_WIDTH '+envMapCubeUVSize.texelWidth:'',envMapCubeUVSize?'#define CUBEUV_TEXEL_HEIGHT '+envMapCubeUVSize.texelHeight:'',envMapCubeUVSize?'#define CUBEUV_MAX_MIP '+envMapCubeUVSize.maxMip+'.0':'',parameters.lightMap?'#define USE_LIGHTMAP':'',parameters.aoMap?'#define USE_AOMAP':'',parameters.bumpMap?'#define USE_BUMPMAP':'',parameters.normalMap?'#define USE_NORMALMAP':'',parameters.normalMapObjectSpace?'#define USE_NORMALMAP_OBJECTSPACE':'',parameters.normalMapTangentSpace?'#define USE_NORMALMAP_TANGENTSPACE':'',parameters.emissiveMap?'#define USE_EMISSIVEMAP':'',parameters.anisotropy?'#define USE_ANISOTROPY':'',parameters.anisotropyMap?'#define USE_ANISOTROPYMAP':'',parameters.clearcoat?'#define USE_CLEARCOAT':'',parameters.clearcoatMap?'#define USE_CLEARCOATMAP':'',parameters.clearcoatRoughnessMap?'#define USE_CLEARCOAT_ROUGHNESSMAP':'',parameters.clearcoatNormalMap?'#define USE_CLEARCOAT_NORMALMAP':'',parameters.iridescence?'#define USE_IRIDESCENCE':'',parameters.iridescenceMap?'#define USE_IRIDESCENCEMAP':'',parameters.iridescenceThicknessMap?'#define USE_IRIDESCENCE_THICKNESSMAP':'',parameters.specularMap?'#define USE_SPECULARMAP':'',parameters.specularColorMap?'#define USE_SPECULAR_COLORMAP':'',parameters.specularIntensityMap?'#define USE_SPECULAR_INTENSITYMAP':'',parameters.roughnessMap?'#define USE_ROUGHNESSMAP':'',parameters.metalnessMap?'#define USE_METALNESSMAP':'',parameters.alphaMap?'#define USE_ALPHAMAP':'',parameters.alphaTest?'#define USE_ALPHATEST':'',parameters.alphaHash?'#define USE_ALPHAHASH':'',parameters.sheen?'#define USE_SHEEN':'',parameters.sheenColorMap?'#define USE_SHEEN_COLORMAP':'',parameters.sheenRoughnessMap?'#define USE_SHEEN_ROUGHNESSMAP':'',parameters.transmission?'#define USE_TRANSMISSION':'',parameters.transmissionMap?'#define USE_TRANSMISSIONMAP':'',parameters.thicknessMap?'#define USE_THICKNESSMAP':'',parameters.vertexTangents&&parameters.flatShading===false?'#define USE_TANGENT':'',parameters.vertexColors||parameters.instancingColor?'#define USE_COLOR':'',parameters.vertexAlphas?'#define USE_COLOR_ALPHA':'',parameters.vertexUv1s?'#define USE_UV1':'',parameters.vertexUv2s?'#define USE_UV2':'',parameters.vertexUv3s?'#define USE_UV3':'',parameters.pointsUvs?'#define USE_POINTS_UV':'',parameters.gradientMap?'#define USE_GRADIENTMAP':'',parameters.flatShading?'#define FLAT_SHADED':'',parameters.doubleSided?'#define DOUBLE_SIDED':'',parameters.flipSided?'#define FLIP_SIDED':'',parameters.shadowMapEnabled?'#define USE_SHADOWMAP':'',parameters.shadowMapEnabled?'#define '+shadowMapTypeDefine:'',parameters.premultipliedAlpha?'#define PREMULTIPLIED_ALPHA':'',parameters.numLightProbes>0?'#define USE_LIGHT_PROBES':'',parameters.useLegacyLights?'#define LEGACY_LIGHTS':'',parameters.decodeVideoTexture?'#define DECODE_VIDEO_TEXTURE':'',parameters.logarithmicDepthBuffer?'#define USE_LOGDEPTHBUF':'',parameters.logarithmicDepthBuffer&&parameters.rendererExtensionFragDepth?'#define USE_LOGDEPTHBUF_EXT':'','uniform mat4 viewMatrix;','uniform vec3 cameraPosition;','uniform bool isOrthographic;',parameters.toneMapping!==NoToneMapping?'#define TONE_MAPPING':'',parameters.toneMapping!==NoToneMapping?ShaderChunk['tonemapping_pars_fragment']:'',// this code is required here because it is used by the toneMapping() function defined below
 parameters.toneMapping!==NoToneMapping?getToneMappingFunction('toneMapping',parameters.toneMapping):'',parameters.dithering?'#define DITHERING':'',parameters.opaque?'#define OPAQUE':'',ShaderChunk['colorspace_pars_fragment'],// this code is required here because it is used by the various encoding/decoding function defined below
 getTexelEncodingFunction('linearToOutputTexel',parameters.outputColorSpace),parameters.useDepthPacking?'#define DEPTH_PACKING '+parameters.depthPacking:'','\n'].filter(filterEmptyLine).join('\n');}vertexShader=resolveIncludes(vertexShader);vertexShader=replaceLightNums(vertexShader,parameters);vertexShader=replaceClippingPlaneNums(vertexShader,parameters);fragmentShader=resolveIncludes(fragmentShader);fragmentShader=replaceLightNums(fragmentShader,parameters);fragmentShader=replaceClippingPlaneNums(fragmentShader,parameters);vertexShader=unrollLoops(vertexShader);fragmentShader=unrollLoops(fragmentShader);if(parameters.isWebGL2&&parameters.isRawShaderMaterial!==true){// GLSL 3.0 conversion for built-in materials and ShaderMaterial
-versionString='#version 300 es\n';prefixVertex=['precision mediump sampler2DArray;','#define attribute in','#define varying out','#define texture2D texture'].join('\n')+'\n'+prefixVertex;prefixFragment=['#define varying in',parameters.glslVersion===GLSL3?'':'layout(location = 0) out highp vec4 pc_fragColor;',parameters.glslVersion===GLSL3?'':'#define gl_FragColor pc_fragColor','#define gl_FragDepthEXT gl_FragDepth','#define texture2D texture','#define textureCube texture','#define texture2DProj textureProj','#define texture2DLodEXT textureLod','#define texture2DProjLodEXT textureProjLod','#define textureCubeLodEXT textureLod','#define texture2DGradEXT textureGrad','#define texture2DProjGradEXT textureProjGrad','#define textureCubeGradEXT textureGrad'].join('\n')+'\n'+prefixFragment;}const vertexGlsl=versionString+prefixVertex+vertexShader;const fragmentGlsl=versionString+prefixFragment+fragmentShader;// console.log( '*VERTEX*', vertexGlsl );
+versionString='#version 300 es\n';prefixVertex=['precision mediump sampler2DArray;','#define attribute in','#define varying out','#define texture2D texture'].join('\n')+'\n'+prefixVertex;prefixFragment=['precision mediump sampler2DArray;','#define varying in',parameters.glslVersion===GLSL3?'':'layout(location = 0) out highp vec4 pc_fragColor;',parameters.glslVersion===GLSL3?'':'#define gl_FragColor pc_fragColor','#define gl_FragDepthEXT gl_FragDepth','#define texture2D texture','#define textureCube texture','#define texture2DProj textureProj','#define texture2DLodEXT textureLod','#define texture2DProjLodEXT textureProjLod','#define textureCubeLodEXT textureLod','#define texture2DGradEXT textureGrad','#define texture2DProjGradEXT textureProjGrad','#define textureCubeGradEXT textureGrad'].join('\n')+'\n'+prefixFragment;}const vertexGlsl=versionString+prefixVertex+vertexShader;const fragmentGlsl=versionString+prefixFragment+fragmentShader;// console.log( '*VERTEX*', vertexGlsl );
 // console.log( '*FRAGMENT*', fragmentGlsl );
 const glVertexShader=WebGLShader(gl,gl.VERTEX_SHADER,vertexGlsl);const glFragmentShader=WebGLShader(gl,gl.FRAGMENT_SHADER,fragmentGlsl);gl.attachShader(program,glVertexShader);gl.attachShader(program,glFragmentShader);// Force a particular attribute to index 0.
 if(parameters.index0AttributeName!==undefined){gl.bindAttribLocation(program,0,parameters.index0AttributeName);}else if(parameters.morphTargets===true){// programs with morphTargets displace position out of attribute 0
@@ -13397,7 +13397,7 @@ Format for adding functions to hydra. For each entry in this file, hydra automat
 
 {
   name: 'osc', // name that will be used to access function in js as well as in glsl
-  type: 'src', // can be 'src', 'color', 'combine', 'combineCoords'. see below for more info
+  type: 'src', // can be 'src', 'color', 'combine', 'combineCoord'. see below for more info
   inputs: [
     {
       name: 'freq',
@@ -13440,23 +13440,29 @@ The value in the 'type' field lets the parser know which type the function will 
 const types = {
   'src': {
     returnType: 'vec4',
-    args: ['vec2 _st']
+    args: [{ type: 'vec2', name: '_st' }]
   },
   'coord': {
     returnType: 'vec2',
-    args: ['vec2 _st']
+    args: [{ type: 'vec2', name: '_st'}]
   },
   'color': {
     returnType: 'vec4',
-    args: ['vec4 _c0']
+    args: [{ type: 'vec4', name: '_c0'}]
   },
   'combine': {
     returnType: 'vec4',
-    args: ['vec4 _c0', 'vec4 _c1']
+    args: [
+      { type: 'vec4', name: '_c0'},
+      { type: 'vec4', name: '_c1'}
+    ]
   },
   'combineCoord': {
     returnType: 'vec2',
-    args: ['vec2 _st', 'vec4 _c0']
+    args: [
+      { type: 'vec2', name: '_st'},
+      { type: 'vec4', name: '_c0'},
+    ]
   }
 }
 
@@ -13864,10 +13870,10 @@ var _default = () => [{
     default: 0
   }],
   glsl: `   vec4 c2 = vec4(_c0);
-   c2.r = fract(c2.r + r);
-   c2.g = fract(c2.g + g);
-   c2.b = fract(c2.b + b);
-   c2.a = fract(c2.a + a);
+   c2.r += fract(r);
+   c2.g += fract(g);
+   c2.b += fract(b);
+   c2.a += fract(a);
    return vec4(c2.rgba);`
 }, {
   name: 'repeat',
@@ -15000,6 +15006,31 @@ class HydraSource {
       //  console.log("received screen input")
     }).catch(err => console.log('could not get screen', err));
   }
+
+  // cache for the canvases, so we don't create them every time
+  canvases = {};
+
+  // Creates a canvas and returns the 2d context
+  initCanvas(width = 1000, height = 1000) {
+    if (this.canvases[this.label] == undefined) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext('2d');
+      if (ctx != null) this.canvases[this.label] = ctx;
+    }
+    const ctx = this.canvases[this.label];
+    const canvas = ctx.canvas;
+    if (canvas.width !== width && canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    } else {
+      ctx.clearRect(0, 0, width, height);
+    }
+    this.init({
+      src: canvas
+    });
+    this.dynamic = true;
+    return ctx;
+  }
   resize(width, height) {
     this.width = width;
     this.height = height;
@@ -15018,7 +15049,7 @@ class HydraSource {
   }
   tick(time) {
     //  console.log(this.src, this.tex.width, this.tex.height)
-    if (this.src !== null && this.dynamic === true) {
+    if (this.src && this.dynamic === true) {
       if (this.src.videoWidth && this.src.videoWidth !== this.tex.width) {
         console.log(this.src.videoWidth, this.src.videoHeight, this.tex.width, this.tex.height);
         // todo: implement resize?
@@ -15136,6 +15167,8 @@ class HydraRenderer {
       mousemove: event => {},
       keydown: event => {},
       keyup: event => {},
+      afterUpdate: dt => {},
+      // user defined function run after update
       hush: this.hush.bind(this),
       tick: this.tick.bind(this),
       shadowMap: this.shadowMap.bind(this),
@@ -15208,7 +15241,7 @@ class HydraRenderer {
     if (autoLoop) (0, _rafLoop.default)(this.tick.bind(this)).start();
 
     // final argument is properties that the user can set, all others are treated as read-only
-    this.sandbox = new _evalSandbox.default(this.synth, makeGlobal, ['speed', 'update', 'click', 'mousedown', 'mouseup', 'mousemove', 'keydown', 'keyup', 'bpm', 'fps']);
+    this.sandbox = new _evalSandbox.default(this.synth, makeGlobal, ['speed', 'update', 'afterUpdate', 'click', 'mousedown', 'mouseup', 'mousemove', 'keydown', 'keyup', 'bpm', 'fps']);
   }
   eval(code) {
     this.sandbox.eval(code);
@@ -15232,6 +15265,7 @@ class HydraRenderer {
     this.sandbox.set('mousemove', event => {});
     this.sandbox.set('keydown', event => {});
     this.sandbox.set('keyup', event => {});
+    this.sandbox.set('afterUpdate', dt => {});
   }
   loadScript(url = "", once = true) {
     const self = this || window;
@@ -15496,42 +15530,53 @@ class HydraRenderer {
 
   // dt in ms
   tick(dt, uniforms) {
-    this.sandbox.tick();
-    if (this.detectAudio === true) this.synth.a.tick();
-    //  let updateInterval = 1000/this.synth.fps // ms
-    this.sandbox.set('time', this.synth.time += dt * 0.001 * this.synth.speed);
-    this.timeSinceLastUpdate += dt;
-    if (!this.synth.fps || this.timeSinceLastUpdate >= 1000 / this.synth.fps) {
-      //  console.log(1000/this.timeSinceLastUpdate)
-      this.synth.stats.fps = Math.ceil(1000 / this.timeSinceLastUpdate);
-      if (this.synth.update) {
-        try {
-          this.synth.update(this.timeSinceLastUpdate);
-        } catch (e) {
-          console.log(e);
+    try {
+      this.sandbox.tick();
+      if (this.detectAudio === true) this.synth.a.tick();
+      //  let updateInterval = 1000/this.synth.fps // ms
+      this.sandbox.set('time', this.synth.time += dt * 0.001 * this.synth.speed);
+      this.timeSinceLastUpdate += dt;
+      if (!this.synth.fps || this.timeSinceLastUpdate >= 1000 / this.synth.fps) {
+        //  console.log(1000/this.timeSinceLastUpdate)
+        this.synth.stats.fps = Math.ceil(1000 / this.timeSinceLastUpdate);
+        if (this.synth.update) {
+          try {
+            this.synth.update(this.timeSinceLastUpdate);
+          } catch (e) {
+            console.log(e);
+          }
         }
+        for (let i = 0; i < this.s.length; i++) {
+          this.s[i].tick(this.synth.time);
+        }
+        for (let i = 0; i < this.o.length; i++) {
+          this.o[i].tick();
+        }
+        if (this.isRenderingAll) {
+          this.renderAll.enabled = true;
+          this.renderFbo.enabled = false;
+        } else {
+          this.renderFbo.enabled = true;
+          this.renderAll.enabled = false;
+        }
+        this.composer.render();
+        if (this.synth.afterUpdate) {
+          try {
+            this.synth.afterUpdate(this.timeSinceLastUpdate);
+          } catch (e) {
+            console.log(e);
+          }
+        }
+        this.timeSinceLastUpdate = 0;
       }
-      for (let i = 0; i < this.s.length; i++) {
-        this.s[i].tick(this.synth.time);
+      if (this.saveFrame === true) {
+        this.canvasToImage();
+        this.saveFrame = false;
       }
-      for (let i = 0; i < this.o.length; i++) {
-        this.o[i].tick();
-      }
-      if (this.isRenderingAll) {
-        this.renderAll.enabled = true;
-        this.renderFbo.enabled = false;
-      } else {
-        this.renderFbo.enabled = true;
-        this.renderAll.enabled = false;
-      }
-      this.composer.render();
-      this.timeSinceLastUpdate = 0;
+    } catch (e) {
+      console.warn('Error during tick():', e);
+      //  this.regl.poll()
     }
-    if (this.saveFrame === true) {
-      this.canvasToImage();
-      this.saveFrame = false;
-    }
-    //  this.regl.poll()
   }
 
   shadowMap(options) {
@@ -15845,6 +15890,14 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var map = (num, in_min, in_max, out_min, out_max) => {
   return (num - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 };
+
+// The '%' operator is a remainder operator, and Javascript lacks a dedicated
+// modulo operator. This function is an implementation of the operation
+// copied-n-pasted from
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Remainder#description
+var modulo = (n, d) => {
+  return (n % d + d) % d;
+};
 var _default = {
   init: () => {
     Array.prototype.fast = function (speed = 1) {
@@ -15895,9 +15948,22 @@ var _default = {
     if (smooth !== 0) {
       let ease = arr._ease ? arr._ease : _easingFunctions.default['linear'];
       let _index = index - smooth / 2;
-      let currValue = arr[Math.floor(_index % arr.length)];
-      let nextValue = arr[Math.floor((_index + 1) % arr.length)];
-      let t = Math.min(_index % 1 / smooth, 1);
+      // Compute the first value used for the interpolation: wrap _index inside the range [0, arr.length), then round the resulting value towards 0.
+      // Note that, during the first seconds Hydra is running, _index may assume a negative value.
+      // If we wrapped _index inside the range [0, arr.length) using the regular remainder operator, the result would be negative.
+      // Passing a negative index to an array returns undefined, which ultimately causes a number of graphical glitches.
+      // We need to use the modulo operation to prevent this.
+      let currValue = arr[Math.floor(modulo(_index, arr.length))];
+      // Compute the second value used for the interpolation, in a similar fashion to 'currValue'.
+      // The above reasoning about the choice of the modulo operation applies for 'nextValue', too.
+      let nextValue = arr[Math.floor(modulo(_index + 1, arr.length))];
+      // Compute the time parameter for the interpolation.
+      // Note that, during the first seconds Hydra is running, _index may assume a negative value.
+      // Assuming 'smooth' is positive, if we wrapped _index in the range [0, 1) using the regular remainder operator, t would become negative as a result.
+      // This would cause the final interpolation to assume values inconsistent with the later ones.
+      // E.g. [0, 1].smooth() should always generate values between 0 and 1, but the initial values would be negative.
+      // We need to use the modulo operation to prevent this.
+      let t = Math.min(modulo(_index, 1) / smooth, 1);
       return ease(t) * (nextValue - currValue) + currValue;
     } else {
       return arr[Math.floor(index % arr.length)];
@@ -18597,7 +18663,7 @@ var _three = require("three");
 //import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 const glsl = require("glslify");
 const uvVert = glsl(["#define GLSLIFY 1\nvarying vec2 vUv;\n\nvoid main() {\n    vUv = uv;\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n}\n"]);
-const filmFrag = glsl(["#define GLSLIFY 1\n//\n// GLSL textureless classic 3D noise \"cnoise\",\n// with an RSL-style periodic variant \"pnoise\".\n// Author:  Stefan Gustavson (stefan.gustavson@liu.se)\n// Version: 2011-10-11\n//\n// Many thanks to Ian McEwan of Ashima Arts for the\n// ideas for permutation and gradient selection.\n//\n// Copyright (c) 2011 Stefan Gustavson. All rights reserved.\n// Distributed under the MIT license. See LICENSE file.\n// https://github.com/ashima/webgl-noise\n//\n\nvec3 mod289_1(vec3 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289_1(vec4 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute_1(vec4 x)\n{\n  return mod289_1(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt_1(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nvec3 fade(vec3 t) {\n  return t*t*t*(t*(t*6.0-15.0)+10.0);\n}\n\n// Classic Perlin noise, periodic variant\nfloat pnoise(vec3 P, vec3 rep)\n{\n  vec3 Pi0 = mod(floor(P), rep); // Integer part, modulo period\n  vec3 Pi1 = mod(Pi0 + vec3(1.0), rep); // Integer part + 1, mod period\n  Pi0 = mod289_1(Pi0);\n  Pi1 = mod289_1(Pi1);\n  vec3 Pf0 = fract(P); // Fractional part for interpolation\n  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n  vec4 iy = vec4(Pi0.yy, Pi1.yy);\n  vec4 iz0 = Pi0.zzzz;\n  vec4 iz1 = Pi1.zzzz;\n\n  vec4 ixy = permute_1(permute_1(ix) + iy);\n  vec4 ixy0 = permute_1(ixy + iz0);\n  vec4 ixy1 = permute_1(ixy + iz1);\n\n  vec4 gx0 = ixy0 * (1.0 / 7.0);\n  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n  gx0 = fract(gx0);\n  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n  vec4 sz0 = step(gz0, vec4(0.0));\n  gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n  gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n  vec4 gx1 = ixy1 * (1.0 / 7.0);\n  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n  gx1 = fract(gx1);\n  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n  vec4 sz1 = step(gz1, vec4(0.0));\n  gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n  gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n  vec4 norm0 = taylorInvSqrt_1(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n  g000 *= norm0.x;\n  g010 *= norm0.y;\n  g100 *= norm0.z;\n  g110 *= norm0.w;\n  vec4 norm1 = taylorInvSqrt_1(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n  g001 *= norm1.x;\n  g011 *= norm1.y;\n  g101 *= norm1.z;\n  g111 *= norm1.w;\n\n  float n000 = dot(g000, Pf0);\n  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n  float n111 = dot(g111, Pf1);\n\n  vec3 fade_xyz = fade(Pf0);\n  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x);\n  return 2.2 * n_xyz;\n}\n\n//\n// Description : Array and textureless GLSL 2D/3D/4D simplex\n//               noise functions.\n//      Author : Ian McEwan, Ashima Arts.\n//  Maintainer : ijm\n//     Lastmod : 20110822 (ijm)\n//     License : Copyright (C) 2011 Ashima Arts. All rights reserved.\n//               Distributed under the MIT License. See LICENSE file.\n//               https://github.com/ashima/webgl-noise\n//\n\nvec3 mod289_0(vec3 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289_0(vec4 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute_0(vec4 x) {\n     return mod289_0(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt_0(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nfloat snoise(vec3 v)\n  {\n  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;\n  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);\n\n// First corner\n  vec3 i  = floor(v + dot(v, C.yyy) );\n  vec3 x0 =   v - i + dot(i, C.xxx) ;\n\n// Other corners\n  vec3 g_0 = step(x0.yzx, x0.xyz);\n  vec3 l = 1.0 - g_0;\n  vec3 i1 = min( g_0.xyz, l.zxy );\n  vec3 i2 = max( g_0.xyz, l.zxy );\n\n  //   x0 = x0 - 0.0 + 0.0 * C.xxx;\n  //   x1 = x0 - i1  + 1.0 * C.xxx;\n  //   x2 = x0 - i2  + 2.0 * C.xxx;\n  //   x3 = x0 - 1.0 + 3.0 * C.xxx;\n  vec3 x1 = x0 - i1 + C.xxx;\n  vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y\n  vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y\n\n// Permutations\n  i = mod289_0(i);\n  vec4 p = permute_0( permute_0( permute_0(\n             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))\n           + i.y + vec4(0.0, i1.y, i2.y, 1.0 ))\n           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));\n\n// Gradients: 7x7 points over a square, mapped onto an octahedron.\n// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)\n  float n_ = 0.142857142857; // 1.0/7.0\n  vec3  ns = n_ * D.wyz - D.xzx;\n\n  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)\n\n  vec4 x_ = floor(j * ns.z);\n  vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)\n\n  vec4 x = x_ *ns.x + ns.yyyy;\n  vec4 y = y_ *ns.x + ns.yyyy;\n  vec4 h = 1.0 - abs(x) - abs(y);\n\n  vec4 b0 = vec4( x.xy, y.xy );\n  vec4 b1 = vec4( x.zw, y.zw );\n\n  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;\n  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;\n  vec4 s0 = floor(b0)*2.0 + 1.0;\n  vec4 s1 = floor(b1)*2.0 + 1.0;\n  vec4 sh = -step(h, vec4(0.0));\n\n  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;\n  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;\n\n  vec3 p0 = vec3(a0.xy,h.x);\n  vec3 p1 = vec3(a0.zw,h.y);\n  vec3 p2 = vec3(a1.xy,h.z);\n  vec3 p3 = vec3(a1.zw,h.w);\n\n//Normalise gradients\n  vec4 norm = taylorInvSqrt_0(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));\n  p0 *= norm.x;\n  p1 *= norm.y;\n  p2 *= norm.z;\n  p3 *= norm.w;\n\n// Mix final noise value\n  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);\n  m = m * m;\n  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1),\n                                dot(p2,x2), dot(p3,x3) ) );\n  }\n\nfloat grain(vec2 texCoord, vec2 resolution, float frame, float multiplier) {\n    vec2 mult = texCoord * resolution;\n    float offset = snoise(vec3(mult / multiplier, frame));\n    float n1 = pnoise(vec3(mult, offset), vec3(1.0/texCoord * resolution, 1.0));\n    return n1 / 2.0 + 0.5;\n}\n\nfloat grain(vec2 texCoord, vec2 resolution, float frame) {\n    return grain(texCoord, resolution, frame, 2.5);\n}\n\nfloat grain(vec2 texCoord, vec2 resolution) {\n    return grain(texCoord, resolution, 0.0);\n}\n\n// control parameter\nuniform float time;\n\nuniform bool grayscale;\n\n// noise effect intensity value (0 = no effect, 1 = full effect)\nuniform float nIntensity;\n\n// scanlines effect intensity value (0 = no effect, 1 = full effect)\nuniform float sIntensity;\n\n// scanlines effect count value (0 = no effect, 4096 = full effect)\nuniform float sCount;\n\nuniform sampler2D tDiffuse;\n\nuniform vec2 uResolution;\n\nuniform float uGrainSize;\n\nvarying vec2 vUv;\n\nvoid main() {\n\n    // sample the source\n    vec4 cTextureScreen = texture2D( tDiffuse, vUv );\n\n    // make some noise\n    // float dx = rand( vUv + time );\n    float dx = grain(vUv, uResolution / uGrainSize, time);\n\n    // add noise\n    vec3 cResult = cTextureScreen.rgb + cTextureScreen.rgb * clamp( 0.1 + dx, 0.0, 1.0 );\n\n    // get us a sine and cosine\n    vec2 sc = vec2( sin( vUv.y * sCount ), cos( vUv.y * sCount ) );\n\n    // add scanlines\n    cResult += cTextureScreen.rgb * vec3( sc.x, sc.y, sc.x ) * sIntensity;\n\n    // interpolate between source and result by intensity\n    cResult = cTextureScreen.rgb + clamp( nIntensity, 0.0,1.0 ) * ( cResult - cTextureScreen.rgb );\n\n    // convert to grayscale if desired\n    if( grayscale ) {\n\n        cResult = vec3( cResult.r * 0.3 + cResult.g * 0.59 + cResult.b * 0.11 );\n\n    }\n\n    gl_FragColor =  vec4( cResult, cTextureScreen.a );\n\n}"]);
+const filmFrag = glsl(["#define GLSLIFY 1\n//\n// GLSL textureless classic 3D noise \"cnoise\",\n// with an RSL-style periodic variant \"pnoise\".\n// Author:  Stefan Gustavson (stefan.gustavson@liu.se)\n// Version: 2011-10-11\n//\n// Many thanks to Ian McEwan of Ashima Arts for the\n// ideas for permutation and gradient selection.\n//\n// Copyright (c) 2011 Stefan Gustavson. All rights reserved.\n// Distributed under the MIT license. See LICENSE file.\n// https://github.com/ashima/webgl-noise\n//\n\nvec3 mod289_0(vec3 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289_0(vec4 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute_0(vec4 x)\n{\n  return mod289_0(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt_0(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nvec3 fade(vec3 t) {\n  return t*t*t*(t*(t*6.0-15.0)+10.0);\n}\n\n// Classic Perlin noise, periodic variant\nfloat pnoise(vec3 P, vec3 rep)\n{\n  vec3 Pi0 = mod(floor(P), rep); // Integer part, modulo period\n  vec3 Pi1 = mod(Pi0 + vec3(1.0), rep); // Integer part + 1, mod period\n  Pi0 = mod289_0(Pi0);\n  Pi1 = mod289_0(Pi1);\n  vec3 Pf0 = fract(P); // Fractional part for interpolation\n  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n  vec4 iy = vec4(Pi0.yy, Pi1.yy);\n  vec4 iz0 = Pi0.zzzz;\n  vec4 iz1 = Pi1.zzzz;\n\n  vec4 ixy = permute_0(permute_0(ix) + iy);\n  vec4 ixy0 = permute_0(ixy + iz0);\n  vec4 ixy1 = permute_0(ixy + iz1);\n\n  vec4 gx0 = ixy0 * (1.0 / 7.0);\n  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n  gx0 = fract(gx0);\n  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n  vec4 sz0 = step(gz0, vec4(0.0));\n  gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n  gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n  vec4 gx1 = ixy1 * (1.0 / 7.0);\n  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n  gx1 = fract(gx1);\n  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n  vec4 sz1 = step(gz1, vec4(0.0));\n  gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n  gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n  vec4 norm0 = taylorInvSqrt_0(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n  g000 *= norm0.x;\n  g010 *= norm0.y;\n  g100 *= norm0.z;\n  g110 *= norm0.w;\n  vec4 norm1 = taylorInvSqrt_0(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n  g001 *= norm1.x;\n  g011 *= norm1.y;\n  g101 *= norm1.z;\n  g111 *= norm1.w;\n\n  float n000 = dot(g000, Pf0);\n  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n  float n111 = dot(g111, Pf1);\n\n  vec3 fade_xyz = fade(Pf0);\n  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x);\n  return 2.2 * n_xyz;\n}\n\n//\n// Description : Array and textureless GLSL 2D/3D/4D simplex\n//               noise functions.\n//      Author : Ian McEwan, Ashima Arts.\n//  Maintainer : ijm\n//     Lastmod : 20110822 (ijm)\n//     License : Copyright (C) 2011 Ashima Arts. All rights reserved.\n//               Distributed under the MIT License. See LICENSE file.\n//               https://github.com/ashima/webgl-noise\n//\n\nvec3 mod289_1(vec3 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289_1(vec4 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute_1(vec4 x) {\n     return mod289_1(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt_1(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nfloat snoise(vec3 v)\n  {\n  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;\n  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);\n\n// First corner\n  vec3 i  = floor(v + dot(v, C.yyy) );\n  vec3 x0 =   v - i + dot(i, C.xxx) ;\n\n// Other corners\n  vec3 g_0 = step(x0.yzx, x0.xyz);\n  vec3 l = 1.0 - g_0;\n  vec3 i1 = min( g_0.xyz, l.zxy );\n  vec3 i2 = max( g_0.xyz, l.zxy );\n\n  //   x0 = x0 - 0.0 + 0.0 * C.xxx;\n  //   x1 = x0 - i1  + 1.0 * C.xxx;\n  //   x2 = x0 - i2  + 2.0 * C.xxx;\n  //   x3 = x0 - 1.0 + 3.0 * C.xxx;\n  vec3 x1 = x0 - i1 + C.xxx;\n  vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y\n  vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y\n\n// Permutations\n  i = mod289_1(i);\n  vec4 p = permute_1( permute_1( permute_1(\n             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))\n           + i.y + vec4(0.0, i1.y, i2.y, 1.0 ))\n           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));\n\n// Gradients: 7x7 points over a square, mapped onto an octahedron.\n// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)\n  float n_ = 0.142857142857; // 1.0/7.0\n  vec3  ns = n_ * D.wyz - D.xzx;\n\n  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)\n\n  vec4 x_ = floor(j * ns.z);\n  vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)\n\n  vec4 x = x_ *ns.x + ns.yyyy;\n  vec4 y = y_ *ns.x + ns.yyyy;\n  vec4 h = 1.0 - abs(x) - abs(y);\n\n  vec4 b0 = vec4( x.xy, y.xy );\n  vec4 b1 = vec4( x.zw, y.zw );\n\n  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;\n  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;\n  vec4 s0 = floor(b0)*2.0 + 1.0;\n  vec4 s1 = floor(b1)*2.0 + 1.0;\n  vec4 sh = -step(h, vec4(0.0));\n\n  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;\n  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;\n\n  vec3 p0 = vec3(a0.xy,h.x);\n  vec3 p1 = vec3(a0.zw,h.y);\n  vec3 p2 = vec3(a1.xy,h.z);\n  vec3 p3 = vec3(a1.zw,h.w);\n\n//Normalise gradients\n  vec4 norm = taylorInvSqrt_1(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));\n  p0 *= norm.x;\n  p1 *= norm.y;\n  p2 *= norm.z;\n  p3 *= norm.w;\n\n// Mix final noise value\n  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);\n  m = m * m;\n  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1),\n                                dot(p2,x2), dot(p3,x3) ) );\n  }\n\nfloat grain(vec2 texCoord, vec2 resolution, float frame, float multiplier) {\n    vec2 mult = texCoord * resolution;\n    float offset = snoise(vec3(mult / multiplier, frame));\n    float n1 = pnoise(vec3(mult, offset), vec3(1.0/texCoord * resolution, 1.0));\n    return n1 / 2.0 + 0.5;\n}\n\nfloat grain(vec2 texCoord, vec2 resolution, float frame) {\n    return grain(texCoord, resolution, frame, 2.5);\n}\n\nfloat grain(vec2 texCoord, vec2 resolution) {\n    return grain(texCoord, resolution, 0.0);\n}\n\n// control parameter\nuniform float time;\n\nuniform bool grayscale;\n\n// noise effect intensity value (0 = no effect, 1 = full effect)\nuniform float nIntensity;\n\n// scanlines effect intensity value (0 = no effect, 1 = full effect)\nuniform float sIntensity;\n\n// scanlines effect count value (0 = no effect, 4096 = full effect)\nuniform float sCount;\n\nuniform sampler2D tDiffuse;\n\nuniform vec2 uResolution;\n\nuniform float uGrainSize;\n\nvarying vec2 vUv;\n\nvoid main() {\n\n    // sample the source\n    vec4 cTextureScreen = texture2D( tDiffuse, vUv );\n\n    // make some noise\n    // float dx = rand( vUv + time );\n    float dx = grain(vUv, uResolution / uGrainSize, time);\n\n    // add noise\n    vec3 cResult = cTextureScreen.rgb + cTextureScreen.rgb * clamp( 0.1 + dx, 0.0, 1.0 );\n\n    // get us a sine and cosine\n    vec2 sc = vec2( sin( vUv.y * sCount ), cos( vUv.y * sCount ) );\n\n    // add scanlines\n    cResult += cTextureScreen.rgb * vec3( sc.x, sc.y, sc.x ) * sIntensity;\n\n    // interpolate between source and result by intensity\n    cResult = cTextureScreen.rgb + clamp( nIntensity, 0.0,1.0 ) * ( cResult - cTextureScreen.rgb );\n\n    // convert to grayscale if desired\n    if( grayscale ) {\n\n        cResult = vec3( cResult.r * 0.3 + cResult.g * 0.59 + cResult.b * 0.11 );\n\n    }\n\n    gl_FragColor =  vec4( cResult, cTextureScreen.a );\n\n}"]);
 const add = options => {
   const {
     composer
