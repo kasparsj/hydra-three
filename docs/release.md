@@ -9,6 +9,8 @@ Run:
 ```bash
 npm ci
 npm run ci:check
+npx playwright install chromium
+npm run test:smoke:browser
 ```
 
 Ensure:

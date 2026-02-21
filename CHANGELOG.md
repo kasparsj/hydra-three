@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- Real browser smoke test (`npm run test:smoke:browser`) using Playwright Chromium against `examples/quickstart.html`.
+- CI and release workflows now run the browser smoke test in addition to existing build/module/package checks.
 
 ## [1.4.1] - 2026-02-21
 ### Added

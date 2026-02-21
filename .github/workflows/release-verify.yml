@@ -23,8 +23,14 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: Verify build and smoke tests
         run: npm run ci:check
+
+      - name: Verify browser smoke test
+        run: npm run test:smoke:browser
 
       - name: Create release tarball
         run: npm pack

@@ -1,51 +1,4 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Hydra = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-module.exports = require('./src/dct.js');
-
-},{"./src/dct.js":2}],2:[function(require,module,exports){
-/*===========================================================================*\
- * Discrete Cosine Transform
- *
- * (c) Vail Systems. Joshua Jung and Ben Bryan. 2015
- *
- * This code is not designed to be highly optimized but as an educational
- * tool to understand the Mel-scale and its related coefficients used in
- * human speech analysis.
-\*===========================================================================*/
-var cosMap = null;
-
-// Builds a cosine map for the given input size. This allows multiple input sizes to be memoized automagically
-// if you want to run the DCT over and over.
-var memoizeCosines = function(N) {
-  cosMap = cosMap || {};
-  cosMap[N] = new Array(N*N);
-
-  var PI_N = Math.PI / N;
-
-  for (var k = 0; k < N; k++) {
-    for (var n = 0; n < N; n++) {
-      cosMap[N][n + (k * N)] = Math.cos(PI_N * (n + 0.5) * k);
-    }
-  }
-};
-
-function dct(signal, scale) {
-  var L = signal.length;
-  scale = scale || 2;
-
-  if (!cosMap || !cosMap[L]) memoizeCosines(L);
-
-  var coefficients = signal.map(function () {return 0;});
-
-  return coefficients.map(function (__, ix) {
-    return scale * signal.reduce(function (prev, cur, ix_, arr) {
-      return prev + (cur * cosMap[L][ix_ + (ix * L)]);
-    }, 0);
-  });
-};
-
-module.exports = dct;
-
-},{}],3:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -544,223 +497,7 @@ function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
   }
 }
 
-},{}],4:[function(require,module,exports){
-'use strict';
-
-var utils = require('./utils');
-
-// real to complex fft
-var fft = function fft(signal) {
-
-  var complexSignal = {};
-
-  if (signal.real === undefined || signal.imag === undefined) {
-    complexSignal = utils.constructComplexArray(signal);
-  } else {
-    complexSignal.real = signal.real.slice();
-    complexSignal.imag = signal.imag.slice();
-  }
-
-  var N = complexSignal.real.length;
-  var logN = Math.log2(N);
-
-  if (Math.round(logN) != logN) throw new Error('Input size must be a power of 2.');
-
-  if (complexSignal.real.length != complexSignal.imag.length) {
-    throw new Error('Real and imaginary components must have the same length.');
-  }
-
-  var bitReversedIndices = utils.bitReverseArray(N);
-
-  // sort array
-  var ordered = {
-    'real': [],
-    'imag': []
-  };
-
-  for (var i = 0; i < N; i++) {
-    ordered.real[bitReversedIndices[i]] = complexSignal.real[i];
-    ordered.imag[bitReversedIndices[i]] = complexSignal.imag[i];
-  }
-
-  for (var _i = 0; _i < N; _i++) {
-    complexSignal.real[_i] = ordered.real[_i];
-    complexSignal.imag[_i] = ordered.imag[_i];
-  }
-  // iterate over the number of stages
-  for (var n = 1; n <= logN; n++) {
-    var currN = Math.pow(2, n);
-
-    // find twiddle factors
-    for (var k = 0; k < currN / 2; k++) {
-      var twiddle = utils.euler(k, currN);
-
-      // on each block of FT, implement the butterfly diagram
-      for (var m = 0; m < N / currN; m++) {
-        var currEvenIndex = currN * m + k;
-        var currOddIndex = currN * m + k + currN / 2;
-
-        var currEvenIndexSample = {
-          'real': complexSignal.real[currEvenIndex],
-          'imag': complexSignal.imag[currEvenIndex]
-        };
-        var currOddIndexSample = {
-          'real': complexSignal.real[currOddIndex],
-          'imag': complexSignal.imag[currOddIndex]
-        };
-
-        var odd = utils.multiply(twiddle, currOddIndexSample);
-
-        var subtractionResult = utils.subtract(currEvenIndexSample, odd);
-        complexSignal.real[currOddIndex] = subtractionResult.real;
-        complexSignal.imag[currOddIndex] = subtractionResult.imag;
-
-        var additionResult = utils.add(odd, currEvenIndexSample);
-        complexSignal.real[currEvenIndex] = additionResult.real;
-        complexSignal.imag[currEvenIndex] = additionResult.imag;
-      }
-    }
-  }
-
-  return complexSignal;
-};
-
-// complex to real ifft
-var ifft = function ifft(signal) {
-
-  if (signal.real === undefined || signal.imag === undefined) {
-    throw new Error("IFFT only accepts a complex input.");
-  }
-
-  var N = signal.real.length;
-
-  var complexSignal = {
-    'real': [],
-    'imag': []
-  };
-
-  //take complex conjugate in order to be able to use the regular FFT for IFFT
-  for (var i = 0; i < N; i++) {
-    var currentSample = {
-      'real': signal.real[i],
-      'imag': signal.imag[i]
-    };
-
-    var conjugateSample = utils.conj(currentSample);
-    complexSignal.real[i] = conjugateSample.real;
-    complexSignal.imag[i] = conjugateSample.imag;
-  }
-
-  //compute
-  var X = fft(complexSignal);
-
-  //normalize
-  complexSignal.real = X.real.map(function (val) {
-    return val / N;
-  });
-
-  complexSignal.imag = X.imag.map(function (val) {
-    return val / N;
-  });
-
-  return complexSignal;
-};
-
-module.exports = {
-  fft: fft,
-  ifft: ifft
-};
-},{"./utils":5}],5:[function(require,module,exports){
-'use strict';
-
-// memoization of the reversal of different lengths.
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
-var memoizedReversal = {};
-var memoizedZeroBuffers = {};
-
-var constructComplexArray = function constructComplexArray(signal) {
-  var complexSignal = {};
-
-  complexSignal.real = signal.real === undefined ? signal.slice() : signal.real.slice();
-
-  var bufferSize = complexSignal.real.length;
-
-  if (memoizedZeroBuffers[bufferSize] === undefined) {
-    memoizedZeroBuffers[bufferSize] = Array.apply(null, Array(bufferSize)).map(Number.prototype.valueOf, 0);
-  }
-
-  complexSignal.imag = memoizedZeroBuffers[bufferSize].slice();
-
-  return complexSignal;
-};
-
-var bitReverseArray = function bitReverseArray(N) {
-  if (memoizedReversal[N] === undefined) {
-    var maxBinaryLength = (N - 1).toString(2).length; //get the binary length of the largest index.
-    var templateBinary = '0'.repeat(maxBinaryLength); //create a template binary of that length.
-    var reversed = {};
-    for (var n = 0; n < N; n++) {
-      var currBinary = n.toString(2); //get binary value of current index.
-
-      //prepend zeros from template to current binary. This makes binary values of all indices have the same length.
-      currBinary = templateBinary.substr(currBinary.length) + currBinary;
-
-      currBinary = [].concat(_toConsumableArray(currBinary)).reverse().join(''); //reverse
-      reversed[n] = parseInt(currBinary, 2); //convert to decimal
-    }
-    memoizedReversal[N] = reversed; //save
-  }
-  return memoizedReversal[N];
-};
-
-// complex multiplication
-var multiply = function multiply(a, b) {
-  return {
-    'real': a.real * b.real - a.imag * b.imag,
-    'imag': a.real * b.imag + a.imag * b.real
-  };
-};
-
-// complex addition
-var add = function add(a, b) {
-  return {
-    'real': a.real + b.real,
-    'imag': a.imag + b.imag
-  };
-};
-
-// complex subtraction
-var subtract = function subtract(a, b) {
-  return {
-    'real': a.real - b.real,
-    'imag': a.imag - b.imag
-  };
-};
-
-// euler's identity e^x = cos(x) + sin(x)
-var euler = function euler(kn, N) {
-  var x = -2 * Math.PI * kn / N;
-  return { 'real': Math.cos(x), 'imag': Math.sin(x) };
-};
-
-// complex conjugate
-var conj = function conj(a) {
-  a.imag *= -1;
-  return a;
-};
-
-module.exports = {
-  bitReverseArray: bitReverseArray,
-  multiply: multiply,
-  add: add,
-  subtract: subtract,
-  euler: euler,
-  conj: conj,
-  constructComplexArray: constructComplexArray
-};
-},{}],6:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 module.exports = function(strings) {
   if (typeof strings === 'string') strings = [strings]
   var exprs = [].slice.call(arguments,1)
@@ -772,7 +509,7 @@ module.exports = function(strings) {
   return parts.join('')
 }
 
-},{}],7:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -801,11 +538,11 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],8:[function(require,module,exports){
-!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e(require("dct"),require("fftjs")):"function"==typeof define&&define.amd?define(["dct","fftjs"],e):(t="undefined"!=typeof globalThis?globalThis:t||self).Meyda=e(t.dct,t.fftjs)}(this,(function(t,e){"use strict";function r(t,e,r){if(r||2===arguments.length)for(var n,a=0,o=e.length;a<o;a++)!n&&a in e||(n||(n=Array.prototype.slice.call(e,0,a)),n[a]=e[a]);return t.concat(n||Array.prototype.slice.call(e))}var n=Object.freeze({__proto__:null,blackman:function(t){for(var e=new Float32Array(t),r=2*Math.PI/(t-1),n=2*r,a=0;a<t/2;a++)e[a]=.42-.5*Math.cos(a*r)+.08*Math.cos(a*n);for(a=Math.ceil(t/2);a>0;a--)e[t-a]=e[a-1];return e},hamming:function(t){for(var e=new Float32Array(t),r=0;r<t;r++)e[r]=.54-.46*Math.cos(2*Math.PI*(r/t-1));return e},hanning:function(t){for(var e=new Float32Array(t),r=0;r<t;r++)e[r]=.5-.5*Math.cos(2*Math.PI*r/(t-1));return e},sine:function(t){for(var e=Math.PI/(t-1),r=new Float32Array(t),n=0;n<t;n++)r[n]=Math.sin(e*n);return r}}),a={};function o(t){for(;t%2==0&&t>1;)t/=2;return 1===t}function i(t,e){if("rect"!==e){if(""!==e&&e||(e="hanning"),a[e]||(a[e]={}),!a[e][t.length])try{a[e][t.length]=n[e](t.length)}catch(t){throw new Error("Invalid windowing function")}t=function(t,e){for(var r=[],n=0;n<Math.min(t.length,e.length);n++)r[n]=t[n]*e[n];return r}(t,a[e][t.length])}return t}function u(t,e,r){for(var n=new Float32Array(t),a=0;a<n.length;a++)n[a]=a*e/r,n[a]=13*Math.atan(n[a]/1315.8)+3.5*Math.atan(Math.pow(n[a]/7518,2));return n}function f(t){return Float32Array.from(t)}function s(t){return 1125*Math.log(1+t/700)}function c(t,e,r){for(var n,a=new Float32Array(t+2),o=new Float32Array(t+2),i=e/2,u=s(0),f=(s(i)-u)/(t+1),c=new Array(t+2),p=0;p<a.length;p++)a[p]=p*f,o[p]=(n=a[p],700*(Math.exp(n/1125)-1)),c[p]=Math.floor((r+1)*o[p]/e);for(var h=new Array(t),m=0;m<h.length;m++){h[m]=new Array(r/2+1).fill(0);for(p=c[m];p<c[m+1];p++)h[m][p]=(p-c[m])/(c[m+1]-c[m]);for(p=c[m+1];p<c[m+2];p++)h[m][p]=(c[m+2]-p)/(c[m+2]-c[m+1])}return h}function p(t,e,n,a,o,i,u){void 0===a&&(a=5),void 0===o&&(o=2),void 0===i&&(i=!0),void 0===u&&(u=440);var f=Math.floor(n/2)+1,s=new Array(n).fill(0).map((function(r,a){return t*function(t,e){return Math.log2(16*t/e)}(e*a/n,u)}));s[0]=s[1]-1.5*t;var c,p,h,m=s.slice(1).map((function(t,e){return Math.max(t-s[e])}),1).concat([1]),l=Math.round(t/2),w=new Array(t).fill(0).map((function(e,r){return s.map((function(e){return(10*t+l+e-r)%t-l}))})),d=w.map((function(t,e){return t.map((function(t,r){return Math.exp(-.5*Math.pow(2*w[e][r]/m[r],2))}))}));if(p=(c=d)[0].map((function(){return 0})),h=c.reduce((function(t,e){return e.forEach((function(e,r){t[r]+=Math.pow(e,2)})),t}),p).map(Math.sqrt),d=c.map((function(t,e){return t.map((function(t,e){return t/(h[e]||1)}))})),o){var S=s.map((function(e){return Math.exp(-.5*Math.pow((e/t-a)/o,2))}));d=d.map((function(t){return t.map((function(t,e){return t*S[e]}))}))}return i&&(d=r(r([],d.slice(3),!0),d.slice(0,3),!0)),d.map((function(t){return t.slice(0,f)}))}function h(t,e){for(var r=0,n=0,a=0;a<e.length;a++)r+=Math.pow(a,t)*Math.abs(e[a]),n+=e[a];return r/n}function m(t){var e=t.ampSpectrum,r=t.barkScale,n=t.numberOfBarkBands,a=void 0===n?24:n;if("object"!=typeof e||"object"!=typeof r)throw new TypeError;var o=a,i=new Float32Array(o),u=0,f=e,s=new Int32Array(o+1);s[0]=0;for(var c=r[f.length-1]/o,p=1,h=0;h<f.length;h++)for(;r[h]>c;)s[p++]=h,c=p*r[f.length-1]/o;s[o]=f.length-1;for(h=0;h<o;h++){for(var m=0,l=s[h];l<s[h+1];l++)m+=f[l];i[h]=Math.pow(m,.23)}for(h=0;h<i.length;h++)u+=i[h];return{specific:i,total:u}}function l(t){var e=t.ampSpectrum;if("object"!=typeof e)throw new TypeError;for(var r=new Float32Array(e.length),n=0;n<r.length;n++)r[n]=Math.pow(e[n],2);return r}function w(t){var e=t.ampSpectrum,r=t.melFilterBank,n=t.bufferSize;if("object"!=typeof e)throw new TypeError("Valid ampSpectrum is required to generate melBands");if("object"!=typeof r)throw new TypeError("Valid melFilterBank is required to generate melBands");for(var a=l({ampSpectrum:e}),o=r.length,i=Array(o),u=new Float32Array(o),f=0;f<u.length;f++){i[f]=new Float32Array(n/2),u[f]=0;for(var s=0;s<n/2;s++)i[f][s]=r[f][s]*a[s],u[f]+=i[f][s];u[f]=Math.log(u[f]+1)}return Array.prototype.slice.call(u)}var d=Object.freeze({__proto__:null,amplitudeSpectrum:function(t){return t.ampSpectrum},buffer:function(t){return t.signal},chroma:function(t){var e=t.ampSpectrum,r=t.chromaFilterBank;if("object"!=typeof e)throw new TypeError("Valid ampSpectrum is required to generate chroma");if("object"!=typeof r)throw new TypeError("Valid chromaFilterBank is required to generate chroma");var n=r.map((function(t,r){return e.reduce((function(e,r,n){return e+r*t[n]}),0)})),a=Math.max.apply(Math,n);return a?n.map((function(t){return t/a})):n},complexSpectrum:function(t){return t.complexSpectrum},energy:function(t){var e=t.signal;if("object"!=typeof e)throw new TypeError;for(var r=0,n=0;n<e.length;n++)r+=Math.pow(Math.abs(e[n]),2);return r},loudness:m,melBands:w,mfcc:function(e){var r=e.ampSpectrum,n=e.melFilterBank,a=e.numberOfMFCCCoefficients,o=e.bufferSize,i=Math.min(40,Math.max(1,a||13));if(n.length<i)throw new Error("Insufficient filter bank for requested number of coefficients");var u=w({ampSpectrum:r,melFilterBank:n,bufferSize:o});return t(u).slice(0,i)},perceptualSharpness:function(t){for(var e=m({ampSpectrum:t.ampSpectrum,barkScale:t.barkScale}),r=e.specific,n=0,a=0;a<r.length;a++)n+=a<15?(a+1)*r[a+1]:.066*Math.exp(.171*(a+1));return n*=.11/e.total},perceptualSpread:function(t){for(var e=m({ampSpectrum:t.ampSpectrum,barkScale:t.barkScale}),r=0,n=0;n<e.specific.length;n++)e.specific[n]>r&&(r=e.specific[n]);return Math.pow((e.total-r)/e.total,2)},powerSpectrum:l,rms:function(t){var e=t.signal;if("object"!=typeof e)throw new TypeError;for(var r=0,n=0;n<e.length;n++)r+=Math.pow(e[n],2);return r/=e.length,r=Math.sqrt(r)},spectralCentroid:function(t){var e=t.ampSpectrum;if("object"!=typeof e)throw new TypeError;return h(1,e)},spectralCrest:function(t){var e=t.ampSpectrum;if("object"!=typeof e)throw new TypeError;var r=0,n=-1/0;return e.forEach((function(t){r+=Math.pow(t,2),n=t>n?t:n})),r/=e.length,r=Math.sqrt(r),n/r},spectralFlatness:function(t){var e=t.ampSpectrum;if("object"!=typeof e)throw new TypeError;for(var r=0,n=0,a=0;a<e.length;a++)r+=Math.log(e[a]),n+=e[a];return Math.exp(r/e.length)*e.length/n},spectralFlux:function(t){var e=t.signal,r=t.previousSignal,n=t.bufferSize;if("object"!=typeof e||"object"!=typeof r)throw new TypeError;for(var a=0,o=-n/2;o<e.length/2-1;o++)x=Math.abs(e[o])-Math.abs(r[o]),a+=(x+Math.abs(x))/2;return a},spectralKurtosis:function(t){var e=t.ampSpectrum;if("object"!=typeof e)throw new TypeError;var r=e,n=h(1,r),a=h(2,r),o=h(3,r),i=h(4,r);return(-3*Math.pow(n,4)+6*n*a-4*n*o+i)/Math.pow(Math.sqrt(a-Math.pow(n,2)),4)},spectralRolloff:function(t){var e=t.ampSpectrum,r=t.sampleRate;if("object"!=typeof e)throw new TypeError;for(var n=e,a=r/(2*(n.length-1)),o=0,i=0;i<n.length;i++)o+=n[i];for(var u=.99*o,f=n.length-1;o>u&&f>=0;)o-=n[f],--f;return(f+1)*a},spectralSkewness:function(t){var e=t.ampSpectrum;if("object"!=typeof e)throw new TypeError;var r=h(1,e),n=h(2,e),a=h(3,e);return(2*Math.pow(r,3)-3*r*n+a)/Math.pow(Math.sqrt(n-Math.pow(r,2)),3)},spectralSlope:function(t){var e=t.ampSpectrum,r=t.sampleRate,n=t.bufferSize;if("object"!=typeof e)throw new TypeError;for(var a=0,o=0,i=new Float32Array(e.length),u=0,f=0,s=0;s<e.length;s++){a+=e[s];var c=s*r/n;i[s]=c,u+=c*c,o+=c,f+=c*e[s]}return(e.length*f-o*a)/(a*(u-Math.pow(o,2)))},spectralSpread:function(t){var e=t.ampSpectrum;if("object"!=typeof e)throw new TypeError;return Math.sqrt(h(2,e)-Math.pow(h(1,e),2))},zcr:function(t){var e=t.signal;if("object"!=typeof e)throw new TypeError;for(var r=0,n=1;n<e.length;n++)(e[n-1]>=0&&e[n]<0||e[n-1]<0&&e[n]>=0)&&r++;return r}}),S=function(){function t(t,e){var r=this;if(this._m=e,!t.audioContext)throw this._m.errors.noAC;if(t.bufferSize&&!o(t.bufferSize))throw this._m._errors.notPow2;if(!t.source)throw this._m._errors.noSource;this._m.audioContext=t.audioContext,this._m.bufferSize=t.bufferSize||this._m.bufferSize||256,this._m.hopSize=t.hopSize||this._m.hopSize||this._m.bufferSize,this._m.sampleRate=t.sampleRate||this._m.audioContext.sampleRate||44100,this._m.callback=t.callback,this._m.windowingFunction=t.windowingFunction||"hanning",this._m.featureExtractors=d,this._m.EXTRACTION_STARTED=t.startImmediately||!1,this._m.channel="number"==typeof t.channel?t.channel:0,this._m.inputs=t.inputs||1,this._m.outputs=t.outputs||1,this._m.numberOfMFCCCoefficients=t.numberOfMFCCCoefficients||this._m.numberOfMFCCCoefficients||13,this._m.numberOfBarkBands=t.numberOfBarkBands||this._m.numberOfBarkBands||24,this._m.spn=this._m.audioContext.createScriptProcessor(this._m.bufferSize,this._m.inputs,this._m.outputs),this._m.spn.connect(this._m.audioContext.destination),this._m._featuresToExtract=t.featureExtractors||[],this._m.barkScale=u(this._m.bufferSize,this._m.sampleRate,this._m.bufferSize),this._m.melFilterBank=c(Math.max(this._m.melBands,this._m.numberOfMFCCCoefficients),this._m.sampleRate,this._m.bufferSize),this._m.inputData=null,this._m.previousInputData=null,this._m.frame=null,this._m.previousFrame=null,this.setSource(t.source),this._m.spn.onaudioprocess=function(t){var e;null!==r._m.inputData&&(r._m.previousInputData=r._m.inputData),r._m.inputData=t.inputBuffer.getChannelData(r._m.channel),r._m.previousInputData?((e=new Float32Array(r._m.previousInputData.length+r._m.inputData.length-r._m.hopSize)).set(r._m.previousInputData.slice(r._m.hopSize)),e.set(r._m.inputData,r._m.previousInputData.length-r._m.hopSize)):e=r._m.inputData;var n=function(t,e,r){if(t.length<e)throw new Error("Buffer is too short for frame length");if(r<1)throw new Error("Hop length cannot be less that 1");if(e<1)throw new Error("Frame length cannot be less that 1");var n=1+Math.floor((t.length-e)/r);return new Array(n).fill(0).map((function(n,a){return t.slice(a*r,a*r+e)}))}(e,r._m.bufferSize,r._m.hopSize);n.forEach((function(t){r._m.frame=t;var e=r._m.extract(r._m._featuresToExtract,r._m.frame,r._m.previousFrame);"function"==typeof r._m.callback&&r._m.EXTRACTION_STARTED&&r._m.callback(e),r._m.previousFrame=r._m.frame}))}}return t.prototype.start=function(t){this._m._featuresToExtract=t||this._m._featuresToExtract,this._m.EXTRACTION_STARTED=!0},t.prototype.stop=function(){this._m.EXTRACTION_STARTED=!1},t.prototype.setSource=function(t){this._m.source&&this._m.source.disconnect(this._m.spn),this._m.source=t,this._m.source.connect(this._m.spn)},t.prototype.setChannel=function(t){t<=this._m.inputs?this._m.channel=t:console.error("Channel ".concat(t," does not exist. Make sure you've provided a value for 'inputs' that is greater than ").concat(t," when instantiating the MeydaAnalyzer"))},t.prototype.get=function(t){return this._m.inputData?this._m.extract(t||this._m._featuresToExtract,this._m.inputData,this._m.previousInputData):null},t}(),_={audioContext:null,spn:null,bufferSize:512,sampleRate:44100,melBands:26,chromaBands:12,callback:null,windowingFunction:"hanning",featureExtractors:d,EXTRACTION_STARTED:!1,numberOfMFCCCoefficients:13,numberOfBarkBands:24,_featuresToExtract:[],windowing:i,_errors:{notPow2:new Error("Meyda: Buffer size must be a power of 2, e.g. 64 or 512"),featureUndef:new Error("Meyda: No features defined."),invalidFeatureFmt:new Error("Meyda: Invalid feature format"),invalidInput:new Error("Meyda: Invalid input."),noAC:new Error("Meyda: No AudioContext specified."),noSource:new Error("Meyda: No source node specified.")},createMeydaAnalyzer:function(t){return new S(t,Object.assign({},_))},listAvailableFeatureExtractors:function(){return Object.keys(this.featureExtractors)},extract:function(t,e,r){var n=this;if(!e)throw this._errors.invalidInput;if("object"!=typeof e)throw this._errors.invalidInput;if(!t)throw this._errors.featureUndef;if(!o(e.length))throw this._errors.notPow2;void 0!==this.barkScale&&this.barkScale.length==this.bufferSize||(this.barkScale=u(this.bufferSize,this.sampleRate,this.bufferSize)),void 0!==this.melFilterBank&&this.barkScale.length==this.bufferSize&&this.melFilterBank.length==this.melBands||(this.melFilterBank=c(Math.max(this.melBands,this.numberOfMFCCCoefficients),this.sampleRate,this.bufferSize)),void 0!==this.chromaFilterBank&&this.chromaFilterBank.length==this.chromaBands||(this.chromaFilterBank=p(this.chromaBands,this.sampleRate,this.bufferSize)),"buffer"in e&&void 0===e.buffer?this.signal=f(e):this.signal=e;var a=v(e,this.windowingFunction,this.bufferSize);if(this.signal=a.windowedSignal,this.complexSpectrum=a.complexSpectrum,this.ampSpectrum=a.ampSpectrum,r){var i=v(r,this.windowingFunction,this.bufferSize);this.previousSignal=i.windowedSignal,this.previousComplexSpectrum=i.complexSpectrum,this.previousAmpSpectrum=i.ampSpectrum}var s=function(t){return n.featureExtractors[t]({ampSpectrum:n.ampSpectrum,chromaFilterBank:n.chromaFilterBank,complexSpectrum:n.complexSpectrum,signal:n.signal,bufferSize:n.bufferSize,sampleRate:n.sampleRate,barkScale:n.barkScale,melFilterBank:n.melFilterBank,previousSignal:n.previousSignal,previousAmpSpectrum:n.previousAmpSpectrum,previousComplexSpectrum:n.previousComplexSpectrum,numberOfMFCCCoefficients:n.numberOfMFCCCoefficients,numberOfBarkBands:n.numberOfBarkBands})};if("object"==typeof t)return t.reduce((function(t,e){var r;return Object.assign({},t,((r={})[e]=s(e),r))}),{});if("string"==typeof t)return s(t);throw this._errors.invalidFeatureFmt}},v=function(t,r,n){var a={};void 0===t.buffer?a.signal=f(t):a.signal=t,a.windowedSignal=i(a.signal,r),a.complexSpectrum=e.fft(a.windowedSignal),a.ampSpectrum=new Float32Array(n/2);for(var o=0;o<n/2;o++)a.ampSpectrum[o]=Math.sqrt(Math.pow(a.complexSpectrum.real[o],2)+Math.pow(a.complexSpectrum.imag[o],2));return a};return"undefined"!=typeof window&&(window.Meyda=_),_}));
+},{}],4:[function(require,module,exports){
+!function(r,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):(r="undefined"!=typeof globalThis?globalThis:r||self).Meyda=t()}(this,(function(){"use strict";function r(r,t,e){if(e||2===arguments.length)for(var a,n=0,o=t.length;n<o;n++)!a&&n in t||(a||(a=Array.prototype.slice.call(t,0,n)),a[n]=t[n]);return r.concat(a||Array.prototype.slice.call(t))}var t=Object.freeze({__proto__:null,blackman:function(r){for(var t=new Float32Array(r),e=2*Math.PI/(r-1),a=2*e,n=0;n<r/2;n++)t[n]=.42-.5*Math.cos(n*e)+.08*Math.cos(n*a);for(n=Math.ceil(r/2);n>0;n--)t[r-n]=t[n-1];return t},hamming:function(r){for(var t=new Float32Array(r),e=0;e<r;e++)t[e]=.54-.46*Math.cos(2*Math.PI*(e/r-1));return t},hanning:function(r){for(var t=new Float32Array(r),e=0;e<r;e++)t[e]=.5-.5*Math.cos(2*Math.PI*e/(r-1));return t},sine:function(r){for(var t=Math.PI/(r-1),e=new Float32Array(r),a=0;a<r;a++)e[a]=Math.sin(t*a);return e}}),e={};function a(r){for(;r%2==0&&r>1;)r/=2;return 1===r}function n(r,a){if("rect"!==a){if(""!==a&&a||(a="hanning"),e[a]||(e[a]={}),!e[a][r.length])try{e[a][r.length]=t[a](r.length)}catch(r){throw new Error("Invalid windowing function")}r=function(r,t){for(var e=[],a=0;a<Math.min(r.length,t.length);a++)e[a]=r[a]*t[a];return e}(r,e[a][r.length])}return r}function o(r,t,e){for(var a=new Float32Array(r),n=0;n<a.length;n++)a[n]=n*t/e,a[n]=13*Math.atan(a[n]/1315.8)+3.5*Math.atan(Math.pow(a[n]/7518,2));return a}function i(r){return Float32Array.from(r)}function u(r){return 1125*Math.log(1+r/700)}function f(r,t,e){for(var a,n=new Float32Array(r+2),o=new Float32Array(r+2),i=t/2,f=u(0),c=(u(i)-f)/(r+1),l=new Array(r+2),s=0;s<n.length;s++)n[s]=s*c,o[s]=(a=n[s],700*(Math.exp(a/1125)-1)),l[s]=Math.floor((e+1)*o[s]/t);for(var m=new Array(r),p=0;p<m.length;p++){m[p]=new Array(e/2+1).fill(0);for(s=l[p];s<l[p+1];s++)m[p][s]=(s-l[p])/(l[p+1]-l[p]);for(s=l[p+1];s<l[p+2];s++)m[p][s]=(l[p+2]-s)/(l[p+2]-l[p+1])}return m}function c(t,e,a,n,o,i,u){void 0===n&&(n=5),void 0===o&&(o=2),void 0===i&&(i=!0),void 0===u&&(u=440);var f=Math.floor(a/2)+1,c=new Array(a).fill(0).map((function(r,n){return t*function(r,t){return Math.log2(16*r/t)}(e*n/a,u)}));c[0]=c[1]-1.5*t;var l,s,m,p=c.slice(1).map((function(r,t){return Math.max(r-c[t])}),1).concat([1]),h=Math.round(t/2),g=new Array(t).fill(0).map((function(r,e){return c.map((function(r){return(10*t+h+r-e)%t-h}))})),w=g.map((function(r,t){return r.map((function(r,e){return Math.exp(-.5*Math.pow(2*g[t][e]/p[e],2))}))}));if(s=(l=w)[0].map((function(){return 0})),m=l.reduce((function(r,t){return t.forEach((function(t,e){r[e]+=Math.pow(t,2)})),r}),s).map(Math.sqrt),w=l.map((function(r,t){return r.map((function(r,t){return r/(m[t]||1)}))})),o){var v=c.map((function(r){return Math.exp(-.5*Math.pow((r/t-n)/o,2))}));w=w.map((function(r){return r.map((function(r,t){return r*v[t]}))}))}return i&&(w=r(r([],w.slice(3),!0),w.slice(0,3),!0)),w.map((function(r){return r.slice(0,f)}))}function l(r,t){for(var e=0,a=0,n=0;n<t.length;n++)e+=Math.pow(n,r)*Math.abs(t[n]),a+=t[n];return e/a}function s(r){var t=r.ampSpectrum,e=r.barkScale,a=r.numberOfBarkBands,n=void 0===a?24:a;if("object"!=typeof t||"object"!=typeof e)throw new TypeError;var o=n,i=new Float32Array(o),u=0,f=t,c=new Int32Array(o+1);c[0]=0;for(var l=e[f.length-1]/o,s=1,m=0;m<f.length;m++)for(;e[m]>l;)c[s++]=m,l=s*e[f.length-1]/o;c[o]=f.length-1;for(m=0;m<o;m++){for(var p=0,h=c[m];h<c[m+1];h++)p+=f[h];i[m]=Math.pow(p,.23)}for(m=0;m<i.length;m++)u+=i[m];return{specific:i,total:u}}function m(r){var t=r.ampSpectrum;if("object"!=typeof t)throw new TypeError;for(var e=new Float32Array(t.length),a=0;a<e.length;a++)e[a]=Math.pow(t[a],2);return e}function p(r){var t=r.ampSpectrum,e=r.melFilterBank,a=r.bufferSize;if("object"!=typeof t)throw new TypeError("Valid ampSpectrum is required to generate melBands");if("object"!=typeof e)throw new TypeError("Valid melFilterBank is required to generate melBands");for(var n=m({ampSpectrum:t}),o=e.length,i=Array(o),u=new Float32Array(o),f=0;f<u.length;f++){i[f]=new Float32Array(a/2),u[f]=0;for(var c=0;c<a/2;c++)i[f][c]=e[f][c]*n[c],u[f]+=i[f][c];u[f]=Math.log(u[f]+1)}return Array.prototype.slice.call(u)}function h(r){return r&&r.__esModule&&Object.prototype.hasOwnProperty.call(r,"default")?r.default:r}var g=null;var w=h((function(r,t){var e=r.length;return t=t||2,g&&g[e]||function(r){(g=g||{})[r]=new Array(r*r);for(var t=Math.PI/r,e=0;e<r;e++)for(var a=0;a<r;a++)g[r][a+e*r]=Math.cos(t*(a+.5)*e)}(e),r.map((function(){return 0})).map((function(a,n){return t*r.reduce((function(r,t,a,o){return r+t*g[e][a+n*e]}),0)}))}));var v=Object.freeze({__proto__:null,amplitudeSpectrum:function(r){return r.ampSpectrum},buffer:function(r){return r.signal},chroma:function(r){var t=r.ampSpectrum,e=r.chromaFilterBank;if("object"!=typeof t)throw new TypeError("Valid ampSpectrum is required to generate chroma");if("object"!=typeof e)throw new TypeError("Valid chromaFilterBank is required to generate chroma");var a=e.map((function(r,e){return t.reduce((function(t,e,a){return t+e*r[a]}),0)})),n=Math.max.apply(Math,a);return n?a.map((function(r){return r/n})):a},complexSpectrum:function(r){return r.complexSpectrum},energy:function(r){var t=r.signal;if("object"!=typeof t)throw new TypeError;for(var e=0,a=0;a<t.length;a++)e+=Math.pow(Math.abs(t[a]),2);return e},loudness:s,melBands:p,mfcc:function(r){var t=r.ampSpectrum,e=r.melFilterBank,a=r.numberOfMFCCCoefficients,n=r.bufferSize,o=Math.min(40,Math.max(1,a||13));if(e.length<o)throw new Error("Insufficient filter bank for requested number of coefficients");var i=p({ampSpectrum:t,melFilterBank:e,bufferSize:n});return w(i).slice(0,o)},perceptualSharpness:function(r){for(var t=s({ampSpectrum:r.ampSpectrum,barkScale:r.barkScale}),e=t.specific,a=0,n=0;n<e.length;n++)a+=n<15?(n+1)*e[n+1]:.066*Math.exp(.171*(n+1));return a*=.11/t.total},perceptualSpread:function(r){for(var t=s({ampSpectrum:r.ampSpectrum,barkScale:r.barkScale}),e=0,a=0;a<t.specific.length;a++)t.specific[a]>e&&(e=t.specific[a]);return Math.pow((t.total-e)/t.total,2)},powerSpectrum:m,rms:function(r){var t=r.signal;if("object"!=typeof t)throw new TypeError;for(var e=0,a=0;a<t.length;a++)e+=Math.pow(t[a],2);return e/=t.length,e=Math.sqrt(e)},spectralCentroid:function(r){var t=r.ampSpectrum;if("object"!=typeof t)throw new TypeError;return l(1,t)},spectralCrest:function(r){var t=r.ampSpectrum;if("object"!=typeof t)throw new TypeError;var e=0,a=-1/0;return t.forEach((function(r){e+=Math.pow(r,2),a=r>a?r:a})),e/=t.length,e=Math.sqrt(e),a/e},spectralFlatness:function(r){var t=r.ampSpectrum;if("object"!=typeof t)throw new TypeError;for(var e=0,a=0,n=0;n<t.length;n++)e+=Math.log(t[n]),a+=t[n];return Math.exp(e/t.length)*t.length/a},spectralFlux:function(r){var t=r.signal,e=r.previousSignal,a=r.bufferSize;if("object"!=typeof t||"object"!=typeof e)throw new TypeError;for(var n=0,o=-a/2;o<t.length/2-1;o++)x=Math.abs(t[o])-Math.abs(e[o]),n+=(x+Math.abs(x))/2;return n},spectralKurtosis:function(r){var t=r.ampSpectrum;if("object"!=typeof t)throw new TypeError;var e=t,a=l(1,e),n=l(2,e),o=l(3,e),i=l(4,e);return(-3*Math.pow(a,4)+6*a*n-4*a*o+i)/Math.pow(Math.sqrt(n-Math.pow(a,2)),4)},spectralRolloff:function(r){var t=r.ampSpectrum,e=r.sampleRate;if("object"!=typeof t)throw new TypeError;for(var a=t,n=e/(2*(a.length-1)),o=0,i=0;i<a.length;i++)o+=a[i];for(var u=.99*o,f=a.length-1;o>u&&f>=0;)o-=a[f],--f;return(f+1)*n},spectralSkewness:function(r){var t=r.ampSpectrum;if("object"!=typeof t)throw new TypeError;var e=l(1,t),a=l(2,t),n=l(3,t);return(2*Math.pow(e,3)-3*e*a+n)/Math.pow(Math.sqrt(a-Math.pow(e,2)),3)},spectralSlope:function(r){var t=r.ampSpectrum,e=r.sampleRate,a=r.bufferSize;if("object"!=typeof t)throw new TypeError;for(var n=0,o=0,i=new Float32Array(t.length),u=0,f=0,c=0;c<t.length;c++){n+=t[c];var l=c*e/a;i[c]=l,u+=l*l,o+=l,f+=l*t[c]}return(t.length*f-o*n)/(n*(u-Math.pow(o,2)))},spectralSpread:function(r){var t=r.ampSpectrum;if("object"!=typeof t)throw new TypeError;return Math.sqrt(l(2,t)-Math.pow(l(1,t),2))},zcr:function(r){var t=r.signal;if("object"!=typeof t)throw new TypeError;for(var e=0,a=1;a<t.length;a++)(t[a-1]>=0&&t[a]<0||t[a-1]<0&&t[a]>=0)&&e++;return e}});function d(r){if(Array.isArray(r)){for(var t=0,e=Array(r.length);t<r.length;t++)e[t]=r[t];return e}return Array.from(r)}var y={},S={},_={bitReverseArray:function(r){if(void 0===y[r]){for(var t=(r-1).toString(2).length,e="0".repeat(t),a={},n=0;n<r;n++){var o=n.toString(2);o=e.substr(o.length)+o,o=[].concat(d(o)).reverse().join(""),a[n]=parseInt(o,2)}y[r]=a}return y[r]},multiply:function(r,t){return{real:r.real*t.real-r.imag*t.imag,imag:r.real*t.imag+r.imag*t.real}},add:function(r,t){return{real:r.real+t.real,imag:r.imag+t.imag}},subtract:function(r,t){return{real:r.real-t.real,imag:r.imag-t.imag}},euler:function(r,t){var e=-2*Math.PI*r/t;return{real:Math.cos(e),imag:Math.sin(e)}},conj:function(r){return r.imag*=-1,r},constructComplexArray:function(r){var t={};t.real=void 0===r.real?r.slice():r.real.slice();var e=t.real.length;return void 0===S[e]&&(S[e]=Array.apply(null,Array(e)).map(Number.prototype.valueOf,0)),t.imag=S[e].slice(),t}},b=function(r){var t={};void 0===r.real||void 0===r.imag?t=_.constructComplexArray(r):(t.real=r.real.slice(),t.imag=r.imag.slice());var e=t.real.length,a=Math.log2(e);if(Math.round(a)!=a)throw new Error("Input size must be a power of 2.");if(t.real.length!=t.imag.length)throw new Error("Real and imaginary components must have the same length.");for(var n=_.bitReverseArray(e),o={real:[],imag:[]},i=0;i<e;i++)o.real[n[i]]=t.real[i],o.imag[n[i]]=t.imag[i];for(var u=0;u<e;u++)t.real[u]=o.real[u],t.imag[u]=o.imag[u];for(var f=1;f<=a;f++)for(var c=Math.pow(2,f),l=0;l<c/2;l++)for(var s=_.euler(l,c),m=0;m<e/c;m++){var p=c*m+l,h=c*m+l+c/2,g={real:t.real[p],imag:t.imag[p]},w={real:t.real[h],imag:t.imag[h]},v=_.multiply(s,w),d=_.subtract(g,v);t.real[h]=d.real,t.imag[h]=d.imag;var y=_.add(v,g);t.real[p]=y.real,t.imag[p]=y.imag}return t},M=b,F=function(){function r(r,t){var e=this;if(this._m=t,!r.audioContext)throw this._m.errors.noAC;if(r.bufferSize&&!a(r.bufferSize))throw this._m._errors.notPow2;if(!r.source)throw this._m._errors.noSource;this._m.audioContext=r.audioContext,this._m.bufferSize=r.bufferSize||this._m.bufferSize||256,this._m.hopSize=r.hopSize||this._m.hopSize||this._m.bufferSize,this._m.sampleRate=r.sampleRate||this._m.audioContext.sampleRate||44100,this._m.callback=r.callback,this._m.windowingFunction=r.windowingFunction||"hanning",this._m.featureExtractors=v,this._m.EXTRACTION_STARTED=r.startImmediately||!1,this._m.channel="number"==typeof r.channel?r.channel:0,this._m.inputs=r.inputs||1,this._m.outputs=r.outputs||1,this._m.numberOfMFCCCoefficients=r.numberOfMFCCCoefficients||this._m.numberOfMFCCCoefficients||13,this._m.numberOfBarkBands=r.numberOfBarkBands||this._m.numberOfBarkBands||24,this._m.spn=this._m.audioContext.createScriptProcessor(this._m.bufferSize,this._m.inputs,this._m.outputs),this._m.spn.connect(this._m.audioContext.destination),this._m._featuresToExtract=r.featureExtractors||[],this._m.barkScale=o(this._m.bufferSize,this._m.sampleRate,this._m.bufferSize),this._m.melFilterBank=f(Math.max(this._m.melBands,this._m.numberOfMFCCCoefficients),this._m.sampleRate,this._m.bufferSize),this._m.inputData=null,this._m.previousInputData=null,this._m.frame=null,this._m.previousFrame=null,this.setSource(r.source),this._m.spn.onaudioprocess=function(r){var t;null!==e._m.inputData&&(e._m.previousInputData=e._m.inputData),e._m.inputData=r.inputBuffer.getChannelData(e._m.channel),e._m.previousInputData?((t=new Float32Array(e._m.previousInputData.length+e._m.inputData.length-e._m.hopSize)).set(e._m.previousInputData.slice(e._m.hopSize)),t.set(e._m.inputData,e._m.previousInputData.length-e._m.hopSize)):t=e._m.inputData;var a=function(r,t,e){if(r.length<t)throw new Error("Buffer is too short for frame length");if(e<1)throw new Error("Hop length cannot be less that 1");if(t<1)throw new Error("Frame length cannot be less that 1");var a=1+Math.floor((r.length-t)/e);return new Array(a).fill(0).map((function(a,n){return r.slice(n*e,n*e+t)}))}(t,e._m.bufferSize,e._m.hopSize);a.forEach((function(r){e._m.frame=r;var t=e._m.extract(e._m._featuresToExtract,e._m.frame,e._m.previousFrame);"function"==typeof e._m.callback&&e._m.EXTRACTION_STARTED&&e._m.callback(t),e._m.previousFrame=e._m.frame}))}}return r.prototype.start=function(r){this._m._featuresToExtract=r||this._m._featuresToExtract,this._m.EXTRACTION_STARTED=!0},r.prototype.stop=function(){this._m.EXTRACTION_STARTED=!1},r.prototype.setSource=function(r){this._m.source&&this._m.source.disconnect(this._m.spn),this._m.source=r,this._m.source.connect(this._m.spn)},r.prototype.setChannel=function(r){r<=this._m.inputs?this._m.channel=r:console.error("Channel ".concat(r," does not exist. Make sure you've provided a value for 'inputs' that is greater than ").concat(r," when instantiating the MeydaAnalyzer"))},r.prototype.get=function(r){return this._m.inputData?this._m.extract(r||this._m._featuresToExtract,this._m.inputData,this._m.previousInputData):null},r}(),A={audioContext:null,spn:null,bufferSize:512,sampleRate:44100,melBands:26,chromaBands:12,callback:null,windowingFunction:"hanning",featureExtractors:v,EXTRACTION_STARTED:!1,numberOfMFCCCoefficients:13,numberOfBarkBands:24,_featuresToExtract:[],windowing:n,_errors:{notPow2:new Error("Meyda: Buffer size must be a power of 2, e.g. 64 or 512"),featureUndef:new Error("Meyda: No features defined."),invalidFeatureFmt:new Error("Meyda: Invalid feature format"),invalidInput:new Error("Meyda: Invalid input."),noAC:new Error("Meyda: No AudioContext specified."),noSource:new Error("Meyda: No source node specified.")},createMeydaAnalyzer:function(r){return new F(r,Object.assign({},A))},listAvailableFeatureExtractors:function(){return Object.keys(this.featureExtractors)},extract:function(r,t,e){var n=this;if(!t)throw this._errors.invalidInput;if("object"!=typeof t)throw this._errors.invalidInput;if(!r)throw this._errors.featureUndef;if(!a(t.length))throw this._errors.notPow2;void 0!==this.barkScale&&this.barkScale.length==this.bufferSize||(this.barkScale=o(this.bufferSize,this.sampleRate,this.bufferSize)),void 0!==this.melFilterBank&&this.barkScale.length==this.bufferSize&&this.melFilterBank.length==this.melBands||(this.melFilterBank=f(Math.max(this.melBands,this.numberOfMFCCCoefficients),this.sampleRate,this.bufferSize)),void 0!==this.chromaFilterBank&&this.chromaFilterBank.length==this.chromaBands||(this.chromaFilterBank=c(this.chromaBands,this.sampleRate,this.bufferSize)),"buffer"in t&&void 0===t.buffer?this.signal=i(t):this.signal=t;var u=E(t,this.windowingFunction,this.bufferSize);if(this.signal=u.windowedSignal,this.complexSpectrum=u.complexSpectrum,this.ampSpectrum=u.ampSpectrum,e){var l=E(e,this.windowingFunction,this.bufferSize);this.previousSignal=l.windowedSignal,this.previousComplexSpectrum=l.complexSpectrum,this.previousAmpSpectrum=l.ampSpectrum}var s=function(r){return n.featureExtractors[r]({ampSpectrum:n.ampSpectrum,chromaFilterBank:n.chromaFilterBank,complexSpectrum:n.complexSpectrum,signal:n.signal,bufferSize:n.bufferSize,sampleRate:n.sampleRate,barkScale:n.barkScale,melFilterBank:n.melFilterBank,previousSignal:n.previousSignal,previousAmpSpectrum:n.previousAmpSpectrum,previousComplexSpectrum:n.previousComplexSpectrum,numberOfMFCCCoefficients:n.numberOfMFCCCoefficients,numberOfBarkBands:n.numberOfBarkBands})};if("object"==typeof r)return r.reduce((function(r,t){var e;return Object.assign({},r,((e={})[t]=s(t),e))}),{});if("string"==typeof r)return s(r);throw this._errors.invalidFeatureFmt}},E=function(r,t,e){var a={};void 0===r.buffer?a.signal=i(r):a.signal=r,a.windowedSignal=n(a.signal,t),a.complexSpectrum=M(a.windowedSignal),a.ampSpectrum=new Float32Array(e/2);for(var o=0;o<e/2;o++)a.ampSpectrum[o]=Math.sqrt(Math.pow(a.complexSpectrum.real[o],2)+Math.pow(a.complexSpectrum.imag[o],2));return a};return"undefined"!=typeof window&&(window.Meyda=A),A}));
 
 
-},{"dct":1,"fftjs":4}],9:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 (function (process){(function (){
 // Generated by CoffeeScript 1.12.2
 (function() {
@@ -845,7 +582,7 @@ if (typeof Object.create === 'function') {
 
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":10}],10:[function(require,module,exports){
+},{"_process":6}],6:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -1031,7 +768,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],11:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var inherits = require('inherits')
 var EventEmitter = require('events').EventEmitter
 var now = require('right-now')
@@ -1076,7 +813,7 @@ Engine.prototype.tick = function() {
     this.emit('tick', dt)
     this.last = time
 }
-},{"events":3,"inherits":7,"raf":12,"right-now":13}],12:[function(require,module,exports){
+},{"events":1,"inherits":3,"raf":8,"right-now":9}],8:[function(require,module,exports){
 (function (global){(function (){
 var now = require('performance-now')
   , root = typeof window === 'undefined' ? global : window
@@ -1155,7 +892,7 @@ module.exports.polyfill = function(object) {
 }
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"performance-now":9}],13:[function(require,module,exports){
+},{"performance-now":5}],9:[function(require,module,exports){
 (function (global){(function (){
 module.exports =
   global.performance &&
@@ -1166,7 +903,7 @@ module.exports =
   }
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],14:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 "use strict";Object.defineProperty(exports,"__esModule",{value:true});exports.EllipseCurve=exports.EdgesGeometry=exports.DynamicReadUsage=exports.DynamicDrawUsage=exports.DynamicCopyUsage=exports.DstColorFactor=exports.DstAlphaFactor=exports.DoubleSide=exports.DodecahedronGeometry=exports.DisplayP3ColorSpace=exports.DiscreteInterpolant=exports.DirectionalLightHelper=exports.DirectionalLight=exports.DepthTexture=exports.DepthStencilFormat=exports.DepthFormat=exports.DefaultLoadingManager=exports.DecrementWrapStencilOp=exports.DecrementStencilOp=exports.DataUtils=exports.DataTextureLoader=exports.DataTexture=exports.DataArrayTexture=exports.Data3DTexture=exports.Cylindrical=exports.CylinderGeometry=exports.CustomToneMapping=exports.CustomBlending=exports.CurvePath=exports.Curve=exports.CullFaceNone=exports.CullFaceFrontBack=exports.CullFaceFront=exports.CullFaceBack=exports.CubicInterpolant=exports.CubicBezierCurve3=exports.CubicBezierCurve=exports.CubeUVReflectionMapping=exports.CubeTextureLoader=exports.CubeTexture=exports.CubeRefractionMapping=exports.CubeReflectionMapping=exports.CubeCamera=exports.ConeGeometry=exports.CompressedTextureLoader=exports.CompressedTexture=exports.CompressedCubeTexture=exports.CompressedArrayTexture=exports.ColorManagement=exports.ColorKeyframeTrack=exports.Color=exports.Clock=exports.ClampToEdgeWrapping=exports.CircleGeometry=exports.CineonToneMapping=exports.CatmullRomCurve3=exports.CapsuleGeometry=exports.CanvasTexture=exports.CameraHelper=exports.Camera=exports.Cache=exports.ByteType=exports.BufferGeometryLoader=exports.BufferGeometry=exports.BufferAttribute=exports.BoxHelper=exports.BoxGeometry=exports.Box3Helper=exports.Box3=exports.Box2=exports.BooleanKeyframeTrack=exports.Bone=exports.BasicShadowMap=exports.BasicDepthPacking=exports.BackSide=exports.AxesHelper=exports.AudioLoader=exports.AudioListener=exports.AudioContext=exports.AudioAnalyser=exports.Audio=exports.ArrowHelper=exports.ArrayCamera=exports.ArcCurve=exports.AnimationUtils=exports.AnimationObjectGroup=exports.AnimationMixer=exports.AnimationLoader=exports.AnimationClip=exports.AnimationAction=exports.AmbientLight=exports.AlwaysStencilFunc=exports.AlwaysDepth=exports.AlwaysCompare=exports.AlphaFormat=exports.AdditiveBlending=exports.AdditiveAnimationBlendMode=exports.AddOperation=exports.AddEquation=exports.ACESFilmicToneMapping=void 0;exports.MaxEquation=exports.Matrix4=exports.Matrix3=exports.MathUtils=exports.MaterialLoader=exports.Material=exports.MOUSE=exports.LuminanceFormat=exports.LuminanceAlphaFormat=exports.LoopRepeat=exports.LoopPingPong=exports.LoopOnce=exports.LoadingManager=exports.LoaderUtils=exports.Loader=exports.LinearTransfer=exports.LinearToneMapping=exports.LinearSRGBColorSpace=exports.LinearMipmapNearestFilter=exports.LinearMipmapLinearFilter=exports.LinearMipMapNearestFilter=exports.LinearMipMapLinearFilter=exports.LinearInterpolant=exports.LinearFilter=exports.LinearEncoding=exports.LinearDisplayP3ColorSpace=exports.LineSegments=exports.LineLoop=exports.LineDashedMaterial=exports.LineCurve3=exports.LineCurve=exports.LineBasicMaterial=exports.Line3=exports.Line=exports.LightProbe=exports.Light=exports.LessStencilFunc=exports.LessEqualStencilFunc=exports.LessEqualDepth=exports.LessEqualCompare=exports.LessDepth=exports.LessCompare=exports.Layers=exports.LatheGeometry=exports.LOD=exports.KeyframeTrack=exports.KeepStencilOp=exports.InvertStencilOp=exports.InterpolateSmooth=exports.InterpolateLinear=exports.InterpolateDiscrete=exports.Interpolant=exports.InterleavedBufferAttribute=exports.InterleavedBuffer=exports.IntType=exports.Int8BufferAttribute=exports.Int32BufferAttribute=exports.Int16BufferAttribute=exports.InstancedMesh=exports.InstancedInterleavedBuffer=exports.InstancedBufferGeometry=exports.InstancedBufferAttribute=exports.IncrementWrapStencilOp=exports.IncrementStencilOp=exports.ImageUtils=exports.ImageLoader=exports.ImageBitmapLoader=exports.IcosahedronGeometry=exports.HemisphereLightHelper=exports.HemisphereLight=exports.HalfFloatType=exports.Group=exports.GridHelper=exports.GreaterStencilFunc=exports.GreaterEqualStencilFunc=exports.GreaterEqualDepth=exports.GreaterEqualCompare=exports.GreaterDepth=exports.GreaterCompare=exports.GLSL3=exports.GLSL1=exports.GLBufferAttribute=exports.Frustum=exports.FrontSide=exports.FramebufferTexture=exports.FogExp2=exports.Fog=exports.FloatType=exports.Float64BufferAttribute=exports.Float32BufferAttribute=exports.Float16BufferAttribute=exports.FileLoader=exports.ExtrudeGeometry=exports.EventDispatcher=exports.Euler=exports.EquirectangularRefractionMapping=exports.EquirectangularReflectionMapping=exports.EqualStencilFunc=exports.EqualDepth=exports.EqualCompare=void 0;exports.RGB_S3TC_DXT1_Format=exports.RGB_PVRTC_4BPPV1_Format=exports.RGB_PVRTC_2BPPV1_Format=exports.RGB_ETC2_Format=exports.RGB_ETC1_Format=exports.RGB_BPTC_UNSIGNED_Format=exports.RGB_BPTC_SIGNED_Format=exports.RGBA_S3TC_DXT5_Format=exports.RGBA_S3TC_DXT3_Format=exports.RGBA_S3TC_DXT1_Format=exports.RGBA_PVRTC_4BPPV1_Format=exports.RGBA_PVRTC_2BPPV1_Format=exports.RGBA_ETC2_EAC_Format=exports.RGBA_BPTC_Format=exports.RGBA_ASTC_8x8_Format=exports.RGBA_ASTC_8x6_Format=exports.RGBA_ASTC_8x5_Format=exports.RGBA_ASTC_6x6_Format=exports.RGBA_ASTC_6x5_Format=exports.RGBA_ASTC_5x5_Format=exports.RGBA_ASTC_5x4_Format=exports.RGBA_ASTC_4x4_Format=exports.RGBA_ASTC_12x12_Format=exports.RGBA_ASTC_12x10_Format=exports.RGBA_ASTC_10x8_Format=exports.RGBA_ASTC_10x6_Format=exports.RGBA_ASTC_10x5_Format=exports.RGBA_ASTC_10x10_Format=exports.RGBAIntegerFormat=exports.RGBAFormat=exports.RGBADepthPacking=exports.REVISION=exports.RED_RGTC1_Format=exports.RED_GREEN_RGTC2_Format=exports.QuaternionLinearInterpolant=exports.QuaternionKeyframeTrack=exports.Quaternion=exports.QuadraticBezierCurve3=exports.QuadraticBezierCurve=exports.PropertyMixer=exports.PropertyBinding=exports.PositionalAudio=exports.PolyhedronGeometry=exports.PolarGridHelper=exports.PointsMaterial=exports.Points=exports.PointLightHelper=exports.PointLight=exports.PlaneHelper=exports.PlaneGeometry=exports.Plane=exports.PerspectiveCamera=exports.Path=exports.PMREMGenerator=exports.PCFSoftShadowMap=exports.PCFShadowMap=exports.P3Primaries=exports.OrthographicCamera=exports.OneMinusSrcColorFactor=exports.OneMinusSrcAlphaFactor=exports.OneMinusDstColorFactor=exports.OneMinusDstAlphaFactor=exports.OneFactor=exports.OctahedronGeometry=exports.ObjectSpaceNormalMap=exports.ObjectLoader=exports.Object3D=exports.NumberKeyframeTrack=exports.NotEqualStencilFunc=exports.NotEqualDepth=exports.NotEqualCompare=exports.NormalBlending=exports.NormalAnimationBlendMode=exports.NoToneMapping=exports.NoColorSpace=exports.NoBlending=exports.NeverStencilFunc=exports.NeverDepth=exports.NeverCompare=exports.NearestMipmapNearestFilter=exports.NearestMipmapLinearFilter=exports.NearestMipMapNearestFilter=exports.NearestMipMapLinearFilter=exports.NearestFilter=exports.MultiplyOperation=exports.MultiplyBlending=exports.MixOperation=exports.MirroredRepeatWrapping=exports.MinEquation=exports.MeshToonMaterial=exports.MeshStandardMaterial=exports.MeshPhysicalMaterial=exports.MeshPhongMaterial=exports.MeshNormalMaterial=exports.MeshMatcapMaterial=exports.MeshLambertMaterial=exports.MeshDistanceMaterial=exports.MeshDepthMaterial=exports.MeshBasicMaterial=exports.Mesh=void 0;exports.WebGLRenderer=exports.WebGLRenderTarget=exports.WebGLMultipleRenderTargets=exports.WebGLCubeRenderTarget=exports.WebGLCoordinateSystem=exports.WebGLArrayRenderTarget=exports.WebGL3DRenderTarget=exports.WebGL1Renderer=exports.VideoTexture=exports.VectorKeyframeTrack=exports.Vector4=exports.Vector3=exports.Vector2=exports.VSMShadowMap=exports.UnsignedShortType=exports.UnsignedShort5551Type=exports.UnsignedShort4444Type=exports.UnsignedIntType=exports.UnsignedInt248Type=exports.UnsignedByteType=exports.UniformsUtils=exports.UniformsLib=exports.UniformsGroup=exports.Uniform=exports.Uint8ClampedBufferAttribute=exports.Uint8BufferAttribute=exports.Uint32BufferAttribute=exports.Uint16BufferAttribute=exports.UVMapping=exports.TwoPassDoubleSide=exports.TubeGeometry=exports.TrianglesDrawMode=exports.TriangleStripDrawMode=exports.TriangleFanDrawMode=exports.Triangle=exports.TorusKnotGeometry=exports.TorusGeometry=exports.TextureLoader=exports.Texture=exports.TetrahedronGeometry=exports.TangentSpaceNormalMap=exports.TOUCH=exports.SubtractiveBlending=exports.SubtractEquation=exports.StringKeyframeTrack=exports.StreamReadUsage=exports.StreamDrawUsage=exports.StreamCopyUsage=exports.StereoCamera=exports.StaticReadUsage=exports.StaticDrawUsage=exports.StaticCopyUsage=exports.SrcColorFactor=exports.SrcAlphaSaturateFactor=exports.SrcAlphaFactor=exports.SpriteMaterial=exports.Sprite=exports.SpotLightHelper=exports.SpotLight=exports.SplineCurve=exports.SphericalHarmonics3=exports.Spherical=exports.SphereGeometry=exports.Sphere=exports.Source=exports.SkinnedMesh=exports.SkeletonHelper=exports.Skeleton=exports.ShortType=exports.ShapeUtils=exports.ShapePath=exports.ShapeGeometry=exports.Shape=exports.ShadowMaterial=exports.ShaderMaterial=exports.ShaderLib=exports.ShaderChunk=exports.Scene=exports.SRGBTransfer=exports.SRGBColorSpace=exports.SIGNED_RED_RGTC1_Format=exports.SIGNED_RED_GREEN_RGTC2_Format=exports.RingGeometry=exports.ReverseSubtractEquation=exports.ReplaceStencilOp=exports.RepeatWrapping=exports.RenderTarget=exports.ReinhardToneMapping=exports.RedIntegerFormat=exports.RedFormat=exports.RectAreaLight=exports.Rec709Primaries=exports.Raycaster=exports.Ray=exports.RawShaderMaterial=exports.RGIntegerFormat=exports.RGFormat=void 0;exports.WebGLUtils=WebGLUtils;exports.WireframeGeometry=exports.WebGPUCoordinateSystem=void 0;exports._SRGBAFormat=exports.ZeroStencilOp=exports.ZeroSlopeEnding=exports.ZeroFactor=exports.ZeroCurvatureEnding=exports.WrapAroundEnding=void 0;exports.createCanvasElement=createCanvasElement;exports.sRGBEncoding=void 0;/**
  * @license
  * Copyright 2010-2023 Three.js Authors
@@ -3657,7 +3394,7 @@ const betterShapeHoles=[];const newShapes=[];let newShapeHoles=[];let mainIdx=0;
 if(!newShapes[0])return toShapesNoHoles(subPaths);if(newShapes.length>1){let ambiguous=false;let toChange=0;for(let sIdx=0,sLen=newShapes.length;sIdx<sLen;sIdx++){betterShapeHoles[sIdx]=[];}for(let sIdx=0,sLen=newShapes.length;sIdx<sLen;sIdx++){const sho=newShapeHoles[sIdx];for(let hIdx=0;hIdx<sho.length;hIdx++){const ho=sho[hIdx];let hole_unassigned=true;for(let s2Idx=0;s2Idx<newShapes.length;s2Idx++){if(isPointInsidePolygon(ho.p,newShapes[s2Idx].p)){if(sIdx!==s2Idx)toChange++;if(hole_unassigned){hole_unassigned=false;betterShapeHoles[s2Idx].push(ho);}else{ambiguous=true;}}}if(hole_unassigned){betterShapeHoles[sIdx].push(ho);}}}if(toChange>0&&ambiguous===false){newShapeHoles=betterShapeHoles;}}let tmpHoles;for(let i=0,il=newShapes.length;i<il;i++){tmpShape=newShapes[i].s;shapes.push(tmpShape);tmpHoles=newShapeHoles[i];for(let j=0,jl=tmpHoles.length;j<jl;j++){tmpShape.holes.push(tmpHoles[j].h);}}//console.log("shape", shapes);
 return shapes;}}exports.ShapePath=ShapePath;if(typeof __THREE_DEVTOOLS__!=='undefined'){__THREE_DEVTOOLS__.dispatchEvent(new CustomEvent('register',{detail:{revision:REVISION}}));}if(typeof window!=='undefined'){if(window.__THREE__){console.warn('WARNING: Multiple instances of Three.js being imported.');}else{window.__THREE__=REVISION;}}
 
-},{}],15:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3710,7 +3447,7 @@ class ImprovedNoise {
 }
 exports.ImprovedNoise = ImprovedNoise;
 
-},{}],16:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3926,7 +3663,7 @@ Sky.SkyShader = {
 		}`
 };
 
-},{"three":14}],17:[function(require,module,exports){
+},{"three":10}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4063,7 +3800,7 @@ const CombineShader = {
 BloomPass.blurX = new _three.Vector2(0.001953125, 0.0);
 BloomPass.blurY = new _three.Vector2(0.0, 0.001953125);
 
-},{"../shaders/ConvolutionShader.js":32,"./Pass.js":22,"three":14}],18:[function(require,module,exports){
+},{"../shaders/ConvolutionShader.js":28,"./Pass.js":18,"three":10}],14:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4096,7 +3833,7 @@ class ClearPass extends _Pass.Pass {
 }
 exports.ClearPass = ClearPass;
 
-},{"./Pass.js":22,"three":14}],19:[function(require,module,exports){
+},{"./Pass.js":18,"three":10}],15:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4237,7 +3974,7 @@ class EffectComposer {
 }
 exports.EffectComposer = EffectComposer;
 
-},{"../shaders/CopyShader.js":33,"./MaskPass.js":21,"./ShaderPass.js":26,"three":14}],20:[function(require,module,exports){
+},{"../shaders/CopyShader.js":29,"./MaskPass.js":17,"./ShaderPass.js":22,"three":10}],16:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4281,7 +4018,7 @@ class FilmPass extends _Pass.Pass {
 }
 exports.FilmPass = FilmPass;
 
-},{"../shaders/FilmShader.js":37,"./Pass.js":22,"three":14}],21:[function(require,module,exports){
+},{"../shaders/FilmShader.js":33,"./Pass.js":18,"three":10}],17:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4365,7 +4102,7 @@ class ClearMaskPass extends _Pass.Pass {
 }
 exports.ClearMaskPass = ClearMaskPass;
 
-},{"./Pass.js":22}],22:[function(require,module,exports){
+},{"./Pass.js":18}],18:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4425,7 +4162,7 @@ class FullScreenQuad {
 }
 exports.FullScreenQuad = FullScreenQuad;
 
-},{"three":14}],23:[function(require,module,exports){
+},{"three":10}],19:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4628,7 +4365,7 @@ class RenderPixelatedPass extends _Pass.Pass {
 }
 exports.RenderPixelatedPass = RenderPixelatedPass;
 
-},{"./Pass.js":22,"three":14}],24:[function(require,module,exports){
+},{"./Pass.js":18,"three":10}],20:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4885,7 +4622,7 @@ SAOPass.OUTPUT = {
   'Normal': 2
 };
 
-},{"../shaders/CopyShader.js":33,"../shaders/DepthLimitedBlurShader.js":34,"../shaders/SAOShader.js":42,"./Pass.js":22,"three":14}],25:[function(require,module,exports){
+},{"../shaders/CopyShader.js":29,"../shaders/DepthLimitedBlurShader.js":30,"../shaders/SAOShader.js":38,"./Pass.js":18,"three":10}],21:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5016,7 +4753,7 @@ class SSAARenderPass extends _Pass.Pass {
 exports.SSAARenderPass = SSAARenderPass;
 const _JitterVectors = [[[0, 0]], [[4, 4], [-4, -4]], [[-2, -6], [6, -2], [-6, 2], [2, 6]], [[1, -3], [-1, 3], [5, 1], [-3, -5], [-5, 5], [-7, -1], [3, 7], [7, -7]], [[1, 1], [-1, -3], [-3, 2], [4, -1], [-5, -2], [2, 5], [5, 3], [3, -5], [-2, 6], [0, -7], [-4, -6], [-6, 4], [-8, 0], [7, -4], [6, 7], [-7, -8]], [[-4, -7], [-7, -5], [-3, -5], [-5, -4], [-1, -4], [-2, -2], [-6, -1], [-4, 0], [-7, 1], [-1, 2], [-6, 3], [-3, 3], [-7, 6], [-3, 6], [-5, 7], [-1, 7], [5, -7], [1, -6], [6, -5], [4, -4], [2, -3], [7, -2], [1, -1], [4, -1], [2, 1], [6, 2], [0, 4], [4, 4], [2, 5], [7, 5], [5, 6], [3, 7]]];
 
-},{"../shaders/CopyShader.js":33,"./Pass.js":22,"three":14}],26:[function(require,module,exports){
+},{"../shaders/CopyShader.js":29,"./Pass.js":18,"three":10}],22:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5066,7 +4803,7 @@ class ShaderPass extends _Pass.Pass {
 }
 exports.ShaderPass = ShaderPass;
 
-},{"./Pass.js":22,"three":14}],27:[function(require,module,exports){
+},{"./Pass.js":18,"three":10}],23:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5414,7 +5151,7 @@ exports.UnrealBloomPass = UnrealBloomPass;
 UnrealBloomPass.BlurDirectionX = new _three.Vector2(1.0, 0.0);
 UnrealBloomPass.BlurDirectionY = new _three.Vector2(0.0, 1.0);
 
-},{"../shaders/CopyShader.js":33,"../shaders/LuminosityHighPassShader.js":40,"./Pass.js":22,"three":14}],28:[function(require,module,exports){
+},{"../shaders/CopyShader.js":29,"../shaders/LuminosityHighPassShader.js":36,"./Pass.js":18,"three":10}],24:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5542,7 +5279,7 @@ class CSS2DRenderer {
 }
 exports.CSS2DRenderer = CSS2DRenderer;
 
-},{"three":14}],29:[function(require,module,exports){
+},{"three":10}],25:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5728,7 +5465,7 @@ class CSS3DRenderer {
 }
 exports.CSS3DRenderer = CSS3DRenderer;
 
-},{"three":14}],30:[function(require,module,exports){
+},{"three":10}],26:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5794,7 +5531,7 @@ const BleachBypassShader = {
 };
 exports.BleachBypassShader = BleachBypassShader;
 
-},{}],31:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5846,7 +5583,7 @@ const ColorifyShader = {
 };
 exports.ColorifyShader = ColorifyShader;
 
-},{"three":14}],32:[function(require,module,exports){
+},{"three":10}],28:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5937,7 +5674,7 @@ function gauss(x, sigma) {
   return Math.exp(-(x * x) / (2.0 * sigma * sigma));
 }
 
-},{"three":14}],33:[function(require,module,exports){
+},{"three":10}],29:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5986,7 +5723,7 @@ const CopyShader = {
 };
 exports.CopyShader = CopyShader;
 
-},{}],34:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -6149,7 +5886,7 @@ function gaussian(x, stdDev) {
   return Math.exp(-(x * x) / (2.0 * (stdDev * stdDev))) / (Math.sqrt(2.0 * Math.PI) * stdDev);
 }
 
-},{"three":14}],35:[function(require,module,exports){
+},{"three":10}],31:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -6226,7 +5963,7 @@ const DotScreenShader = {
 };
 exports.DotScreenShader = DotScreenShader;
 
-},{"three":14}],36:[function(require,module,exports){
+},{"three":10}],32:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -6514,7 +6251,7 @@ const FXAAShader = {
 };
 exports.FXAAShader = FXAAShader;
 
-},{"three":14}],37:[function(require,module,exports){
+},{"three":10}],33:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -6581,7 +6318,7 @@ const FilmShader = {
 };
 exports.FilmShader = FilmShader;
 
-},{}],38:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -6626,7 +6363,7 @@ const GammaCorrectionShader = {
 };
 exports.GammaCorrectionShader = GammaCorrectionShader;
 
-},{}],39:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -6689,7 +6426,7 @@ const HorizontalBlurShader = {
 };
 exports.HorizontalBlurShader = HorizontalBlurShader;
 
-},{}],40:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -6760,7 +6497,7 @@ const LuminosityHighPassShader = {
 };
 exports.LuminosityHighPassShader = LuminosityHighPassShader;
 
-},{"three":14}],41:[function(require,module,exports){
+},{"three":10}],37:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -6820,7 +6557,7 @@ const RGBShiftShader = {
 };
 exports.RGBShiftShader = RGBShiftShader;
 
-},{}],42:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -7020,7 +6757,7 @@ const SAOShader = {
 };
 exports.SAOShader = SAOShader;
 
-},{"three":14}],43:[function(require,module,exports){
+},{"three":10}],39:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -7076,7 +6813,7 @@ const SepiaShader = {
 };
 exports.SepiaShader = SepiaShader;
 
-},{}],44:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -7139,7 +6876,7 @@ const VerticalBlurShader = {
 };
 exports.VerticalBlurShader = VerticalBlurShader;
 
-},{}],45:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -7552,7 +7289,7 @@ exports.WebGLCoordinateSystem = WebGLCoordinateSystem;
 const WebGPUCoordinateSystem = 2001;
 exports.WebGPUCoordinateSystem = WebGPUCoordinateSystem;
 
-},{}],46:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -7909,7 +7646,7 @@ class Float64BufferAttribute extends BufferAttribute {
 //
 exports.Float64BufferAttribute = Float64BufferAttribute;
 
-},{"../constants.js":45,"../extras/DataUtils.js":51,"../math/MathUtils.js":54,"../math/Vector2.js":59,"../math/Vector3.js":60}],47:[function(require,module,exports){
+},{"../constants.js":41,"../extras/DataUtils.js":47,"../math/MathUtils.js":50,"../math/Vector2.js":55,"../math/Vector3.js":56}],43:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -8597,7 +8334,7 @@ class BufferGeometry extends _EventDispatcher.EventDispatcher {
 }
 exports.BufferGeometry = BufferGeometry;
 
-},{"../math/Box3.js":52,"../math/MathUtils.js":54,"../math/Matrix3.js":55,"../math/Matrix4.js":56,"../math/Sphere.js":58,"../math/Vector2.js":59,"../math/Vector3.js":60,"../utils.js":61,"./BufferAttribute.js":46,"./EventDispatcher.js":48,"./Object3D.js":50}],48:[function(require,module,exports){
+},{"../math/Box3.js":48,"../math/MathUtils.js":50,"../math/Matrix3.js":51,"../math/Matrix4.js":52,"../math/Sphere.js":54,"../math/Vector2.js":55,"../math/Vector3.js":56,"../utils.js":57,"./BufferAttribute.js":42,"./EventDispatcher.js":44,"./Object3D.js":46}],44:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -8653,7 +8390,7 @@ class EventDispatcher {
 }
 exports.EventDispatcher = EventDispatcher;
 
-},{}],49:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -8691,7 +8428,7 @@ class Layers {
 }
 exports.Layers = Layers;
 
-},{}],50:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -9276,7 +9013,7 @@ Object3D.DEFAULT_UP = /*@__PURE__*/new _Vector.Vector3(0, 1, 0);
 Object3D.DEFAULT_MATRIX_AUTO_UPDATE = true;
 Object3D.DEFAULT_MATRIX_WORLD_AUTO_UPDATE = true;
 
-},{"../math/Euler.js":53,"../math/MathUtils.js":54,"../math/Matrix3.js":55,"../math/Matrix4.js":56,"../math/Quaternion.js":57,"../math/Vector3.js":60,"./EventDispatcher.js":48,"./Layers.js":49}],51:[function(require,module,exports){
+},{"../math/Euler.js":49,"../math/MathUtils.js":50,"../math/Matrix3.js":51,"../math/Matrix4.js":52,"../math/Quaternion.js":53,"../math/Vector3.js":56,"./EventDispatcher.js":44,"./Layers.js":45}],47:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -9410,7 +9147,7 @@ const DataUtils = {
 };
 exports.DataUtils = DataUtils;
 
-},{"../math/MathUtils.js":54}],52:[function(require,module,exports){
+},{"../math/MathUtils.js":50}],48:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -9719,7 +9456,7 @@ function satForAxes(axes, v0, v1, v2, extents) {
   return true;
 }
 
-},{"./Vector3.js":60}],53:[function(require,module,exports){
+},{"./Vector3.js":56}],49:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -9913,7 +9650,7 @@ class Euler {
 exports.Euler = Euler;
 Euler.DEFAULT_ORDER = 'XYZ';
 
-},{"./MathUtils.js":54,"./Matrix4.js":56,"./Quaternion.js":57}],54:[function(require,module,exports){
+},{"./MathUtils.js":50,"./Matrix4.js":52,"./Quaternion.js":53}],50:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -10162,7 +9899,7 @@ const MathUtils = {
 };
 exports.MathUtils = MathUtils;
 
-},{}],55:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -10423,7 +10160,7 @@ class Matrix3 {
 exports.Matrix3 = Matrix3;
 const _m3 = /*@__PURE__*/new Matrix3();
 
-},{}],56:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -11126,7 +10863,7 @@ const _x = /*@__PURE__*/new _Vector.Vector3();
 const _y = /*@__PURE__*/new _Vector.Vector3();
 const _z = /*@__PURE__*/new _Vector.Vector3();
 
-},{"../constants.js":45,"./Vector3.js":60}],57:[function(require,module,exports){
+},{"../constants.js":41,"./Vector3.js":56}],53:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -11593,7 +11330,7 @@ class Quaternion {
 }
 exports.Quaternion = Quaternion;
 
-},{"./MathUtils.js":54}],58:[function(require,module,exports){
+},{"./MathUtils.js":50}],54:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -11730,7 +11467,7 @@ class Sphere {
 }
 exports.Sphere = Sphere;
 
-},{"./Box3.js":52,"./Vector3.js":60}],59:[function(require,module,exports){
+},{"./Box3.js":48,"./Vector3.js":56}],55:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -12015,7 +11752,7 @@ class Vector2 {
 }
 exports.Vector2 = Vector2;
 
-},{"./MathUtils.js":54}],60:[function(require,module,exports){
+},{"./MathUtils.js":50}],56:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -12483,7 +12220,7 @@ exports.Vector3 = Vector3;
 const _vector = /*@__PURE__*/new Vector3();
 const _quaternion = /*@__PURE__*/new _Quaternion.Quaternion();
 
-},{"./MathUtils.js":54,"./Quaternion.js":57}],61:[function(require,module,exports){
+},{"./MathUtils.js":50,"./Quaternion.js":53}],57:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -12550,7 +12287,7 @@ function warnOnce(message) {
   console.warn(message);
 }
 
-},{}],62:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -12656,7 +12393,7 @@ const initCanvas = (canvas, synth) => {
 };
 exports.initCanvas = initCanvas;
 
-},{}],63:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -12687,7 +12424,7 @@ const setAttributes = (el, attributes) => {
 };
 exports.setAttributes = setAttributes;
 
-},{}],64:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -12736,7 +12473,7 @@ class EvalSandbox {
 var _default = EvalSandbox;
 exports.default = _default;
 
-},{"./lib/array-utils.js":77,"./lib/sandbox.js":83}],65:[function(require,module,exports){
+},{"./lib/array-utils.js":73,"./lib/sandbox.js":79}],61:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -12942,7 +12679,7 @@ function getArrayValue(value, input, vecLen = 0) {
   }
 }
 
-},{"./hydra-source.js":72,"./lib/array-utils.js":77,"./output.js":87,"./types.js":105}],66:[function(require,module,exports){
+},{"./hydra-source.js":68,"./lib/array-utils.js":73,"./output.js":83,"./types.js":101}],62:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -13098,7 +12835,7 @@ function contains(object, arr) {
   return false;
 }
 
-},{"./format-arguments.js":65,"./glsl-source.js":68,"./three/scene.js":102,"./types.js":105}],67:[function(require,module,exports){
+},{"./format-arguments.js":61,"./glsl-source.js":64,"./three/scene.js":98,"./types.js":101}],63:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -13255,7 +12992,7 @@ if (typeof window !== 'undefined') {
   window.processFunction = processFunction;
 }
 
-},{"./glsl-source.js":68,"./glsl/glsl-functions.js":69,"./types.js":105}],68:[function(require,module,exports){
+},{"./glsl-source.js":64,"./glsl/glsl-functions.js":65,"./types.js":101}],64:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -13386,7 +13123,7 @@ glslProps.map(prop => {
 var _default = GlslSource;
 exports.default = _default;
 
-},{"./generate-glsl.js":66,"./glsl/utility-functions.js":70,"./lib/HydraShader.js":76,"./lib/mixins.js":80,"./three/HydraUniform.js":90,"./three/mt.js":99,"./types.js":105}],69:[function(require,module,exports){
+},{"./generate-glsl.js":62,"./glsl/utility-functions.js":66,"./lib/HydraShader.js":72,"./lib/mixins.js":76,"./three/HydraUniform.js":86,"./three/mt.js":95,"./types.js":101}],65:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -14581,7 +14318,7 @@ var _default = () => [{
 }];
 exports.default = _default;
 
-},{"glslify":6}],70:[function(require,module,exports){
+},{"glslify":2}],66:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -14797,7 +14534,7 @@ vec4 _mod289(vec4 x)
 };
 exports.default = _default;
 
-},{}],71:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -14923,7 +14660,7 @@ const hideSaveRow = nameOrGui => {
 };
 exports.hideSaveRow = hideSaveRow;
 
-},{"./three/lights.js":97,"./three/world.js":104}],72:[function(require,module,exports){
+},{"./three/lights.js":93,"./three/world.js":100}],68:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -15079,7 +14816,7 @@ class HydraSource {
 var _default = HydraSource;
 exports.default = _default;
 
-},{"./lib/screenmedia.js":84,"./lib/webcam.js":86,"three":14}],73:[function(require,module,exports){
+},{"./lib/screenmedia.js":80,"./lib/webcam.js":82,"three":10}],69:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -15607,14 +15344,14 @@ class HydraRenderer {
 var _default = HydraRenderer;
 exports.default = _default;
 
-},{"./canvas.js":62,"./el.js":63,"./eval-sandbox.js":64,"./generator-factory.js":67,"./gui.js":71,"./hydra-source.js":72,"./lib/array-utils.js":77,"./lib/audio.js":78,"./lib/mouse.js":82,"./lib/video-recorder.js":85,"./output.js":87,"./three/HydraUniform.js":90,"./three/arr.js":91,"./three/cmp.js":92,"./three/globals.js":94,"./three/gm.js":95,"./three/math.js":98,"./three/mt.js":99,"./three/noise.js":100,"./three/rnd.js":101,"./three/scene.js":102,"./three/tx.js":103,"raf-loop":11,"three":14,"three/examples/jsm/postprocessing/EffectComposer.js":19,"three/examples/jsm/postprocessing/ShaderPass.js":26,"three/examples/jsm/renderers/CSS2DRenderer.js":28,"three/examples/jsm/renderers/CSS3DRenderer.js":29}],74:[function(require,module,exports){
+},{"./canvas.js":58,"./el.js":59,"./eval-sandbox.js":60,"./generator-factory.js":63,"./gui.js":67,"./hydra-source.js":68,"./lib/array-utils.js":73,"./lib/audio.js":74,"./lib/mouse.js":78,"./lib/video-recorder.js":81,"./output.js":83,"./three/HydraUniform.js":86,"./three/arr.js":87,"./three/cmp.js":88,"./three/globals.js":90,"./three/gm.js":91,"./three/math.js":94,"./three/mt.js":95,"./three/noise.js":96,"./three/rnd.js":97,"./three/scene.js":98,"./three/tx.js":99,"raf-loop":7,"three":10,"three/examples/jsm/postprocessing/EffectComposer.js":15,"three/examples/jsm/postprocessing/ShaderPass.js":22,"three/examples/jsm/renderers/CSS2DRenderer.js":24,"three/examples/jsm/renderers/CSS3DRenderer.js":25}],70:[function(require,module,exports){
 "use strict";
 
 var _hydraSynth = _interopRequireDefault(require("./hydra-synth.js"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 module.exports = _hydraSynth.default;
 
-},{"./hydra-synth.js":73}],75:[function(require,module,exports){
+},{"./hydra-synth.js":69}],71:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -15746,7 +15483,7 @@ class GridGeometry extends _BufferGeometry.BufferGeometry {
 }
 exports.GridGeometry = GridGeometry;
 
-},{"three/src/core/BufferAttribute.js":46,"three/src/core/BufferGeometry.js":47}],76:[function(require,module,exports){
+},{"three/src/core/BufferAttribute.js":42,"three/src/core/BufferGeometry.js":43}],72:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -15880,7 +15617,7 @@ class HydraVertexShader extends HydraShader {
 }
 exports.HydraVertexShader = HydraVertexShader;
 
-},{"three":14}],77:[function(require,module,exports){
+},{"three":10}],73:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -15978,7 +15715,7 @@ var _default = {
 };
 exports.default = _default;
 
-},{"./easing-functions.js":79}],78:[function(require,module,exports){
+},{"./easing-functions.js":75}],74:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16188,7 +15925,7 @@ class Audio {
 var _default = Audio;
 exports.default = _default;
 
-},{"meyda":8}],79:[function(require,module,exports){
+},{"meyda":4}],75:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16256,7 +15993,7 @@ var _default = {
 };
 exports.default = _default;
 
-},{}],80:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16511,7 +16248,7 @@ const mixClass = (clazz, ...mixins) => {
 };
 exports.mixClass = mixClass;
 
-},{"../three/HydraOrbitControls.js":88,"three":14}],81:[function(require,module,exports){
+},{"../three/HydraOrbitControls.js":84,"three":10}],77:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16573,7 +16310,7 @@ mouse.y = mouseRelativeY;
 var _default = mouse;
 exports.default = _default;
 
-},{}],82:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16756,7 +16493,7 @@ function mouseListen(element, callback) {
   return result;
 }
 
-},{"./mouse-event.js":81}],83:[function(require,module,exports){
+},{"./mouse-event.js":77}],79:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16794,7 +16531,7 @@ var _default = parent => {
 };
 exports.default = _default;
 
-},{}],84:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16817,7 +16554,7 @@ function _default(options) {
   });
 }
 
-},{}],85:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16907,7 +16644,7 @@ class VideoRecorder {
 var _default = VideoRecorder;
 exports.default = _default;
 
-},{}],86:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -16948,7 +16685,7 @@ function _default(deviceId) {
   }).catch(console.log.bind(console));
 }
 
-},{}],87:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -17175,7 +16912,7 @@ Output.prototype.renderTexture = function (options = {}) {
 var _default = Output;
 exports.default = _default;
 
-},{"./lib/mixins.js":80,"./three/HydraPass.js":89,"./three/HydraUniform.js":90,"./three/fx.js":93,"./three/layers.js":96,"./three/tx.js":103,"three":14,"three/examples/jsm/postprocessing/ClearPass.js":18,"three/examples/jsm/postprocessing/EffectComposer.js":19}],88:[function(require,module,exports){
+},{"./lib/mixins.js":76,"./three/HydraPass.js":85,"./three/HydraUniform.js":86,"./three/fx.js":89,"./three/layers.js":92,"./three/tx.js":99,"three":10,"three/examples/jsm/postprocessing/ClearPass.js":14,"three/examples/jsm/postprocessing/EffectComposer.js":15}],84:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -17966,7 +17703,7 @@ class HydraMapControls extends HydraOrbitControls {
 }
 exports.HydraMapControls = HydraMapControls;
 
-},{"three":14}],89:[function(require,module,exports){
+},{"three":10}],85:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18176,7 +17913,7 @@ class HydraFadePass extends HydraMaterialPass {
 }
 exports.HydraFadePass = HydraFadePass;
 
-},{"../format-arguments.js":65,"../lib/HydraShader.js":76,"./mt.js":99,"three":14,"three/examples/jsm/postprocessing/Pass.js":22}],90:[function(require,module,exports){
+},{"../format-arguments.js":61,"../lib/HydraShader.js":72,"./mt.js":95,"three":10,"three/examples/jsm/postprocessing/Pass.js":18}],86:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18233,7 +17970,7 @@ class HydraUniform {
 }
 exports.HydraUniform = HydraUniform;
 
-},{"../hydra-source.js":72,"../output.js":87}],91:[function(require,module,exports){
+},{"../hydra-source.js":68,"../output.js":83}],87:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18517,7 +18254,7 @@ const transpose = arr => {
 };
 exports.transpose = transpose;
 
-},{"./math.js":98,"./noise.js":100,"./rnd.js":101}],92:[function(require,module,exports){
+},{"./math.js":94,"./noise.js":96,"./rnd.js":97}],88:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18644,7 +18381,7 @@ function lookAtBox(scene, box, offset) {
   }
 }
 
-},{"./lights.js":97,"./noise.js":100,"./rnd.js":101,"three":14}],93:[function(require,module,exports){
+},{"./lights.js":93,"./noise.js":96,"./rnd.js":97,"three":10}],89:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18844,7 +18581,7 @@ const addPass = (type, options) => {
   return pass;
 };
 
-},{"./HydraUniform.js":90,"glslify":6,"three":14,"three/examples/jsm/postprocessing/BloomPass.js":17,"three/examples/jsm/postprocessing/FilmPass.js":20,"three/examples/jsm/postprocessing/Pass.js":22,"three/examples/jsm/postprocessing/RenderPixelatedPass.js":23,"three/examples/jsm/postprocessing/SAOPass.js":24,"three/examples/jsm/postprocessing/SSAARenderPass.js":25,"three/examples/jsm/postprocessing/ShaderPass.js":26,"three/examples/jsm/postprocessing/UnrealBloomPass.js":27,"three/examples/jsm/shaders/BleachBypassShader.js":30,"three/examples/jsm/shaders/ColorifyShader.js":31,"three/examples/jsm/shaders/DotScreenShader.js":35,"three/examples/jsm/shaders/FXAAShader.js":36,"three/examples/jsm/shaders/GammaCorrectionShader.js":38,"three/examples/jsm/shaders/HorizontalBlurShader.js":39,"three/examples/jsm/shaders/RGBShiftShader.js":41,"three/examples/jsm/shaders/SepiaShader.js":43,"three/examples/jsm/shaders/VerticalBlurShader.js":44}],94:[function(require,module,exports){
+},{"./HydraUniform.js":86,"glslify":2,"three":10,"three/examples/jsm/postprocessing/BloomPass.js":13,"three/examples/jsm/postprocessing/FilmPass.js":16,"three/examples/jsm/postprocessing/Pass.js":18,"three/examples/jsm/postprocessing/RenderPixelatedPass.js":19,"three/examples/jsm/postprocessing/SAOPass.js":20,"three/examples/jsm/postprocessing/SSAARenderPass.js":21,"three/examples/jsm/postprocessing/ShaderPass.js":22,"three/examples/jsm/postprocessing/UnrealBloomPass.js":23,"three/examples/jsm/shaders/BleachBypassShader.js":26,"three/examples/jsm/shaders/ColorifyShader.js":27,"three/examples/jsm/shaders/DotScreenShader.js":31,"three/examples/jsm/shaders/FXAAShader.js":32,"three/examples/jsm/shaders/GammaCorrectionShader.js":34,"three/examples/jsm/shaders/HorizontalBlurShader.js":35,"three/examples/jsm/shaders/RGBShiftShader.js":37,"three/examples/jsm/shaders/SepiaShader.js":39,"three/examples/jsm/shaders/VerticalBlurShader.js":40}],90:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -18906,7 +18643,7 @@ const xyz = (x, y, z, w = window.innerWidth, h = window.innerHeight) => {
 };
 exports.xyz = xyz;
 
-},{"three":14}],95:[function(require,module,exports){
+},{"three":10}],91:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -19051,7 +18788,7 @@ function signedArea(A, B, C) {
   return 0.5 * ((B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x));
 }
 
-},{"../lib/GridGeometry.js":75,"three":14}],96:[function(require,module,exports){
+},{"../lib/GridGeometry.js":71,"three":10}],92:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -19179,7 +18916,7 @@ const restoreMaterials = scene => {
 };
 exports.restoreMaterials = restoreMaterials;
 
-},{"./HydraPass.js":89,"./HydraUniform.js":90,"./fx.js":93,"three":14,"three/examples/jsm/postprocessing/EffectComposer.js":19}],97:[function(require,module,exports){
+},{"./HydraPass.js":85,"./HydraUniform.js":86,"./fx.js":89,"three":10,"three/examples/jsm/postprocessing/EffectComposer.js":15}],93:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -19389,7 +19126,7 @@ const updateHemi = (group, options) => {
   group.add(hemiLight);
 };
 
-},{"./gm.js":95,"three":14}],98:[function(require,module,exports){
+},{"./gm.js":91,"three":10}],94:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -19429,7 +19166,7 @@ const deg = rad => {
 };
 exports.deg = deg;
 
-},{}],99:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -19790,7 +19527,7 @@ const getBlend = blendMode => {
 };
 exports.getBlend = getBlend;
 
-},{"../generator-factory.js":67,"../glsl-source.js":68,"glslify":6,"three":14}],100:[function(require,module,exports){
+},{"../generator-factory.js":63,"../glsl-source.js":64,"glslify":2,"three":10}],96:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -19926,7 +19663,7 @@ function fbm(noiseFn, H, opts = {}) {
   // return redistributed / max;
 }
 
-},{"./math.js":98,"three/examples/jsm/math/ImprovedNoise.js":15}],101:[function(require,module,exports){
+},{"./math.js":94,"three/examples/jsm/math/ImprovedNoise.js":11}],97:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -20042,7 +19779,7 @@ const color = () => {
 };
 exports.color = color;
 
-},{"./math.js":98,"three":14}],102:[function(require,module,exports){
+},{"./math.js":94,"three":10}],98:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -20662,7 +20399,7 @@ class HydraScene extends THREE.Scene {
 exports.HydraScene = HydraScene;
 (0, _mixins.mixClass)(HydraScene, _mixins.cameraMixin, _mixins.autoClearMixin, _mixins.sourceMixin, sceneMixin);
 
-},{"../glsl-source.js":68,"../gui.js":71,"../lib/GridGeometry.js":75,"../lib/mixins.js":80,"./gm.js":95,"./layers.js":96,"./lights.js":97,"./mt.js":99,"./world.js":104,"three":14,"three/examples/jsm/postprocessing/Pass.js":22,"three/examples/jsm/renderers/CSS2DRenderer.js":28,"three/examples/jsm/renderers/CSS3DRenderer.js":29}],103:[function(require,module,exports){
+},{"../glsl-source.js":64,"../gui.js":67,"../lib/GridGeometry.js":71,"../lib/mixins.js":76,"./gm.js":91,"./layers.js":92,"./lights.js":93,"./mt.js":95,"./world.js":100,"three":10,"three/examples/jsm/postprocessing/Pass.js":18,"three/examples/jsm/renderers/CSS2DRenderer.js":24,"three/examples/jsm/renderers/CSS3DRenderer.js":25}],99:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21097,7 +20834,7 @@ const fbo = (options = {}) => {
 };
 exports.fbo = fbo;
 
-},{"./arr.js":91,"three":14}],104:[function(require,module,exports){
+},{"./arr.js":87,"three":10}],100:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21319,7 +21056,7 @@ const update = (scene, options) => {
 };
 exports.update = update;
 
-},{"./gm.js":95,"./mt.js":99,"./noise.js":100,"three":14,"three/examples/jsm/objects/Sky.js":16}],105:[function(require,module,exports){
+},{"./gm.js":91,"./mt.js":95,"./noise.js":96,"three":10,"three/examples/jsm/objects/Sky.js":12}],101:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -21464,5 +21201,5 @@ function replaceGenType(transform, toType) {
   return processGlsl(result, t.returnType, t.args);
 }
 
-},{}]},{},[74])(74)
+},{}]},{},[70])(70)
 });

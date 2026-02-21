@@ -28,11 +28,19 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Install Playwright Chromium
+        if: matrix.node-version == 20
+        run: npx playwright install --with-deps chromium
+
       - name: Build
         run: npm run build
 
       - name: Smoke test
         run: npm run test:smoke
+
+      - name: Browser smoke test
+        if: matrix.node-version == 20
+        run: npm run test:smoke:browser
 
       - name: Package dry-run
         run: npm run pack:check

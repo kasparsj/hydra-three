@@ -68,6 +68,8 @@ Useful checks:
 
 ```bash
 npm run ci:check
+npx playwright install chromium
+npm run test:smoke:browser
 ```
 
 ## Example
@@ -124,6 +126,7 @@ Use these docs before shipping:
 ## Trust signals
 
 - CI runs build + smoke + package checks on Node 20 and 22.
+- CI runs a real Chromium smoke test of `examples/quickstart.html` on Node 20.
 - Release tags (`v*`) run verification and attach an npm tarball artifact.
 
 ## License

@@ -30,6 +30,7 @@
     "build:debug": "browserify ./src/index.js --debug -p esmify -t glslify --standalone Hydra > dist/hydra-synth.js",
     "test:smoke:canvas": "node ./scripts/smoke/canvas-smoke.mjs",
     "test:smoke:module": "node ./scripts/smoke/module-load-smoke.mjs",
+    "test:smoke:browser": "node ./scripts/smoke/browser-smoke.mjs",
     "test:smoke": "npm run test:smoke:canvas && npm run test:smoke:module",
     "pack:check": "npm pack --dry-run",
     "ci:check": "npm run build && npm run test:smoke && npm run pack:check"
@@ -62,6 +63,7 @@
     "browserify": "^17.0.0",
     "budo": "^11.8.4",
     "esmify": "^2.1.1",
-    "glslify": "^7.1.1"
+    "glslify": "^7.1.1",
+    "playwright": "1.56.1"
   }
 }
