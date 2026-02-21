@@ -38129,294 +38129,8 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     "SAO": 1,
     "Normal": 2
   };
-  const uvVert = `#define GLSLIFY 1
-varying vec2 vUv;
-
-void main() {
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-}
-`;
-  const filmFrag = `#define GLSLIFY 1
-//
-// GLSL textureless classic 3D noise "cnoise",
-// with an RSL-style periodic variant "pnoise".
-// Author:  Stefan Gustavson (stefan.gustavson@liu.se)
-// Version: 2011-10-11
-//
-// Many thanks to Ian McEwan of Ashima Arts for the
-// ideas for permutation and gradient selection.
-//
-// Copyright (c) 2011 Stefan Gustavson. All rights reserved.
-// Distributed under the MIT license. See LICENSE file.
-// https://github.com/ashima/webgl-noise
-//
-
-vec3 mod289_0(vec3 x)
-{
-  return x - floor(x * (1.0 / 289.0)) * 289.0;
-}
-
-vec4 mod289_0(vec4 x)
-{
-  return x - floor(x * (1.0 / 289.0)) * 289.0;
-}
-
-vec4 permute_0(vec4 x)
-{
-  return mod289_0(((x*34.0)+1.0)*x);
-}
-
-vec4 taylorInvSqrt_0(vec4 r)
-{
-  return 1.79284291400159 - 0.85373472095314 * r;
-}
-
-vec3 fade(vec3 t) {
-  return t*t*t*(t*(t*6.0-15.0)+10.0);
-}
-
-// Classic Perlin noise, periodic variant
-float pnoise(vec3 P, vec3 rep)
-{
-  vec3 Pi0 = mod(floor(P), rep); // Integer part, modulo period
-  vec3 Pi1 = mod(Pi0 + vec3(1.0), rep); // Integer part + 1, mod period
-  Pi0 = mod289_0(Pi0);
-  Pi1 = mod289_0(Pi1);
-  vec3 Pf0 = fract(P); // Fractional part for interpolation
-  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0
-  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);
-  vec4 iy = vec4(Pi0.yy, Pi1.yy);
-  vec4 iz0 = Pi0.zzzz;
-  vec4 iz1 = Pi1.zzzz;
-
-  vec4 ixy = permute_0(permute_0(ix) + iy);
-  vec4 ixy0 = permute_0(ixy + iz0);
-  vec4 ixy1 = permute_0(ixy + iz1);
-
-  vec4 gx0 = ixy0 * (1.0 / 7.0);
-  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;
-  gx0 = fract(gx0);
-  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);
-  vec4 sz0 = step(gz0, vec4(0.0));
-  gx0 -= sz0 * (step(0.0, gx0) - 0.5);
-  gy0 -= sz0 * (step(0.0, gy0) - 0.5);
-
-  vec4 gx1 = ixy1 * (1.0 / 7.0);
-  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;
-  gx1 = fract(gx1);
-  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);
-  vec4 sz1 = step(gz1, vec4(0.0));
-  gx1 -= sz1 * (step(0.0, gx1) - 0.5);
-  gy1 -= sz1 * (step(0.0, gy1) - 0.5);
-
-  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);
-  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);
-  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);
-  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);
-  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);
-  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);
-  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);
-  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);
-
-  vec4 norm0 = taylorInvSqrt_0(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
-  g000 *= norm0.x;
-  g010 *= norm0.y;
-  g100 *= norm0.z;
-  g110 *= norm0.w;
-  vec4 norm1 = taylorInvSqrt_0(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));
-  g001 *= norm1.x;
-  g011 *= norm1.y;
-  g101 *= norm1.z;
-  g111 *= norm1.w;
-
-  float n000 = dot(g000, Pf0);
-  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));
-  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));
-  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));
-  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));
-  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));
-  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));
-  float n111 = dot(g111, Pf1);
-
-  vec3 fade_xyz = fade(Pf0);
-  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);
-  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);
-  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x);
-  return 2.2 * n_xyz;
-}
-
-//
-// Description : Array and textureless GLSL 2D/3D/4D simplex
-//               noise functions.
-//      Author : Ian McEwan, Ashima Arts.
-//  Maintainer : ijm
-//     Lastmod : 20110822 (ijm)
-//     License : Copyright (C) 2011 Ashima Arts. All rights reserved.
-//               Distributed under the MIT License. See LICENSE file.
-//               https://github.com/ashima/webgl-noise
-//
-
-vec3 mod289_1(vec3 x) {
-  return x - floor(x * (1.0 / 289.0)) * 289.0;
-}
-
-vec4 mod289_1(vec4 x) {
-  return x - floor(x * (1.0 / 289.0)) * 289.0;
-}
-
-vec4 permute_1(vec4 x) {
-     return mod289_1(((x*34.0)+1.0)*x);
-}
-
-vec4 taylorInvSqrt_1(vec4 r)
-{
-  return 1.79284291400159 - 0.85373472095314 * r;
-}
-
-float snoise(vec3 v)
-  {
-  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
-  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
-
-// First corner
-  vec3 i  = floor(v + dot(v, C.yyy) );
-  vec3 x0 =   v - i + dot(i, C.xxx) ;
-
-// Other corners
-  vec3 g_0 = step(x0.yzx, x0.xyz);
-  vec3 l = 1.0 - g_0;
-  vec3 i1 = min( g_0.xyz, l.zxy );
-  vec3 i2 = max( g_0.xyz, l.zxy );
-
-  //   x0 = x0 - 0.0 + 0.0 * C.xxx;
-  //   x1 = x0 - i1  + 1.0 * C.xxx;
-  //   x2 = x0 - i2  + 2.0 * C.xxx;
-  //   x3 = x0 - 1.0 + 3.0 * C.xxx;
-  vec3 x1 = x0 - i1 + C.xxx;
-  vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y
-  vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y
-
-// Permutations
-  i = mod289_1(i);
-  vec4 p = permute_1( permute_1( permute_1(
-             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
-           + i.y + vec4(0.0, i1.y, i2.y, 1.0 ))
-           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
-
-// Gradients: 7x7 points over a square, mapped onto an octahedron.
-// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)
-  float n_ = 0.142857142857; // 1.0/7.0
-  vec3  ns = n_ * D.wyz - D.xzx;
-
-  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)
-
-  vec4 x_ = floor(j * ns.z);
-  vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)
-
-  vec4 x = x_ *ns.x + ns.yyyy;
-  vec4 y = y_ *ns.x + ns.yyyy;
-  vec4 h = 1.0 - abs(x) - abs(y);
-
-  vec4 b0 = vec4( x.xy, y.xy );
-  vec4 b1 = vec4( x.zw, y.zw );
-
-  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;
-  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;
-  vec4 s0 = floor(b0)*2.0 + 1.0;
-  vec4 s1 = floor(b1)*2.0 + 1.0;
-  vec4 sh = -step(h, vec4(0.0));
-
-  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
-  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
-
-  vec3 p0 = vec3(a0.xy,h.x);
-  vec3 p1 = vec3(a0.zw,h.y);
-  vec3 p2 = vec3(a1.xy,h.z);
-  vec3 p3 = vec3(a1.zw,h.w);
-
-//Normalise gradients
-  vec4 norm = taylorInvSqrt_1(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
-  p0 *= norm.x;
-  p1 *= norm.y;
-  p2 *= norm.z;
-  p3 *= norm.w;
-
-// Mix final noise value
-  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
-  m = m * m;
-  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1),
-                                dot(p2,x2), dot(p3,x3) ) );
-  }
-
-float grain(vec2 texCoord, vec2 resolution, float frame, float multiplier) {
-    vec2 mult = texCoord * resolution;
-    float offset = snoise(vec3(mult / multiplier, frame));
-    float n1 = pnoise(vec3(mult, offset), vec3(1.0/texCoord * resolution, 1.0));
-    return n1 / 2.0 + 0.5;
-}
-
-float grain(vec2 texCoord, vec2 resolution, float frame) {
-    return grain(texCoord, resolution, frame, 2.5);
-}
-
-float grain(vec2 texCoord, vec2 resolution) {
-    return grain(texCoord, resolution, 0.0);
-}
-
-// control parameter
-uniform float time;
-
-uniform bool grayscale;
-
-// noise effect intensity value (0 = no effect, 1 = full effect)
-uniform float nIntensity;
-
-// scanlines effect intensity value (0 = no effect, 1 = full effect)
-uniform float sIntensity;
-
-// scanlines effect count value (0 = no effect, 4096 = full effect)
-uniform float sCount;
-
-uniform sampler2D tDiffuse;
-
-uniform vec2 uResolution;
-
-uniform float uGrainSize;
-
-varying vec2 vUv;
-
-void main() {
-
-    // sample the source
-    vec4 cTextureScreen = texture2D( tDiffuse, vUv );
-
-    // make some noise
-    // float dx = rand( vUv + time );
-    float dx = grain(vUv, uResolution / uGrainSize, time);
-
-    // add noise
-    vec3 cResult = cTextureScreen.rgb + cTextureScreen.rgb * clamp( 0.1 + dx, 0.0, 1.0 );
-
-    // get us a sine and cosine
-    vec2 sc = vec2( sin( vUv.y * sCount ), cos( vUv.y * sCount ) );
-
-    // add scanlines
-    cResult += cTextureScreen.rgb * vec3( sc.x, sc.y, sc.x ) * sIntensity;
-
-    // interpolate between source and result by intensity
-    cResult = cTextureScreen.rgb + clamp( nIntensity, 0.0,1.0 ) * ( cResult - cTextureScreen.rgb );
-
-    // convert to grayscale if desired
-    if( grayscale ) {
-
-        cResult = vec3( cResult.r * 0.3 + cResult.g * 0.59 + cResult.b * 0.11 );
-
-    }
-
-    gl_FragColor =  vec4( cResult, cTextureScreen.a );
-
-}`;
+  const uvVert = "#define GLSLIFY 1\nvarying vec2 vUv;\n\nvoid main() {\n    vUv = uv;\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n}\n";
+  const filmFrag = '#define GLSLIFY 1\n//\n// GLSL textureless classic 3D noise "cnoise",\n// with an RSL-style periodic variant "pnoise".\n// Author:  Stefan Gustavson (stefan.gustavson@liu.se)\n// Version: 2011-10-11\n//\n// Many thanks to Ian McEwan of Ashima Arts for the\n// ideas for permutation and gradient selection.\n//\n// Copyright (c) 2011 Stefan Gustavson. All rights reserved.\n// Distributed under the MIT license. See LICENSE file.\n// https://github.com/ashima/webgl-noise\n//\n\nvec3 mod289_0(vec3 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289_0(vec4 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute_0(vec4 x)\n{\n  return mod289_0(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt_0(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nvec3 fade(vec3 t) {\n  return t*t*t*(t*(t*6.0-15.0)+10.0);\n}\n\n// Classic Perlin noise, periodic variant\nfloat pnoise(vec3 P, vec3 rep)\n{\n  vec3 Pi0 = mod(floor(P), rep); // Integer part, modulo period\n  vec3 Pi1 = mod(Pi0 + vec3(1.0), rep); // Integer part + 1, mod period\n  Pi0 = mod289_0(Pi0);\n  Pi1 = mod289_0(Pi1);\n  vec3 Pf0 = fract(P); // Fractional part for interpolation\n  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n  vec4 iy = vec4(Pi0.yy, Pi1.yy);\n  vec4 iz0 = Pi0.zzzz;\n  vec4 iz1 = Pi1.zzzz;\n\n  vec4 ixy = permute_0(permute_0(ix) + iy);\n  vec4 ixy0 = permute_0(ixy + iz0);\n  vec4 ixy1 = permute_0(ixy + iz1);\n\n  vec4 gx0 = ixy0 * (1.0 / 7.0);\n  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n  gx0 = fract(gx0);\n  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n  vec4 sz0 = step(gz0, vec4(0.0));\n  gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n  gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n\n  vec4 gx1 = ixy1 * (1.0 / 7.0);\n  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n  gx1 = fract(gx1);\n  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n  vec4 sz1 = step(gz1, vec4(0.0));\n  gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n  gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n\n  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n\n  vec4 norm0 = taylorInvSqrt_0(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n  g000 *= norm0.x;\n  g010 *= norm0.y;\n  g100 *= norm0.z;\n  g110 *= norm0.w;\n  vec4 norm1 = taylorInvSqrt_0(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n  g001 *= norm1.x;\n  g011 *= norm1.y;\n  g101 *= norm1.z;\n  g111 *= norm1.w;\n\n  float n000 = dot(g000, Pf0);\n  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n  float n111 = dot(g111, Pf1);\n\n  vec3 fade_xyz = fade(Pf0);\n  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x);\n  return 2.2 * n_xyz;\n}\n\n//\n// Description : Array and textureless GLSL 2D/3D/4D simplex\n//               noise functions.\n//      Author : Ian McEwan, Ashima Arts.\n//  Maintainer : ijm\n//     Lastmod : 20110822 (ijm)\n//     License : Copyright (C) 2011 Ashima Arts. All rights reserved.\n//               Distributed under the MIT License. See LICENSE file.\n//               https://github.com/ashima/webgl-noise\n//\n\nvec3 mod289_1(vec3 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 mod289_1(vec4 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec4 permute_1(vec4 x) {\n     return mod289_1(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt_1(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nfloat snoise(vec3 v)\n  {\n  const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;\n  const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);\n\n// First corner\n  vec3 i  = floor(v + dot(v, C.yyy) );\n  vec3 x0 =   v - i + dot(i, C.xxx) ;\n\n// Other corners\n  vec3 g_0 = step(x0.yzx, x0.xyz);\n  vec3 l = 1.0 - g_0;\n  vec3 i1 = min( g_0.xyz, l.zxy );\n  vec3 i2 = max( g_0.xyz, l.zxy );\n\n  //   x0 = x0 - 0.0 + 0.0 * C.xxx;\n  //   x1 = x0 - i1  + 1.0 * C.xxx;\n  //   x2 = x0 - i2  + 2.0 * C.xxx;\n  //   x3 = x0 - 1.0 + 3.0 * C.xxx;\n  vec3 x1 = x0 - i1 + C.xxx;\n  vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y\n  vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y\n\n// Permutations\n  i = mod289_1(i);\n  vec4 p = permute_1( permute_1( permute_1(\n             i.z + vec4(0.0, i1.z, i2.z, 1.0 ))\n           + i.y + vec4(0.0, i1.y, i2.y, 1.0 ))\n           + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));\n\n// Gradients: 7x7 points over a square, mapped onto an octahedron.\n// The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)\n  float n_ = 0.142857142857; // 1.0/7.0\n  vec3  ns = n_ * D.wyz - D.xzx;\n\n  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)\n\n  vec4 x_ = floor(j * ns.z);\n  vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)\n\n  vec4 x = x_ *ns.x + ns.yyyy;\n  vec4 y = y_ *ns.x + ns.yyyy;\n  vec4 h = 1.0 - abs(x) - abs(y);\n\n  vec4 b0 = vec4( x.xy, y.xy );\n  vec4 b1 = vec4( x.zw, y.zw );\n\n  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;\n  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;\n  vec4 s0 = floor(b0)*2.0 + 1.0;\n  vec4 s1 = floor(b1)*2.0 + 1.0;\n  vec4 sh = -step(h, vec4(0.0));\n\n  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;\n  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;\n\n  vec3 p0 = vec3(a0.xy,h.x);\n  vec3 p1 = vec3(a0.zw,h.y);\n  vec3 p2 = vec3(a1.xy,h.z);\n  vec3 p3 = vec3(a1.zw,h.w);\n\n//Normalise gradients\n  vec4 norm = taylorInvSqrt_1(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));\n  p0 *= norm.x;\n  p1 *= norm.y;\n  p2 *= norm.z;\n  p3 *= norm.w;\n\n// Mix final noise value\n  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);\n  m = m * m;\n  return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1),\n                                dot(p2,x2), dot(p3,x3) ) );\n  }\n\nfloat grain(vec2 texCoord, vec2 resolution, float frame, float multiplier) {\n    vec2 mult = texCoord * resolution;\n    float offset = snoise(vec3(mult / multiplier, frame));\n    float n1 = pnoise(vec3(mult, offset), vec3(1.0/texCoord * resolution, 1.0));\n    return n1 / 2.0 + 0.5;\n}\n\nfloat grain(vec2 texCoord, vec2 resolution, float frame) {\n    return grain(texCoord, resolution, frame, 2.5);\n}\n\nfloat grain(vec2 texCoord, vec2 resolution) {\n    return grain(texCoord, resolution, 0.0);\n}\n\n// control parameter\nuniform float time;\n\nuniform bool grayscale;\n\n// noise effect intensity value (0 = no effect, 1 = full effect)\nuniform float nIntensity;\n\n// scanlines effect intensity value (0 = no effect, 1 = full effect)\nuniform float sIntensity;\n\n// scanlines effect count value (0 = no effect, 4096 = full effect)\nuniform float sCount;\n\nuniform sampler2D tDiffuse;\n\nuniform vec2 uResolution;\n\nuniform float uGrainSize;\n\nvarying vec2 vUv;\n\nvoid main() {\n\n    // sample the source\n    vec4 cTextureScreen = texture2D( tDiffuse, vUv );\n\n    // make some noise\n    // float dx = rand( vUv + time );\n    float dx = grain(vUv, uResolution / uGrainSize, time);\n\n    // add noise\n    vec3 cResult = cTextureScreen.rgb + cTextureScreen.rgb * clamp( 0.1 + dx, 0.0, 1.0 );\n\n    // get us a sine and cosine\n    vec2 sc = vec2( sin( vUv.y * sCount ), cos( vUv.y * sCount ) );\n\n    // add scanlines\n    cResult += cTextureScreen.rgb * vec3( sc.x, sc.y, sc.x ) * sIntensity;\n\n    // interpolate between source and result by intensity\n    cResult = cTextureScreen.rgb + clamp( nIntensity, 0.0,1.0 ) * ( cResult - cTextureScreen.rgb );\n\n    // convert to grayscale if desired\n    if( grayscale ) {\n\n        cResult = vec3( cResult.r * 0.3 + cResult.g * 0.59 + cResult.b * 0.11 );\n\n    }\n\n    gl_FragColor =  vec4( cResult, cTextureScreen.a );\n\n}';
   const add$1 = (options2) => {
     const { composer } = options2;
     if (options2 instanceof Pass) {
@@ -39711,8 +39425,9 @@ void main() {
       if (options2.skyDomeGeom !== "Sky") {
         const geom = new SphereGeometry(100);
         const mat = new MeshBasicMaterial({ color: new Color(16777215) });
-        const sunElevation = options2.sunElevation ?? options2.sunElevetion;
-        const sunPos = posFromEleAzi(sunElevation, options2.sunAzimuth, options2.far / 2);
+        const sunElevation = options2.sunElevation ?? options2.sunElevetion ?? 2;
+        const sunAzimuth = options2.sunAzimuth ?? 180;
+        const sunPos = posFromEleAzi(sunElevation, sunAzimuth, options2.far / 2);
         sun.name = sunName;
         sun.geometry = geom;
         sun.material = mat;
@@ -39787,22 +39502,59 @@ void main() {
     updateGround(group, options2);
     updateFog(scene, options2);
   };
-  const guis = {};
-  const init = async () => {
-    if (!window.dat) {
-      if (typeof window.loadScript !== "function") {
-        throw new Error("gui.init() requires window.loadScript to be available.");
-      }
-      await window.loadScript("https://unpkg.com/dat.gui");
+  const loadScript = (url = "", once = true, scope = null) => {
+    const globalScope = scope || (typeof window !== "undefined" ? window : null);
+    if (!globalScope || typeof document === "undefined") {
+      return Promise.reject(
+        new Error("loadScript() requires a browser-like window/document runtime.")
+      );
     }
-    patchDat();
+    return new Promise((resolve, reject) => {
+      if (once) {
+        globalScope.loadedScripts || (globalScope.loadedScripts = {});
+        if (globalScope.loadedScripts[url]) {
+          resolve();
+          return;
+        }
+      }
+      const script = document.createElement("script");
+      script.onload = () => {
+        if (once) {
+          globalScope.loadedScripts[url] = true;
+        }
+        resolve();
+      };
+      script.onerror = (error) => {
+        reject(error || new Error(`Failed to load script: ${url}`));
+      };
+      script.src = url;
+      document.head.appendChild(script);
+    });
+  };
+  const guis = {};
+  const ensureDat = async () => {
+    if (window.dat) {
+      return window.dat;
+    }
+    if (typeof window.loadScript === "function") {
+      await window.loadScript("https://unpkg.com/dat.gui");
+    } else {
+      await loadScript("https://unpkg.com/dat.gui");
+    }
+    if (!window.dat) {
+      throw new Error("gui.init() could not initialize dat.gui.");
+    }
+    return window.dat;
+  };
+  const init = async () => {
+    const datApi = await ensureDat();
+    patchDat(datApi);
   };
   const create$2 = async (name = "hydra-three") => {
     if (!guis[name]) {
-      if (!window.dat) {
-        await init();
-      }
-      const gui2 = guis[name] || new dat.GUI({ name, hideable: false });
+      const datApi = window.dat || await ensureDat();
+      patchDat(datApi);
+      const gui2 = guis[name] || new datApi.GUI({ name, hideable: false });
       gui2.useLocalStorage = true;
       guis[name] = gui2;
     }
@@ -39888,12 +39640,14 @@ void main() {
   const updateWorld = (scene, settings) => {
     update(scene, settings);
   };
-  function patchDat() {
-    const updateDisplay = dat.controllers.NumberControllerBox.prototype.updateDisplay;
-    dat.controllers.NumberControllerBox.prototype.updateDisplay = function() {
-      if (dat.dom.dom.isActive(this.__input)) return this;
+  function patchDat(datApi = window.dat) {
+    if (!datApi || datApi.__hydraPatched) return;
+    const updateDisplay = datApi.controllers.NumberControllerBox.prototype.updateDisplay;
+    datApi.controllers.NumberControllerBox.prototype.updateDisplay = function() {
+      if (datApi.dom.dom.isActive(this.__input)) return this;
       return updateDisplay.call(this);
     };
+    datApi.__hydraPatched = true;
   }
   const hideSaveRow = (nameOrGui) => {
     if (document.getElementsByClassName("save-row").length) {
@@ -39909,15 +39663,72 @@ void main() {
     lights,
     world
   }, Symbol.toStringTag, { value: "Module" }));
-  let runtime = null;
-  const setRuntime = (value) => {
-    runtime = value || null;
+  const runtimes = /* @__PURE__ */ new Set();
+  let activeRuntime = null;
+  const setActiveRuntime = (value) => {
+    if (!value) {
+      activeRuntime = null;
+      return null;
+    }
+    runtimes.add(value);
+    activeRuntime = value;
+    return value;
   };
-  const getRuntime = () => {
+  const setRuntime = (value, { active = true } = {}) => {
+    if (!value) {
+      return clearRuntime();
+    }
+    runtimes.add(value);
+    if (active || !activeRuntime) {
+      activeRuntime = value;
+    }
+    return value;
+  };
+  const getRuntime = (fallbackRuntime) => {
+    const runtime = fallbackRuntime || activeRuntime || (runtimes.size === 1 ? Array.from(runtimes)[0] : null);
     if (!runtime) {
-      throw new Error("Hydra runtime is not initialized. Create a Hydra instance before using 3D helpers.");
+      throw new Error(
+        "Hydra runtime is not initialized. Create a Hydra instance before using 3D helpers."
+      );
     }
     return runtime;
+  };
+  const clearRuntime = (value) => {
+    if (value) {
+      runtimes.delete(value);
+      if (activeRuntime === value) {
+        const runtimeList = Array.from(runtimes);
+        activeRuntime = runtimeList.length ? runtimeList[runtimeList.length - 1] : null;
+      }
+      return;
+    }
+    runtimes.clear();
+    activeRuntime = null;
+  };
+  const withRuntime = (runtime, fn) => {
+    const prevRuntime = activeRuntime;
+    setActiveRuntime(runtime);
+    try {
+      return fn();
+    } finally {
+      if (prevRuntime && runtimes.has(prevRuntime)) {
+        activeRuntime = prevRuntime;
+      } else {
+        activeRuntime = runtimes.has(runtime) ? runtime : null;
+      }
+    }
+  };
+  const bindRuntimeModule = (moduleApi, runtime) => {
+    const bound = {};
+    Object.keys(moduleApi).forEach((key) => {
+      const value = moduleApi[key];
+      if (typeof value === "function") {
+        bound[key] = (...args) => withRuntime(runtime, () => value(...args));
+      } else {
+        bound[key] = value;
+      }
+    });
+    return bound;
   };
   const scenes = {};
   const groups = {};
@@ -39975,6 +39786,8 @@ void main() {
     let scene = scenes[name];
     if (!name || !scene) {
       scene = new HydraScene(options2);
+    } else if (options2 && options2.runtime) {
+      scene._runtime = options2.runtime;
     }
     for (let attr in attributes) {
       if (!attributes.hasOwnProperty(attr)) continue;
@@ -39990,12 +39803,12 @@ void main() {
     scenes[scene.name] = scene;
     return scene;
   };
-  const getOrCreateMesh = (attributes = {}) => {
+  const getOrCreateMesh = (attributes = {}, runtime) => {
     const { name } = attributes;
     let mesh2 = namedMeshes[name];
     if (!name || !mesh2) {
       mesh2 = new Mesh();
-      const renderer = getRuntime().renderer;
+      const renderer = getRuntime(runtime).renderer;
       if (renderer.shadowMap.enabled) {
         mesh2.castShadow = true;
         mesh2.receiveShadow = true;
@@ -40007,12 +39820,12 @@ void main() {
     }
     return mesh2;
   };
-  const getOrCreateInstancedMesh = (attributes) => {
+  const getOrCreateInstancedMesh = (attributes, runtime) => {
     const { name, geometry, material, count } = attributes;
     let mesh2 = namedInstancedMeshes[name];
     if (!name || !mesh2) {
       mesh2 = new InstancedMesh(geometry, material, count);
-      const renderer = getRuntime().renderer;
+      const renderer = getRuntime(runtime).renderer;
       if (renderer.shadowMap.enabled) {
         mesh2.castShadow = true;
         mesh2.receiveShadow = true;
@@ -40187,9 +40000,12 @@ void main() {
         const quad = new FullScreenQuad(material);
         mesh2 = quad._mesh;
       } else if (options2.instanced) {
-        mesh2 = getOrCreateInstancedMesh(Object.assign({ geometry, material, count: options2.instanced }, options2));
+        mesh2 = getOrCreateInstancedMesh(
+          Object.assign({ geometry, material, count: options2.instanced }, options2),
+          this._runtime
+        );
       } else {
-        mesh2 = getOrCreateMesh(Object.assign({ geometry, material }, options2));
+        mesh2 = getOrCreateMesh(Object.assign({ geometry, material }, options2), this._runtime);
       }
       return mesh2;
     },
@@ -40305,10 +40121,11 @@ void main() {
       const { name } = attributes;
       let group = groups[name];
       if (!name || !group) {
-        group = new HydraGroup();
+        group = new HydraGroup(this._runtime);
       }
       addChild(this, group);
       setObject3DAttrs(group, attributes);
+      group._runtime = this._runtime;
       groups[group.name] = group;
       return group;
     },
@@ -40337,9 +40154,10 @@ void main() {
     }
   };
   class HydraGroup extends Group {
-    constructor() {
+    constructor(runtime) {
       super();
       this._matrixStack = [];
+      this._runtime = runtime || null;
     }
     _addObject3D(...args) {
       return super.add(...args);
@@ -40349,6 +40167,7 @@ void main() {
   class HydraScene extends Scene {
     constructor(options2) {
       super();
+      this._runtime = options2 && options2.runtime ? options2.runtime : null;
       this.init(options2);
       this._autoClear = { amount: 1 };
       this._layers = [];
@@ -40969,35 +40788,9 @@ vec4 _mod289(vec4 x)
       }
     });
   });
-  const pnoiseFrag = `#define GLSLIFY 1
-vec4 pnoise(vec2 _st, float scale, vec3 offset, vec4 rep, float uv)
-{
-    vec3 v = vec3(_st + offset.xy, offset.z) * scale;
-    return vec4(vec3(_pnoise(v, rep.rgb+v*uv)), 1.0);
-}`;
-  const snoiseFrag = `#define GLSLIFY 1
-vec4 snoise(vec2 _st, float scale, vec3 offset)
-{
-    vec3 v = vec3(_st + offset.xy, offset.z) * scale;
-    return vec4(vec3(_noise(v)), 1.0);
-}`;
-  const fbmFrag = `#define GLSLIFY 1
-vec4 fbm(vec2 _st, float scale, vec3 offset, int octaves) {
-    float value = 0.0;
-    float amplitude = .5;
-    float frequency = 0.;
-
-    const int MAX_OCTAVES = 100;
-    for (int i = 0; i < MAX_OCTAVES; i++) {
-        if (i >= octaves) break;
-        vec3 v = vec3(_st + offset.xy, offset.z) * scale;
-        value += amplitude * _noise(v);
-        _st *= 2.;
-        amplitude *= .5;
-    }
-
-    return vec4(vec3(value), 1.0);
-}`;
+  const pnoiseFrag = "#define GLSLIFY 1\nvec4 pnoise(vec2 _st, float scale, vec3 offset, vec4 rep, float uv)\n{\n    vec3 v = vec3(_st + offset.xy, offset.z) * scale;\n    return vec4(vec3(_pnoise(v, rep.rgb+v*uv)), 1.0);\n}";
+  const snoiseFrag = "#define GLSLIFY 1\nvec4 snoise(vec2 _st, float scale, vec3 offset)\n{\n    vec3 v = vec3(_st + offset.xy, offset.z) * scale;\n    return vec4(vec3(_noise(v)), 1.0);\n}";
+  const fbmFrag = "#define GLSLIFY 1\nvec4 fbm(vec2 _st, float scale, vec3 offset, int octaves) {\n    float value = 0.0;\n    float amplitude = .5;\n    float frequency = 0.;\n\n    const int MAX_OCTAVES = 100;\n    for (int i = 0; i < MAX_OCTAVES; i++) {\n        if (i >= octaves) break;\n        vec3 v = vec3(_st + offset.xy, offset.z) * scale;\n        value += amplitude * _noise(v);\n        _st *= 2.;\n        amplitude *= .5;\n    }\n\n    return vec4(vec3(value), 1.0);\n}";
   const glslFunctions = () => [
     {
       name: "noise",
@@ -42269,138 +42062,17 @@ vec4 fbm(vec2 _st, float scale, vec3 offset, int octaves) {
   if (typeof window !== "undefined") {
     window.processFunction = processFunction;
   }
-  const worldPosVert = `#define GLSLIFY 1
-varying vec3 vWorldPosition;
-
-void main() {
-
-    vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
-    vWorldPosition = worldPosition.xyz;
-
-    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-
-}`;
-  const worldPosGradientYFrag = `#define GLSLIFY 1
-uniform vec3 topColor;
-uniform vec3 bottomColor;
-uniform float offset;
-uniform float exponent;
-
-varying vec3 vWorldPosition;
-
-void main() {
-
-    float h = normalize( vWorldPosition + offset ).y;
-    gl_FragColor = vec4( mix( bottomColor, topColor, max( pow( max( h , 0.0), exponent ), 0.0 ) ), 1.0 );
-
-}`;
-  const pointsVert = `#define GLSLIFY 1
-varying vec3 vPos;
-varying float vSize;
-varying vec4 vColor;
-
-// note: pos.z does not change anything with GL_POINTS
-vec4 points(vec2 _st, vec3 pos, float size, vec4 color, float fade) {
-    vPos = pos;
-    vSize = size;
-    vColor = color;
-    gl_PointSize = vSize;
-    return vec4(vPos.xy * 2.0 - 1.0, vPos.z, 1.0);
-}
-
-`;
-  const linesVert = `#define GLSLIFY 1
-varying vec3 vPos;
-varying vec4 vColor;
-
-// note: pos.z does not change anything with GL_LINES
-vec4 lines(vec2 _st, vec3 pos, vec4 color) {
-    vPos = pos;
-    vColor = color;
-    return vec4(vPos.xy * 2.0 - 1.0, vPos.z, 1.0);
-}
-
-`;
-  const linestripVert = `#define GLSLIFY 1
-varying vec3 vPos;
-varying float vSize;
-varying vec4 vColor;
-
-vec4 linestrip(vec2 _st, vec3 pos, vec4 color) {
-    vPos = pos;
-    vColor = color;
-    vColor.a = vColor.a * ceil(1.0 - _st.x);
-    vColor.a = vColor.a * ceil(_st.x);
-    return vec4(vPos.xy * 2.0 - 1.0, vPos.z, 1.0);
-}
-
-`;
-  const lineloopVert = `#define GLSLIFY 1
-varying vec3 vPos;
-varying float vSize;
-varying vec4 vColor;
-
-vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
-    vPos = pos;
-    vColor = color;
-    vColor.a = vColor.a * ceil(1.0 - _st.x);
-    vColor.a = vColor.a * ceil(_st.x);
-    return vec4(vPos.xy * 2.0 - 1.0, vPos.z, 1.0);
-}
-
-`;
-  const dotsFrag = `#define GLSLIFY 1
-varying vec4 vColor;
-
-vec4 dots(vec2 _st, vec3 pos, float size, vec4 color, float fade) {
-    vec4 outColor = vColor;
-    float dist = distance(gl_PointCoord, vec2(0.5));
-    float maxDist = 0.5;
-    outColor.a = (1.0 - smoothstep(maxDist - fade, maxDist, dist)) * outColor.a;
-    if (outColor.a <= 0.0 || dist >= maxDist) {
-        discard;
-    }
-    return outColor;
-}`;
-  const squaresFrag = `#define GLSLIFY 1
-varying vec4 vColor;
-
-vec4 squares(vec2 _st, vec3 pos, float size, vec4 color, float fade) {
-    vec4 outColor = vColor;
-    float dist = distance(gl_PointCoord, vec2(0.5));
-    float maxDist;
-    // todo: need to be based on angle
-    //maxDist = length(vec2(0.5, 0.5));
-    //outColor.a = 1.0 - smoothstep(maxDist - fade, maxDist, dist);
-    return outColor;
-}`;
-  const linesFrag = `#define GLSLIFY 1
-varying vec4 vColor;
-
-vec4 lines(vec2 _st, vec3 pos, vec4 color) {
-    vec4 outColor = vColor;
-    return outColor;
-}`;
-  const linestripFrag = `#define GLSLIFY 1
-varying vec4 vColor;
-
-vec4 linestrip(vec2 _st, vec3 pos, vec4 color) {
-    vec4 outColor = vColor;
-    if (outColor.a <= 0.0) {
-        discard;
-    }
-    return vec4(outColor.rgb, 1.0);
-}`;
-  const lineloopFrag = `#define GLSLIFY 1
-varying vec4 vColor;
-
-vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
-    vec4 outColor = vColor;
-    if (outColor.a <= 0.0) {
-        discard;
-    }
-    return vec4(outColor.rgb, 1.0);
-}`;
+  const worldPosVert = "#define GLSLIFY 1\nvarying vec3 vWorldPosition;\n\nvoid main() {\n\n    vec4 worldPosition = modelMatrix * vec4( position, 1.0 );\n    vWorldPosition = worldPosition.xyz;\n\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\n}";
+  const worldPosGradientYFrag = "#define GLSLIFY 1\nuniform vec3 topColor;\nuniform vec3 bottomColor;\nuniform float offset;\nuniform float exponent;\n\nvarying vec3 vWorldPosition;\n\nvoid main() {\n\n    float h = normalize( vWorldPosition + offset ).y;\n    gl_FragColor = vec4( mix( bottomColor, topColor, max( pow( max( h , 0.0), exponent ), 0.0 ) ), 1.0 );\n\n}";
+  const pointsVert = "#define GLSLIFY 1\nvarying vec3 vPos;\nvarying float vSize;\nvarying vec4 vColor;\n\n// note: pos.z does not change anything with GL_POINTS\nvec4 points(vec2 _st, vec3 pos, float size, vec4 color, float fade) {\n    vPos = pos;\n    vSize = size;\n    vColor = color;\n    gl_PointSize = vSize;\n    return vec4(vPos.xy * 2.0 - 1.0, vPos.z, 1.0);\n}\n\n";
+  const linesVert = "#define GLSLIFY 1\nvarying vec3 vPos;\nvarying vec4 vColor;\n\n// note: pos.z does not change anything with GL_LINES\nvec4 lines(vec2 _st, vec3 pos, vec4 color) {\n    vPos = pos;\n    vColor = color;\n    return vec4(vPos.xy * 2.0 - 1.0, vPos.z, 1.0);\n}\n\n";
+  const linestripVert = "#define GLSLIFY 1\nvarying vec3 vPos;\nvarying float vSize;\nvarying vec4 vColor;\n\nvec4 linestrip(vec2 _st, vec3 pos, vec4 color) {\n    vPos = pos;\n    vColor = color;\n    vColor.a = vColor.a * ceil(1.0 - _st.x);\n    vColor.a = vColor.a * ceil(_st.x);\n    return vec4(vPos.xy * 2.0 - 1.0, vPos.z, 1.0);\n}\n\n";
+  const lineloopVert = "#define GLSLIFY 1\nvarying vec3 vPos;\nvarying float vSize;\nvarying vec4 vColor;\n\nvec4 lineloop(vec2 _st, vec3 pos, vec4 color) {\n    vPos = pos;\n    vColor = color;\n    vColor.a = vColor.a * ceil(1.0 - _st.x);\n    vColor.a = vColor.a * ceil(_st.x);\n    return vec4(vPos.xy * 2.0 - 1.0, vPos.z, 1.0);\n}\n\n";
+  const dotsFrag = "#define GLSLIFY 1\nvarying vec4 vColor;\n\nvec4 dots(vec2 _st, vec3 pos, float size, vec4 color, float fade) {\n    vec4 outColor = vColor;\n    float dist = distance(gl_PointCoord, vec2(0.5));\n    float maxDist = 0.5;\n    outColor.a = (1.0 - smoothstep(maxDist - fade, maxDist, dist)) * outColor.a;\n    if (outColor.a <= 0.0 || dist >= maxDist) {\n        discard;\n    }\n    return outColor;\n}";
+  const squaresFrag = "#define GLSLIFY 1\nvarying vec4 vColor;\n\nvec4 squares(vec2 _st, vec3 pos, float size, vec4 color, float fade) {\n    vec4 outColor = vColor;\n    float dist = distance(gl_PointCoord, vec2(0.5));\n    float maxDist;\n    // todo: need to be based on angle\n    //maxDist = length(vec2(0.5, 0.5));\n    //outColor.a = 1.0 - smoothstep(maxDist - fade, maxDist, dist);\n    return outColor;\n}";
+  const linesFrag = "#define GLSLIFY 1\nvarying vec4 vColor;\n\nvec4 lines(vec2 _st, vec3 pos, vec4 color) {\n    vec4 outColor = vColor;\n    return outColor;\n}";
+  const linestripFrag = "#define GLSLIFY 1\nvarying vec4 vColor;\n\nvec4 linestrip(vec2 _st, vec3 pos, vec4 color) {\n    vec4 outColor = vColor;\n    if (outColor.a <= 0.0) {\n        discard;\n    }\n    return vec4(outColor.rgb, 1.0);\n}";
+  const lineloopFrag = "#define GLSLIFY 1\nvarying vec4 vColor;\n\nvec4 lineloop(vec2 _st, vec3 pos, vec4 color) {\n    vec4 outColor = vColor;\n    if (outColor.a <= 0.0) {\n        discard;\n    }\n    return vec4(outColor.rgb, 1.0);\n}";
   const basicProps = {
     isMeshBasicMaterial: true,
     color: new Color(16777215)
@@ -43648,6 +43320,25 @@ vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
     }
     this.layers = [];
     this.controls = [];
+  };
+  Output.prototype.dispose = function() {
+    this.stop();
+    if (this.composer && typeof this.composer.dispose === "function") {
+      this.composer.dispose();
+    }
+    if (this.temp0 && typeof this.temp0.dispose === "function") {
+      this.temp0.dispose();
+    }
+    if (this.temp1 && typeof this.temp1.dispose === "function") {
+      this.temp1.dispose();
+    }
+    if (this._boundCamBoundsListener) {
+      window.removeEventListener("resize", this._boundCamBoundsListener);
+    }
+    if (this._camera && this._camera.userData && this._camera.userData.controls) {
+      this._camera.userData.controls.dispose();
+      delete this._camera.userData.controls;
+    }
   };
   Output.prototype._set = function(passes, { cssRenderer = false }) {
     this.stop();
@@ -45011,21 +44702,35 @@ vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
       };
     }
   };
+  const MISSING_GLOBAL = Symbol("hydra-missing-global");
   class EvalSandbox {
     constructor(parent, makeGlobal, userProps = []) {
       this.makeGlobal = makeGlobal;
       this.sandbox = Sandbox();
       this.parent = parent;
+      this.globalSnapshot = /* @__PURE__ */ new Map();
       var properties = Object.keys(parent);
       properties.forEach((property) => this.add(property));
       this.userProps = userProps;
     }
+    _rememberGlobal(name) {
+      if (!this.makeGlobal || this.globalSnapshot.has(name)) return;
+      if (Object.prototype.hasOwnProperty.call(window, name)) {
+        this.globalSnapshot.set(name, window[name]);
+      } else {
+        this.globalSnapshot.set(name, MISSING_GLOBAL);
+      }
+    }
     add(name) {
-      if (this.makeGlobal) window[name] = this.parent[name];
+      if (this.makeGlobal) {
+        this._rememberGlobal(name);
+        window[name] = this.parent[name];
+      }
     }
     // sets on window as well as synth object if global (not needed for objects, which can be set directly)
     set(property, value) {
       if (this.makeGlobal) {
+        this._rememberGlobal(property);
         window[property] = value;
       }
       this.parent[property] = value;
@@ -45039,6 +44744,17 @@ vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
     }
     eval(code) {
       this.sandbox.eval(code);
+    }
+    destroy() {
+      if (!this.makeGlobal) return;
+      this.globalSnapshot.forEach((value, key) => {
+        if (value === MISSING_GLOBAL) {
+          delete window[key];
+        } else {
+          window[key] = value;
+        }
+      });
+      this.globalSnapshot.clear();
     }
   }
   const size = (object, precise = true) => {
@@ -45360,6 +45076,9 @@ vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
       this.height = height;
       this.renderAll = false;
       this.detectAudio = detectAudio;
+      this.makeGlobal = makeGlobal;
+      this._disposed = false;
+      this._loop = null;
       this.canvas = initCanvas(canvas, this);
       this.width = this.canvas.width;
       this.height = this.canvas.height;
@@ -45403,19 +45122,30 @@ vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
         perspective: (...args) => this.output.perspective.apply(this.output, args),
         screenCoords: (w, h) => this.output.screenCoords(w, h),
         normalizedCoords: () => this.output.normalizedCoords(),
-        cartesianCoords: (w, h) => this.output.cartesianCoords(w, h),
-        tx,
-        gm,
-        mt,
-        cmp,
-        rnd,
-        nse,
-        gui,
-        arr,
-        el
+        cartesianCoords: (w, h) => this.output.cartesianCoords(w, h)
       };
       init$1();
       Object.assign(Math, math);
+      this.modules = {
+        tx: bindRuntimeModule(tx, this),
+        gm: bindRuntimeModule(gm, this),
+        mt: bindRuntimeModule(mt, this),
+        cmp: bindRuntimeModule(cmp, this),
+        rnd: bindRuntimeModule(rnd, this),
+        nse: bindRuntimeModule(nse, this),
+        gui: bindRuntimeModule(gui, this),
+        arr: bindRuntimeModule(arr, this),
+        el: bindRuntimeModule(el, this)
+      };
+      this.synth.tx = this.modules.tx;
+      this.synth.gm = this.modules.gm;
+      this.synth.mt = this.modules.mt;
+      this.synth.cmp = this.modules.cmp;
+      this.synth.rnd = this.modules.rnd;
+      this.synth.nse = this.modules.nse;
+      this.synth.gui = this.modules.gui;
+      this.synth.arr = this.modules.arr;
+      this.synth.el = this.modules.el;
       if (makeGlobal) {
         window.loadScript = this.loadScript;
         window.getCode = () => {
@@ -45440,7 +45170,7 @@ vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
       this._initOutputs(numOutputs);
       this._initSources(numSources);
       this._generateGlslTransforms();
-      setRuntime(this);
+      setRuntime(this, { active: true });
       this.synth.screencap = () => {
         this.saveFrame = true;
       };
@@ -45454,7 +45184,10 @@ vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
         }
       }
       if (detectAudio) this._initAudio();
-      if (autoLoop) loop(this.tick.bind(this)).start();
+      if (autoLoop) {
+        this._loop = loop(this.tick.bind(this));
+        this._loop.start();
+      }
       this.sandbox = new EvalSandbox(this.synth, makeGlobal, ["speed", "update", "afterUpdate", "click", "mousedown", "mouseup", "mousemove", "keydown", "keyup", "bpm", "fps"]);
     }
     eval(code) {
@@ -45490,31 +45223,9 @@ vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
       });
     }
     loadScript(url = "", once = true) {
-      const self2 = this || window;
-      const p = new Promise((res, rej) => {
-        if (once) {
-          self2.loadedScripts || (self2.loadedScripts = {});
-          if (self2.loadedScripts[url]) {
-            res();
-            return;
-          }
-        }
-        var script = document.createElement("script");
-        script.onload = function() {
-          console.log(`loaded script ${url}`);
-          if (once) {
-            self2.loadedScripts[url] = true;
-          }
-          res();
-        };
-        script.onerror = (err) => {
-          console.log(`error loading script ${url}`, "log-error");
-          res();
-        };
-        script.src = url;
-        document.head.appendChild(script);
+      return loadScript(url, once, this || window).then(() => {
+        console.log(`loaded script ${url}`);
       });
-      return p;
     }
     setResolution(width, height) {
       console.log("setResolution", width, height);
@@ -45728,6 +45439,9 @@ vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
     }
     // dt in ms
     tick(dt, uniforms) {
+      if (this._disposed) {
+        return;
+      }
       try {
         this.sandbox.tick();
         if (this.detectAudio === true) this.synth.a.tick();
@@ -45773,6 +45487,68 @@ vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
         console.warn("Error during tick():", e);
       }
     }
+    dispose() {
+      if (this._disposed) {
+        return;
+      }
+      this._disposed = true;
+      if (this._loop && typeof this._loop.stop === "function") {
+        this._loop.stop();
+        this._loop = null;
+      }
+      if (this.synth && this.synth.vidRecorder && this.synth.vidRecorder.mediaRecorder) {
+        const recorder = this.synth.vidRecorder.mediaRecorder;
+        if (recorder.state && recorder.state !== "inactive") {
+          try {
+            recorder.stop();
+          } catch (_error) {
+          }
+        }
+      }
+      if (this.captureStream && typeof this.captureStream.getTracks === "function") {
+        this.captureStream.getTracks().forEach((track) => {
+          if (track && typeof track.stop === "function") {
+            track.stop();
+          }
+        });
+      }
+      if (this.s) {
+        this.s.forEach((source) => {
+          if (source && typeof source.clear === "function") {
+            source.clear();
+          }
+        });
+      }
+      if (this.o) {
+        this.o.forEach((output) => {
+          if (output && typeof output.dispose === "function") {
+            output.dispose();
+          } else if (output && typeof output.stop === "function") {
+            output.stop();
+          }
+        });
+      }
+      if (this.composer && typeof this.composer.dispose === "function") {
+        this.composer.dispose();
+      }
+      if (this.renderer && typeof this.renderer.dispose === "function") {
+        this.renderer.dispose();
+      }
+      if (this.css2DRenderer && this.css2DRenderer.domElement && this.css2DRenderer.domElement.parentNode) {
+        this.css2DRenderer.domElement.parentNode.removeChild(
+          this.css2DRenderer.domElement
+        );
+      }
+      if (this.css3DRenderer && this.css3DRenderer.domElement && this.css3DRenderer.domElement.parentNode) {
+        this.css3DRenderer.domElement.parentNode.removeChild(
+          this.css3DRenderer.domElement
+        );
+      }
+      if (this.sandbox && typeof this.sandbox.destroy === "function") {
+        this.sandbox.destroy();
+      }
+      clearRuntime(this);
+    }
     shadowMap(options2) {
       options2 = options2 || {
         enabled: true,
@@ -45784,11 +45560,18 @@ vec4 lineloop(vec2 _st, vec3 pos, vec4 color) {
     }
     // todo: scene2d and scene3d
     scene(attributes) {
-      return getOrCreateScene({
-        defaultOutput: this.generator.defaultOutput,
-        defaultUniforms: this.generator.defaultUniforms,
-        utils: this.generator.utils
-      }, attributes);
+      return withRuntime(
+        this,
+        () => getOrCreateScene(
+          {
+            runtime: this,
+            defaultOutput: this.generator.defaultOutput,
+            defaultUniforms: this.generator.defaultUniforms,
+            utils: this.generator.utils
+          },
+          attributes
+        )
+      );
     }
   }
   return HydraRenderer;

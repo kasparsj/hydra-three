@@ -4,8 +4,10 @@
   "description": "hydra-three: three.js-powered hydra fork for creative coding",
   "type": "module",
   "main": "./dist/hydra-synth.js",
+  "types": "./src/index.d.ts",
   "exports": {
     ".": {
+      "types": "./src/index.d.ts",
       "import": "./src/package-entry.js",
       "require": "./dist/hydra-synth.js"
     },
@@ -37,13 +39,14 @@
     "test:smoke:browser:chromium": "node ./scripts/smoke/browser-smoke.mjs --browser=chromium",
     "test:smoke:browser:firefox": "node ./scripts/smoke/browser-smoke.mjs --browser=firefox",
     "test:smoke:browser:non-global": "node ./scripts/smoke/browser-non-global-smoke.mjs --browser=chromium",
-    "test:smoke:browser": "npm run test:smoke:browser:chromium && npm run test:smoke:browser:firefox && npm run test:smoke:browser:non-global",
+    "test:smoke:browser": "npm run test:smoke:browser:chromium && npm run test:smoke:browser:firefox && npm run test:smoke:browser:non-global && npm run test:smoke:browser:multi-instance",
     "test:smoke": "npm run test:smoke:canvas && npm run test:smoke:module && npm run test:smoke:regression",
     "release:verify-meta": "node ./scripts/release/verify-release-meta.mjs",
     "release:checksums": "node ./scripts/release/generate-checksums.mjs",
     "site:build": "node ./scripts/site/build-site.mjs",
     "pack:check": "npm pack --dry-run",
-    "ci:check": "npm run release:verify-meta && npm run lint && npm run typecheck && npm run build && npm run site:build && npm run test:smoke && npm run pack:check"
+    "ci:check": "npm run release:verify-meta && npm run lint && npm run typecheck && npm run build && npm run site:build && npm run test:smoke && npm run pack:check",
+    "test:smoke:browser:multi-instance": "node ./scripts/smoke/browser-multi-instance-smoke.mjs"
   },
   "repository": {
     "type": "git",
@@ -72,10 +75,10 @@
   "devDependencies": {
     "@types/node": "^25.3.0",
     "eslint": "^10.0.1",
+    "glslify": "^7.1.1",
     "playwright": "1.56.1",
     "prettier": "^3.5.3",
     "typescript": "^5.7.3",
-    "vite": "^6.4.1",
-    "vite-plugin-glslify": "^2.3.0"
+    "vite": "^6.4.1"
   }
 }

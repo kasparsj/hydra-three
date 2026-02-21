@@ -32,6 +32,12 @@ jobs:
         if: matrix.node-version == 20
         run: npx playwright install --with-deps chromium firefox
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
       - name: Build
         run: npm run build
 

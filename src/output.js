@@ -110,6 +110,26 @@ Output.prototype.stop = function() {
   this.controls = [];
 }
 
+Output.prototype.dispose = function() {
+  this.stop();
+  if (this.composer && typeof this.composer.dispose === 'function') {
+    this.composer.dispose();
+  }
+  if (this.temp0 && typeof this.temp0.dispose === 'function') {
+    this.temp0.dispose();
+  }
+  if (this.temp1 && typeof this.temp1.dispose === 'function') {
+    this.temp1.dispose();
+  }
+  if (this._boundCamBoundsListener) {
+    window.removeEventListener('resize', this._boundCamBoundsListener);
+  }
+  if (this._camera && this._camera.userData && this._camera.userData.controls) {
+    this._camera.userData.controls.dispose();
+    delete this._camera.userData.controls;
+  }
+}
+
 Output.prototype._set = function (passes, {cssRenderer = false}) {
   this.stop();
   if (passes.length > 0) {

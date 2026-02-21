@@ -1,24 +1,34 @@
 import * as lightsLib from "./three/lights.js";
 import * as worldLib from "./three/world.js";
+import { loadScript } from "./lib/load-script.js";
 
 const guis = {};
 
-const init = async () => {
-    if (!window.dat) {
-        if (typeof window.loadScript !== 'function') {
-            throw new Error('gui.init() requires window.loadScript to be available.');
-        }
-        await window.loadScript("https://unpkg.com/dat.gui");
+const ensureDat = async () => {
+    if (window.dat) {
+        return window.dat;
     }
-    patchDat();
+    if (typeof window.loadScript === 'function') {
+        await window.loadScript("https://unpkg.com/dat.gui");
+    } else {
+        await loadScript("https://unpkg.com/dat.gui");
+    }
+    if (!window.dat) {
+        throw new Error('gui.init() could not initialize dat.gui.');
+    }
+    return window.dat;
+}
+
+const init = async () => {
+    const datApi = await ensureDat();
+    patchDat(datApi);
 }
 
 const create = async (name = "hydra-three") => {
     if (!guis[name]) {
-        if (!window.dat) {
-            await init();
-        }
-        const gui = guis[name] || (new dat.GUI({ name, hideable: false }));
+        const datApi = window.dat || (await ensureDat());
+        patchDat(datApi);
+        const gui = guis[name] || (new datApi.GUI({ name, hideable: false }));
         gui.useLocalStorage = true;
         guis[name] = gui;
     }
@@ -105,12 +115,14 @@ const updateWorld = (scene, settings) => {
     worldLib.update(scene, settings);
 }
 
-function patchDat() {
-    const updateDisplay = dat.controllers.NumberControllerBox.prototype.updateDisplay;
-    dat.controllers.NumberControllerBox.prototype.updateDisplay = function() {
-        if (dat.dom.dom.isActive(this.__input)) return this;
+function patchDat(datApi = window.dat) {
+    if (!datApi || datApi.__hydraPatched) return;
+    const updateDisplay = datApi.controllers.NumberControllerBox.prototype.updateDisplay;
+    datApi.controllers.NumberControllerBox.prototype.updateDisplay = function() {
+        if (datApi.dom.dom.isActive(this.__input)) return this;
         return updateDisplay.call(this);
     }
+    datApi.__hydraPatched = true;
 }
 
 const hideSaveRow = (nameOrGui) => {

@@ -1,16 +1,14 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
-import { glslify } from "vite-plugin-glslify";
+import { hydraGlslifyPlugin } from "./scripts/build/vite-glslify-plugin.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const buildSourcemap = process.env.BUILD_SOURCEMAP === "true";
 
 export default defineConfig({
-  plugins: glslify({
-    transformLiterals: false,
-  }),
+  plugins: [hydraGlslifyPlugin()],
   define: {
     global: "globalThis",
   },

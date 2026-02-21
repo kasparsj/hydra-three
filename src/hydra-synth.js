@@ -6,6 +6,7 @@ import MouseTools from './lib/mouse.js'
 import Audio from './lib/audio.js'
 import VidRecorder from './lib/video-recorder.js'
 import ArrayUtils from './lib/array-utils.js'
+import { loadScript as loadExternalScript } from './lib/load-script.js'
 // import strudel from './lib/strudel.js'
 import Sandbox from './eval-sandbox.js'
 import {GeneratorFactory} from './generator-factory.js'
@@ -25,7 +26,12 @@ import * as arr from "./three/arr.js";
 import * as gui from "./gui.js";
 import * as el from "./el.js";
 import * as threeGlobals from "./three/globals.js";
-import { setRuntime } from "./three/runtime.js";
+import {
+  bindRuntimeModule,
+  clearRuntime,
+  setRuntime,
+  withRuntime,
+} from "./three/runtime.js";
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 import { initCanvas } from "./canvas.js";
@@ -60,6 +66,9 @@ class HydraRenderer {
     this.height = height
     this.renderAll = false
     this.detectAudio = detectAudio
+    this.makeGlobal = makeGlobal
+    this._disposed = false
+    this._loop = null
 
     this.canvas = initCanvas(canvas, this);
     this.width = this.canvas.width
@@ -98,19 +107,31 @@ class HydraRenderer {
       screenCoords: (w, h) => this.output.screenCoords(w, h),
       normalizedCoords: () => this.output.normalizedCoords(),
       cartesianCoords: (w, h) => this.output.cartesianCoords(w, h),
-      tx,
-      gm,
-      mt,
-      cmp,
-      rnd,
-      nse,
-      gui,
-      arr,
-      el,
     }
 
     nse.init();
     Object.assign(Math, math);
+
+    this.modules = {
+      tx: bindRuntimeModule(tx, this),
+      gm: bindRuntimeModule(gm, this),
+      mt: bindRuntimeModule(mt, this),
+      cmp: bindRuntimeModule(cmp, this),
+      rnd: bindRuntimeModule(rnd, this),
+      nse: bindRuntimeModule(nse, this),
+      gui: bindRuntimeModule(gui, this),
+      arr: bindRuntimeModule(arr, this),
+      el: bindRuntimeModule(el, this),
+    }
+    this.synth.tx = this.modules.tx
+    this.synth.gm = this.modules.gm
+    this.synth.mt = this.modules.mt
+    this.synth.cmp = this.modules.cmp
+    this.synth.rnd = this.modules.rnd
+    this.synth.nse = this.modules.nse
+    this.synth.gui = this.modules.gui
+    this.synth.arr = this.modules.arr
+    this.synth.el = this.modules.el
 
     if (makeGlobal) {
       window.loadScript = this.loadScript
@@ -156,7 +177,7 @@ class HydraRenderer {
     this._initOutputs(numOutputs)
     this._initSources(numSources)
     this._generateGlslTransforms()
-    setRuntime(this)
+    setRuntime(this, { active: true })
 
     this.synth.screencap = () => {
       this.saveFrame = true
@@ -175,7 +196,10 @@ class HydraRenderer {
 
     if(detectAudio) this._initAudio()
 
-    if(autoLoop) loop(this.tick.bind(this)).start()
+    if(autoLoop) {
+      this._loop = loop(this.tick.bind(this))
+      this._loop.start()
+    }
 
     // final argument is properties that the user can set, all others are treated as read-only
     this.sandbox = new Sandbox(this.synth, makeGlobal, ['speed', 'update', 'afterUpdate', 'click', 'mousedown', 'mouseup', 'mousemove', 'keydown', 'keyup', 'bpm', 'fps'])
@@ -209,31 +233,9 @@ class HydraRenderer {
   }
 
   loadScript(url = "", once = true) {
-   const self = this || window;
-   const p = new Promise((res, rej) => {
-     if (once) {
-       self.loadedScripts || (self.loadedScripts = {});
-       if (self.loadedScripts[url]) {
-         res();
-         return;
-       }
-     }
-     var script = document.createElement("script");
-     script.onload = function () {
-       console.log(`loaded script ${url}`);
-       if (once) {
-         self.loadedScripts[url] = true;
-       }
-       res();
-     };
-     script.onerror = (err) => {
-       console.log(`error loading script ${url}`, "log-error");
-       res()
-     };
-     script.src = url;
-     document.head.appendChild(script);
-   });
-   return p;
+   return loadExternalScript(url, once, this || window).then(() => {
+     console.log(`loaded script ${url}`)
+   })
  }
 
   setResolution(width, height) {
@@ -473,6 +475,9 @@ class HydraRenderer {
 
   // dt in ms
   tick (dt, uniforms) {
+    if (this._disposed) {
+      return
+    }
     try {
     this.sandbox.tick()
     if(this.detectAudio === true) this.synth.a.tick()
@@ -512,7 +517,88 @@ class HydraRenderer {
     console.warn('Error during tick():', e)
   //  this.regl.poll()
   }
-}
+  }
+
+  dispose() {
+    if (this._disposed) {
+      return
+    }
+    this._disposed = true
+
+    if (this._loop && typeof this._loop.stop === 'function') {
+      this._loop.stop()
+      this._loop = null
+    }
+
+    if (this.synth && this.synth.vidRecorder && this.synth.vidRecorder.mediaRecorder) {
+      const recorder = this.synth.vidRecorder.mediaRecorder
+      if (recorder.state && recorder.state !== 'inactive') {
+        try {
+          recorder.stop()
+        } catch (_error) {}
+      }
+    }
+
+    if (this.captureStream && typeof this.captureStream.getTracks === 'function') {
+      this.captureStream.getTracks().forEach((track) => {
+        if (track && typeof track.stop === 'function') {
+          track.stop()
+        }
+      })
+    }
+
+    if (this.s) {
+      this.s.forEach((source) => {
+        if (source && typeof source.clear === 'function') {
+          source.clear()
+        }
+      })
+    }
+
+    if (this.o) {
+      this.o.forEach((output) => {
+        if (output && typeof output.dispose === 'function') {
+          output.dispose()
+        } else if (output && typeof output.stop === 'function') {
+          output.stop()
+        }
+      })
+    }
+
+    if (this.composer && typeof this.composer.dispose === 'function') {
+      this.composer.dispose()
+    }
+
+    if (this.renderer && typeof this.renderer.dispose === 'function') {
+      this.renderer.dispose()
+    }
+
+    if (
+      this.css2DRenderer &&
+      this.css2DRenderer.domElement &&
+      this.css2DRenderer.domElement.parentNode
+    ) {
+      this.css2DRenderer.domElement.parentNode.removeChild(
+        this.css2DRenderer.domElement
+      )
+    }
+
+    if (
+      this.css3DRenderer &&
+      this.css3DRenderer.domElement &&
+      this.css3DRenderer.domElement.parentNode
+    ) {
+      this.css3DRenderer.domElement.parentNode.removeChild(
+        this.css3DRenderer.domElement
+      )
+    }
+
+    if (this.sandbox && typeof this.sandbox.destroy === 'function') {
+      this.sandbox.destroy()
+    }
+
+    clearRuntime(this)
+  }
 
   shadowMap(options) {
     options = options || {
@@ -526,11 +612,17 @@ class HydraRenderer {
 
   // todo: scene2d and scene3d
   scene(attributes) {
-    return scene.getOrCreateScene({
-      defaultOutput: this.generator.defaultOutput,
-      defaultUniforms: this.generator.defaultUniforms,
-      utils: this.generator.utils,
-    }, attributes);
+    return withRuntime(this, () =>
+      scene.getOrCreateScene(
+        {
+          runtime: this,
+          defaultOutput: this.generator.defaultOutput,
+          defaultUniforms: this.generator.defaultUniforms,
+          utils: this.generator.utils,
+        },
+        attributes
+      )
+    )
   }
 
 }

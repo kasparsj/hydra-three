@@ -82,6 +82,8 @@ const getOrCreateScene = (options, attributes = {}) => {
     let scene = scenes[name];
     if (!name || !scene) { // always recreate default scene?
         scene = new HydraScene(options);
+    } else if (options && options.runtime) {
+        scene._runtime = options.runtime;
     }
     for (let attr in attributes) {
         if (!attributes.hasOwnProperty(attr)) continue;
@@ -98,12 +100,12 @@ const getOrCreateScene = (options, attributes = {}) => {
     return scene;
 }
 
-const getOrCreateMesh = (attributes = {}) => {
+const getOrCreateMesh = (attributes = {}, runtime) => {
     const {name} = attributes;
     let mesh = namedMeshes[name];
     if (!name || !mesh) {
         mesh = new THREE.Mesh();
-        const renderer = getRuntime().renderer;
+        const renderer = getRuntime(runtime).renderer;
         if (renderer.shadowMap.enabled) {
             mesh.castShadow = true;
             mesh.receiveShadow = true;
@@ -117,12 +119,12 @@ const getOrCreateMesh = (attributes = {}) => {
     return mesh;
 }
 
-const getOrCreateInstancedMesh = (attributes) => {
+const getOrCreateInstancedMesh = (attributes, runtime) => {
     const {name, geometry, material, count} = attributes;
     let mesh = namedInstancedMeshes[name];
     if (!name || !mesh) {
         mesh = new THREE.InstancedMesh(geometry, material, count);
-        const renderer = getRuntime().renderer;
+        const renderer = getRuntime(runtime).renderer;
         if (renderer.shadowMap.enabled) {
             mesh.castShadow = true;
             mesh.receiveShadow = true;
@@ -333,10 +335,13 @@ const sceneMixin = {
             mesh = quad._mesh;
         }
         else if (options.instanced) {
-            mesh = getOrCreateInstancedMesh(Object.assign({geometry, material, count: options.instanced}, options));
+            mesh = getOrCreateInstancedMesh(
+                Object.assign({geometry, material, count: options.instanced}, options),
+                this._runtime
+            );
         }
         else {
-            mesh = getOrCreateMesh(Object.assign({geometry, material}, options));
+            mesh = getOrCreateMesh(Object.assign({geometry, material}, options), this._runtime);
         }
         return mesh;
     },
@@ -477,10 +482,11 @@ const sceneMixin = {
         const {name} = attributes;
         let group = groups[name];
         if (!name || !group) {
-            group = new HydraGroup();
+            group = new HydraGroup(this._runtime);
         }
         addChild(this, group);
         setObject3DAttrs(group, attributes);
+        group._runtime = this._runtime;
         groups[group.name] = group;
         return group;
     },
@@ -515,10 +521,11 @@ const sceneMixin = {
 }
 
 class HydraGroup extends THREE.Group {
-    constructor() {
+    constructor(runtime) {
         super();
 
         this._matrixStack = [];
+        this._runtime = runtime || null;
     }
 
     _addObject3D(...args) {
@@ -533,6 +540,7 @@ class HydraScene extends THREE.Scene {
     constructor(options) {
         super();
 
+        this._runtime = options && options.runtime ? options.runtime : null;
         this.init(options);
         this._autoClear = {amount: 1};
         this._layers = [];

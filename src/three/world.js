@@ -8,6 +8,7 @@ const groupName = '__world';
 const skyName = "__sky";
 const sunName = "__sun";
 const groundName = "__ground";
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
 const defaults = {
     skyDome: false,
@@ -91,8 +92,9 @@ const updateSun = (group, options) => {
         if (options.skyDomeGeom !== 'Sky') {
             const geom = new THREE.SphereGeometry(100);
             const mat = new THREE.MeshBasicMaterial({color: new THREE.Color(0xffffff)});
-            const sunElevation = options.sunElevation ?? options.sunElevetion;
-            const sunPos = gm.posFromEleAzi(sunElevation, options.sunAzimuth, options.far/2);
+            const sunElevation = options.sunElevation ?? options.sunElevetion ?? 2;
+            const sunAzimuth = options.sunAzimuth ?? 180;
+            const sunPos = gm.posFromEleAzi(sunElevation, sunAzimuth, options.far / 2);
             sun.name = sunName;
             sun.geometry = geom;
             sun.material = mat;
@@ -158,9 +160,17 @@ function getReliefAt(scene, vec) {
     if (ground && ground.userData.relief) {
         const wSegments = ground.geometry.parameters.widthSegments;
         const hSegments = ground.geometry.parameters.heightSegments;
-        const x = ((vec.x + ground.geometry.parameters.width / 2) / ground.geometry.parameters.width) * wSegments;
+        const x = clamp(
+            ((vec.x + ground.geometry.parameters.width / 2) / ground.geometry.parameters.width) * wSegments,
+            0,
+            wSegments
+        );
         const zInput = typeof vec.z === 'number' ? vec.z : vec.y;
-        const z = ((zInput + ground.geometry.parameters.height / 2) / ground.geometry.parameters.height) * hSegments;
+        const z = clamp(
+            ((zInput + ground.geometry.parameters.height / 2) / ground.geometry.parameters.height) * hSegments,
+            0,
+            hSegments
+        );
         const x1 = Math.floor(x);
         const z1 = Math.floor(z);
         const x2 = Math.ceil(x);

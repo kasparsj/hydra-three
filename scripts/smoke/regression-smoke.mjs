@@ -91,8 +91,19 @@ documentTarget.body = {
   appendChild() {},
   removeChild() {},
 };
+documentTarget.head = {
+  appendChild() {},
+};
 documentTarget.createElement = (name) => {
   if (name === "canvas") return new FakeCanvas();
+  if (name === "script") {
+    return {
+      async: false,
+      src: "",
+      onload: null,
+      onerror: null,
+    };
+  }
   if (name === "video") {
     return {
       autoplay: false,
@@ -114,7 +125,9 @@ setGlobal("MediaSource", FakeMediaSource);
 
 try {
   const { cameraMixin } = await import("../../src/lib/mixins.js");
+  const { loadScript } = await import("../../src/lib/load-script.js");
   const lights = await import("../../src/three/lights.js");
+  const runtime = await import("../../src/three/runtime.js");
   const { default: HydraSource } = await import("../../src/hydra-source.js");
   const arr = await import("../../src/three/arr.js");
   const { default: VideoRecorder } =
@@ -199,6 +212,40 @@ try {
   const recorder = new VideoRecorder({ getTracks: () => [] });
   recorder.mediaSource.dispatchEvent({ type: "sourceopen" });
   assert.equal(recorder.sourceBuffer.type, "source-buffer");
+
+  // loadScript(): reject on load failure
+  documentTarget.head.appendChild = (script) => {
+    if (typeof script.onerror === "function") {
+      script.onerror(new Error("mock script load error"));
+    }
+  };
+  await assert.rejects(
+    () => loadScript("https://example.invalid/fail.js", false, window),
+    /mock script load error/,
+  );
+
+  // runtime: bound module functions should resolve against instance-specific runtimes
+  const runtimeA = { id: "A" };
+  const runtimeB = { id: "B" };
+  runtime.clearRuntime();
+  runtime.setRuntime(runtimeA);
+  runtime.setRuntime(runtimeB, { active: false });
+  const runtimeApiA = runtime.bindRuntimeModule(
+    {
+      getCurrent: () => runtime.getRuntime(),
+    },
+    runtimeA,
+  );
+  const runtimeApiB = runtime.bindRuntimeModule(
+    {
+      getCurrent: () => runtime.getRuntime(),
+    },
+    runtimeB,
+  );
+  assert.equal(runtimeApiA.getCurrent(), runtimeA);
+  assert.equal(runtimeApiB.getCurrent(), runtimeB);
+  runtime.clearRuntime(runtimeA);
+  runtime.clearRuntime(runtimeB);
 } finally {
   restoreGlobal("window", originalDescriptors.window);
   restoreGlobal("document", originalDescriptors.document);

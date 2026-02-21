@@ -165,6 +165,7 @@ More examples: [`examples/README.md`](./examples/README.md)
 Use these docs before shipping:
 
 - Getting started: [`docs/getting-started.md`](./docs/getting-started.md)
+- API reference: [`docs/api.md`](./docs/api.md)
 - Upstream fork differences: [`docs/upstream-differences.md`](./docs/upstream-differences.md)
 - Production checklist: [`docs/production-checklist.md`](./docs/production-checklist.md)
 - Release process: [`docs/release.md`](./docs/release.md)
