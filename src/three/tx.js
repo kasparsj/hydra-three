@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { padTo } from "./arr.js";
+import { getRuntime } from "./runtime.js";
 
 const textures = {};
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -104,7 +105,11 @@ const adjustData = (data, options) => {
         data = padTo(data, options.width * options.height * options.depth);
     }
     if (Array.isArray(data)) {
-        data = window[typesArray[options.type]].from(data);
+        const ctor = globalThis[typesArray[options.type]];
+        if (!ctor || typeof ctor.from !== 'function') {
+            throw new Error(`Unsupported data constructor for texture type ${options.type}`);
+        }
+        data = ctor.from(data);
     }
     return data;
 }
@@ -170,8 +175,17 @@ const dataArray = (data_, options_ = {}) => {
     return tex;
 }
 
-const load = (url) => {
-    return (new THREE.TextureLoader()).load(url);
+const load = (url, onLoad, onError) => {
+    return (new THREE.TextureLoader()).load(
+        url,
+        (texture) => {
+            if (typeof onLoad === 'function') onLoad(texture);
+        },
+        undefined,
+        (error) => {
+            if (typeof onError === 'function') onError(error);
+        }
+    );
 }
 
 const save = (tex, options = {}) => {
@@ -247,7 +261,7 @@ const mirror1 = (texture, x = 2, y = 2, options = {}) => {
     }, matOptions)));
     const plane = scene.children[0];
 
-    const renderer = hydraSynth.renderer;
+    const renderer = getRuntime().renderer;
     renderer.autoClear = false;
     renderer.setRenderTarget(renderTarget);
     renderer.setViewport(0, 0, texWidth, texHeight);
@@ -344,7 +358,7 @@ const atlas = (textures, options = {}) => {
     const scene = createQuadScene(new THREE.MeshBasicMaterial());
     const plane = scene.children[0];
 
-    const renderer = hydraSynth.renderer;
+    const renderer = getRuntime().renderer;
     renderer.autoClear = false;
     renderer.setRenderTarget(renderTarget);
     textures.forEach((texture, index) => {
@@ -370,7 +384,7 @@ const atlas = (textures, options = {}) => {
 
 const createSceneTexture = (scene, options = {}) => {
     const renderTarget = fbo(options);
-    const renderer = hydraSynth.renderer;
+    const renderer = getRuntime().renderer;
     renderer.setRenderTarget(renderTarget);
     renderer.render(scene, camera);
     renderer.setRenderTarget(null);

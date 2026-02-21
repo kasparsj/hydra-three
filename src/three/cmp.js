@@ -108,6 +108,8 @@ function lookAtBox(scene, box, offset) {
         const maxSize = Math.max(size.x, size.y, size.z);
         const paddedSize = maxSize * (1 + paddingPercent);
         // todo: handle window resize
+        const width = window.innerWidth;
+        const height = window.innerHeight;
         const hRatio = width >= height ? 1 : width / height;
         const vRatio = height >= width ? 1 : height / width;
         camera.left = -paddedSize * hRatio / 2 + offset.x;

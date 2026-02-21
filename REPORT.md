@@ -1,0 +1,171 @@
+# Hydra-Three Release Readiness Report
+
+Date: 2026-02-21
+Repository: `/Users/kasparsj/Work2/hydra/hydra-three`
+
+## 1) Release readiness score
+
+**Score: 7.6 / 10**
+
+Why:
+- Core build/test/release checks are passing locally (`build`, smoke tests, browser smoke tests, lint, typecheck, format, `ci:check`).
+- Packaging metadata is mostly complete (`exports`, `files`, `repository`, `bugs`, changelog + tag verification script).
+- Runtime regressions found earlier were patched (non-global 3D path, texture/image handling, world/light fixes, source resize, recorder bug).
+- Main blockers to a higher score:
+  - Dev-toolchain vulnerabilities remain in legacy Browserify/Budo/Esmify stack (`npm audit` still reports high/critical in dev deps).
+  - Main CI workflow does not run lint/typecheck gates on every push/PR.
+  - Some API behavior remains implicit-global/browser-coupled.
+
+## 2) User journey (new user in 10 minutes)
+
+### Happy path (what works now)
+1. Open `/Users/kasparsj/Work2/hydra/hydra-three/examples/quickstart.html` through a local HTTP server (or use README script-tag snippet).
+2. Load `/Users/kasparsj/Work2/hydra/hydra-three/dist/hydra-synth.js`.
+3. Run:
+   - `const hydra = new Hydra({ detectAudio: false, makeGlobal: true })`
+   - `osc(8, 0.1, 0.8).out()`
+4. Confirm animated canvas appears.
+5. Optional 3D check:
+   - `perspective(...)`
+   - `scene().lights().mesh(gm.box(), osc().phong()).out()`
+
+### What breaks or commonly fails
+- Installing `npm i hydra-synth` pulls upstream package, not this fork (fork is consumed via GitHub ref per README).
+- Importing from pure Node/SSR fails by design (`/Users/kasparsj/Work2/hydra/hydra-three/src/package-entry.js:1`).
+- Vite can fail with `global is not defined` unless configured (documented workaround in README/getting-started).
+- GUI helper init in non-global mode can fail because it expects `window.loadScript` (`/Users/kasparsj/Work2/hydra/hydra-three/src/gui.js:7`).
+- Browser smoke requires Playwright browser install; missing browsers will fail smoke commands.
+
+## 3) API surface summary (public entry points)
+
+### Package entry points
+- Root import: `hydra-synth` -> `/Users/kasparsj/Work2/hydra/hydra-three/src/package-entry.js` (browser runtime only).
+- Root require: `hydra-synth` -> `/Users/kasparsj/Work2/hydra/hydra-three/dist/hydra-synth.js`.
+- Subpath export: `hydra-synth/src/glsl/glsl-functions.js`.
+
+### Runtime constructor/API
+- Primary constructor: `new Hydra(options)` (global from bundle, or default import).
+- Key instance methods: `eval`, `setResolution`, `tick`, `hush`, `scene`, `shadowMap`.
+- Primary user namespace: `hydra.synth`.
+- `hydra.synth` includes:
+  - Core Hydra generator methods (from `/Users/kasparsj/Work2/hydra/hydra-three/src/glsl/glsl-functions.js`, plus user `setFunction`).
+  - 3D helpers/modules: `gm`, `mt`, `tx`, `cmp`, `rnd`, `nse`, `arr`, `gui`, `el`.
+  - Camera helpers: `perspective`, `ortho`.
+  - Scene helpers: `scene`, render/output/sources (`o0..`, `s0..`), lifecycle hooks (`update`, `afterUpdate`).
+
+### Global mode
+- `makeGlobal: true`: methods are assigned on `window` via eval sandbox.
+- `makeGlobal: false`: use namespaced calls via `hydra.synth.*`.
+
+## 4) Packaging audit
+
+- Name: `hydra-synth` (`/Users/kasparsj/Work2/hydra/hydra-three/package.json`).
+- Version: `1.4.1`.
+- Main: `./dist/hydra-synth.js`.
+- Exports: dual import/require plus GLSL subpath.
+- Included files in published tarball: `dist/`, `src/`, `examples/`, docs/license/changelog.
+- Build artifact:
+  - Main bundle: `/Users/kasparsj/Work2/hydra/hydra-three/dist/hydra-synth.js`.
+  - Tarball dry-run currently includes ~90 files and ~2.0 MB unpacked.
+- License metadata: `"AGPL"` (non-SPDX shorthand; could be tightened to SPDX form).
+- Metadata completeness:
+  - Present: `repository`, `bugs`, `homepage`, `files`, `unpkg`.
+  - Distribution model documented in README (GitHub tags/artifacts for this fork).
+
+## 5) Quality audit
+
+### Tests and checks
+- Node smoke tests:
+  - `/Users/kasparsj/Work2/hydra/hydra-three/scripts/smoke/canvas-smoke.mjs`
+  - `/Users/kasparsj/Work2/hydra/hydra-three/scripts/smoke/module-load-smoke.mjs`
+  - `/Users/kasparsj/Work2/hydra/hydra-three/scripts/smoke/regression-smoke.mjs`
+- Browser smoke tests:
+  - `/Users/kasparsj/Work2/hydra/hydra-three/scripts/smoke/browser-smoke.mjs` (Chromium + Firefox)
+  - `/Users/kasparsj/Work2/hydra/hydra-three/scripts/smoke/browser-non-global-smoke.mjs`
+- Static checks:
+  - ESLint (`lint`)
+  - TypeScript checkJs pass (`typecheck`)
+  - Prettier check (`format:check`)
+- Release metadata check:
+  - `/Users/kasparsj/Work2/hydra/hydra-three/scripts/release/verify-release-meta.mjs`
+
+### CI posture
+- CI workflow (`/Users/kasparsj/Work2/hydra/hydra-three/.github/workflows/ci.yml`) runs build + smoke + browser smoke + pack dry-run.
+- Release-tag workflow (`/Users/kasparsj/Work2/hydra/hydra-three/.github/workflows/release-verify.yml`) runs `ci:check` + browser smoke + packaging artifacts.
+- Gap: regular CI does not explicitly run `lint` and `typecheck`.
+
+### Security posture
+- Production dependency audit: clean (`npm audit --omit=dev` => 0 vulnerabilities).
+- Full dependency audit: unresolved dev-chain advisories (Browserify/Budo/Esmify + transitive crypto/minimatch/Babel tooling).
+- Security policy exists with reporting path and response targets:
+  - `/Users/kasparsj/Work2/hydra/hydra-three/SECURITY.md`
+
+## 6) Known-bug candidates
+
+These are plausible defects/risk points (not all are confirmed reproductions):
+
+1. GUI helper breaks in non-global mode
+- Pointer: `/Users/kasparsj/Work2/hydra/hydra-three/src/gui.js:7`
+- Risk: `gui.init()` requires `window.loadScript`, but `window.loadScript` is only installed when `makeGlobal: true` (`/Users/kasparsj/Work2/hydra/hydra-three/src/hydra-synth.js:115`).
+
+2. Script loader swallows failures
+- Pointer: `/Users/kasparsj/Work2/hydra/hydra-three/src/hydra-synth.js:229`
+- Risk: `loadScript()` resolves even on `script.onerror`, masking failed loads and causing delayed downstream errors.
+
+3. Sun defaults may produce invalid position
+- Pointer: `/Users/kasparsj/Work2/hydra/hydra-three/src/three/world.js:94`
+- Risk: `sunElevation`/`sunAzimuth` can be `undefined` when `sun: true` and no explicit values are provided.
+
+4. Terrain height sampling not clamped
+- Pointer: `/Users/kasparsj/Work2/hydra/hydra-three/src/three/world.js:161`
+- Risk: `getReliefAt()` indexes relief arrays without bounds clamps; out-of-area queries may yield `undefined`/`NaN`.
+
+5. Single global runtime context
+- Pointer: `/Users/kasparsj/Work2/hydra/hydra-three/src/three/runtime.js:1`
+- Risk: runtime singleton can cause conflicts with multiple concurrent Hydra instances and stale context handling.
+
+## 7) Missing features (ranked by impact)
+
+1. **Build toolchain modernization (high impact)**
+- Move from Browserify/Budo/Esmify stack to a maintained bundler path to eliminate dev-chain critical advisories and reduce fragility.
+
+2. **CI gate parity (high impact)**
+- Ensure push/PR CI runs the same gate set as release verify (`lint`, `typecheck`, smoke/browser smoke, pack checks).
+
+3. **Lifecycle/dispose + multi-instance contract (high impact)**
+- Add explicit `dispose()` and runtime cleanup semantics; support isolated multiple Hydra instances without singleton collisions.
+
+4. **Public API docs + typed contract (medium-high impact)**
+- Publish stable API reference for `hydra.synth` + 3D modules and ship first-class `.d.ts` experience.
+
+5. **Deeper regression suite (medium impact)**
+- Expand beyond smoke tests into deterministic module-level tests for world/scene/material/texture edge cases.
+
+## 8) Roadmap
+
+### Milestone 1: MVP Public
+Goal: safe public adoption for creative coding demos and small projects.
+
+Acceptance criteria:
+- `npm run ci:check` passes on clean clone.
+- Chromium + Firefox browser smoke pass in CI.
+- Quickstart success path documented and verified in under 10 minutes.
+- Release artifacts include tarball + checksums + matching changelog entry.
+
+### Milestone 2: Stable v0.x
+Goal: predictable behavior and lower operational risk.
+
+Acceptance criteria:
+- Main CI includes lint + typecheck + smoke/browser smoke gates.
+- Non-global and global modes both covered by automated regression tests.
+- Known bug candidates #1-#4 are either fixed or documented with guardrails.
+- Dev security posture improved (no critical advisories in active toolchain path).
+
+### Milestone 3: v1.0
+Goal: freeze a dependable public API and support long-term integrations.
+
+Acceptance criteria:
+- API surface formally documented and versioned (including 3D modules).
+- Introduce and document lifecycle/dispose semantics and multi-instance support.
+- Semver and deprecation policy enforced in release process.
+- 2 consecutive release cycles with zero high-severity regressions from issue templates/CI.

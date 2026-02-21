@@ -188,25 +188,65 @@ const grid = (width, height = 1, options = {}) => {
     return data;
 }
 
-const image = (url) => {
+const image = (url, callback) => {
     const txApi = globalThis.tx;
     if (!txApi || typeof txApi.load !== 'function') {
         throw new Error('arr.image() requires a global tx loader with a load(url, callback) function.');
     }
-    const data = new Uint8Array();
-    txApi.load(url, (texture) => {
-        const image = texture.image;
-        const canvas = document.createElement('canvas');
-        canvas.width = image.width;
-        canvas.height = image.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(image, 0, 0);
-        const imageData = ctx.getImageData(0, 0, image.width, image.height);
-        data.set(imageData.data.buffer);
-        data.width = image.width;
-        data.height = image.height;
+    return new Promise((resolve, reject) => {
+        let settled = false;
+        const finish = (err, value) => {
+            if (settled) return;
+            settled = true;
+            if (err) reject(err);
+            else {
+                if (typeof callback === 'function') callback(value);
+                resolve(value);
+            }
+        };
+        const handleTexture = (texture) => {
+            try {
+                if (!texture || !texture.image) {
+                    finish(new Error('arr.image() failed to load texture image.'));
+                    return;
+                }
+                const img = texture.image;
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    finish(new Error('arr.image() could not acquire 2D canvas context.'));
+                    return;
+                }
+                ctx.drawImage(img, 0, 0);
+                const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                const data = new Uint8Array(imageData.data);
+                data.width = img.width;
+                data.height = img.height;
+                finish(null, data);
+            } catch (error) {
+                finish(error);
+            }
+        };
+        const handleError = (error) => {
+            finish(error instanceof Error ? error : new Error(String(error)));
+        };
+        try {
+            const texture = txApi.load(url, handleTexture, handleError);
+            if (texture && texture.image) {
+                const img = texture.image;
+                if (img.complete && img.width && img.height) {
+                    handleTexture(texture);
+                } else if (typeof img.addEventListener === 'function') {
+                    img.addEventListener('load', () => handleTexture(texture), { once: true });
+                    img.addEventListener('error', handleError, { once: true });
+                }
+            }
+        } catch (error) {
+            handleError(error);
+        }
     });
-    return data;
 }
 
 const sum = (list) => {

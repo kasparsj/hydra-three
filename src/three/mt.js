@@ -2,6 +2,7 @@ import * as THREE from "three";
 import glsl from "glslify";
 import GlslSource from "../glsl-source.js";
 import {processFunction} from "../generator-factory.js";
+import { getRuntime } from "./runtime.js";
 
 const worldPosVert = glsl("../shaders/worldPos.vert");
 const worldPosGradientYFrag = glsl("../shaders/worldPosGradientY.frag");
@@ -151,11 +152,29 @@ const hydra = (source, properties = {}) => {
     return material;
 }
 
+const createRuntimeSource = (name, fn, args) => {
+    return getRuntime().generator.createSource(name, fn, args);
+}
+
+const getGenerator = (name) => {
+    const generator = getRuntime().generator && getRuntime().generator.generators
+        ? getRuntime().generator.generators[name]
+        : null;
+    if (typeof generator !== 'function') {
+        throw new Error(`Generator "${name}" is not available.`);
+    }
+    return generator;
+}
+
+const gradientDefault = () => getGenerator('gradient')();
+const noiseDefault = (scale) => getGenerator('noise')(scale);
+const solidDefault = (...args) => getGenerator('solid')(...args);
+
 const dotsFunc = processFunction({
     name: 'dots',
     type: 'vert',
     inputs: [
-        {name: 'pos', type: 'vec3', default: () => gradient()},
+        {name: 'pos', type: 'vec3', default: () => gradientDefault()},
         {name: 'size', type: 'float', default: 10},
         {name: 'color', type: 'vec4', default: 1},
         {name: 'fade', type: 'float', default: 0.025},
@@ -166,7 +185,7 @@ const dotsFunc = processFunction({
     blendMode: true,
 });
 const dots = (pos, size, color, fade, options = {}) => {
-    return hydra(hydraSynth.generator.createSource('dots', dotsFunc, [pos, size, color, fade]), Object.assign({
+    return hydra(createRuntimeSource('dots', dotsFunc, [pos, size, color, fade]), Object.assign({
         transparent: true,
         blendMode: 'normal',
     }, options));
@@ -176,7 +195,7 @@ const squaresFunc = processFunction({
     name: 'squares',
     type: 'vert',
     inputs: [
-        {name: 'pos', type: 'vec3', default: () => gradient()},
+        {name: 'pos', type: 'vec3', default: () => gradientDefault()},
         {name: 'size', type: 'float', default: 10},
         {name: 'color', type: 'vec4', default: 1},
         {name: 'fade', type: 'float', default: 0.025},
@@ -187,7 +206,7 @@ const squaresFunc = processFunction({
     blendMode: true,
 });
 const squares = (pos, size, color, fade, options = {}) => {
-    return hydra(hydraSynth.generator.createSource('squares', squaresFunc, [pos, size, color, fade]), Object.assign({
+    return hydra(createRuntimeSource('squares', squaresFunc, [pos, size, color, fade]), Object.assign({
         transparent: true,
         blendMode: 'normal',
     }, options));
@@ -197,7 +216,7 @@ const linesFunc = processFunction({
     name: 'lines',
     type: 'vert',
     inputs: [
-        {name: 'pos', type: 'vec3', default: () => gradient()},
+        {name: 'pos', type: 'vec3', default: () => gradientDefault()},
         {name: 'color', type: 'vec4', default: 1},
     ],
     glsl: linesFrag,
@@ -205,7 +224,7 @@ const linesFunc = processFunction({
     primitive: 'lines',
 });
 const lines = (pos, color, options = {}) => {
-    return hydra(hydraSynth.generator.createSource('lines', linesFunc, [pos, color]), Object.assign({
+    return hydra(createRuntimeSource('lines', linesFunc, [pos, color]), Object.assign({
         transparent: true,
         blendMode: 'normal',
     }, options));
@@ -215,7 +234,7 @@ const linestripFunc = processFunction({
     name: 'linestrip',
     type: 'vert',
     inputs: [
-        {name: 'pos', type: 'vec3', default: () => solid(noise(1).x, noise(2).y, noise(3).z).map(-1,1,0,1)},
+        {name: 'pos', type: 'vec3', default: () => solidDefault(noiseDefault(1).x, noiseDefault(2).y, noiseDefault(3).z).map(-1,1,0,1)},
         {name: 'color', type: 'vec4', default: 1},
     ],
     glsl: linestripFrag,
@@ -223,7 +242,7 @@ const linestripFunc = processFunction({
     primitive: 'line strip',
 });
 const linestrip = (pos, color, options = {}) => {
-    return hydra(hydraSynth.generator.createSource('linestrip', linestripFunc, [pos, color]), Object.assign({
+    return hydra(createRuntimeSource('linestrip', linestripFunc, [pos, color]), Object.assign({
         transparent: true,
         blendMode: 'normal',
     }, options));
@@ -233,7 +252,7 @@ const lineloopFunc = processFunction({
     name: 'lineloop',
     type: 'vert',
     inputs: [
-        {name: 'pos', type: 'vec3', default: () => solid(noise(1).x, noise(2).y, noise(3).z).map(-1,1,0,1)},
+        {name: 'pos', type: 'vec3', default: () => solidDefault(noiseDefault(1).x, noiseDefault(2).y, noiseDefault(3).z).map(-1,1,0,1)},
         {name: 'color', type: 'vec4', default: 1},
     ],
     glsl: lineloopFrag,
@@ -241,7 +260,7 @@ const lineloopFunc = processFunction({
     primitive: 'line loop',
 });
 const lineloop = (pos, color, options = {}) => {
-    return hydra(hydraSynth.generator.createSource('lineloop', lineloopFunc, [pos, color]), Object.assign({
+    return hydra(createRuntimeSource('lineloop', lineloopFunc, [pos, color]), Object.assign({
         transparent: true,
         blendMode: 'normal',
     }, options));
@@ -258,7 +277,7 @@ const textFunc = processFunction({
     useNormal: false,
 });
 const text = (color, options = {}) => {
-    return hydra(hydraSynth.generator.createSource('text', textFunc, [color]), options);
+    return hydra(createRuntimeSource('text', textFunc, [color]), options);
 }
 
 const meshFunc = processFunction({
@@ -271,7 +290,7 @@ const meshFunc = processFunction({
     primitive: 'triangles',
 });
 const mesh = (color, options = {}) => {
-    return hydra(hydraSynth.generator.createSource('mesh', meshFunc, [color]), options);
+    return hydra(createRuntimeSource('mesh', meshFunc, [color]), options);
 }
 
 const getBlend = (blendMode) => {

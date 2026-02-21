@@ -96,12 +96,16 @@ const cameraMixin = {
     },
 
     _camResizeListener(type, width, height) {
+        if (!this._boundCamBoundsListener) {
+            this._boundCamBoundsListener = this._camBoundsListener.bind(this);
+        }
         if (!width || !height) {
-            window.addEventListener('resize', this._camBoundsListener.bind(this));
+            window.removeEventListener('resize', this._boundCamBoundsListener);
+            window.addEventListener('resize', this._boundCamBoundsListener);
             this._camResizeData = {type, width, height};
         }
         else {
-            window.removeEventListener('resize', this._camBoundsListener);
+            window.removeEventListener('resize', this._boundCamBoundsListener);
             delete this._camResizeData;
         }
     },

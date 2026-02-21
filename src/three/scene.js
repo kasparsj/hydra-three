@@ -11,6 +11,7 @@ import * as lights from "./lights.js";
 import * as world from "./world.js";
 import * as gui from "../gui.js";
 import * as gm from "./gm.js";
+import { getRuntime } from "./runtime.js";
 
 const scenes = {};
 const groups = {};
@@ -65,7 +66,7 @@ const setMeshAttrs = (mesh, attributes) => {
 
 const createMeshEdges = (mesh, attributes) => {
     // todo: i don't think this will work with InstancedMesh
-    const line = getOrCreateLineSegments(mesh.parent, {
+    const line = getOrCreateLineSegments({
         name: mesh.name,
         geometry: new THREE.EdgesGeometry(attributes.geometry),
         material: attributes.lineMat || (new THREE.LineBasicMaterial({
@@ -102,7 +103,7 @@ const getOrCreateMesh = (attributes = {}) => {
     let mesh = namedMeshes[name];
     if (!name || !mesh) {
         mesh = new THREE.Mesh();
-        const renderer = hydraSynth.renderer;
+        const renderer = getRuntime().renderer;
         if (renderer.shadowMap.enabled) {
             mesh.castShadow = true;
             mesh.receiveShadow = true;
@@ -121,7 +122,7 @@ const getOrCreateInstancedMesh = (attributes) => {
     let mesh = namedInstancedMeshes[name];
     if (!name || !mesh) {
         mesh = new THREE.InstancedMesh(geometry, material, count);
-        const renderer = hydraSynth.renderer;
+        const renderer = getRuntime().renderer;
         if (renderer.shadowMap.enabled) {
             mesh.castShadow = true;
             mesh.receiveShadow = true;

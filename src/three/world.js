@@ -43,7 +43,8 @@ const updateSkyDome = (group, options) => {
                 sky.scale.setScalar(options.far);
                 group.add(sky);
                 if (options.sun) {
-                    const sunPos = gm.posFromEleAzi(options.sunElevetion || 2, options.sunAzimuth || 180);
+                    const sunElevation = options.sunElevation ?? options.sunElevetion ?? 2;
+                    const sunPos = gm.posFromEleAzi(sunElevation, options.sunAzimuth || 180);
                     sky.material.uniforms.sunPosition.value.copy(sunPos);
                     return;
                 }
@@ -90,7 +91,8 @@ const updateSun = (group, options) => {
         if (options.skyDomeGeom !== 'Sky') {
             const geom = new THREE.SphereGeometry(100);
             const mat = new THREE.MeshBasicMaterial({color: new THREE.Color(0xffffff)});
-            const sunPos = gm.posFromEleAzi(options.sunElevetion, options.sunAzimuth, options.far/2);
+            const sunElevation = options.sunElevation ?? options.sunElevetion;
+            const sunPos = gm.posFromEleAzi(sunElevation, options.sunAzimuth, options.far/2);
             sun.name = sunName;
             sun.geometry = geom;
             sun.material = mat;
@@ -146,18 +148,19 @@ function generateRelief(width, height, noiseF, noiseZ, noiseType = "improved") {
     for ( let i = 0; i < size; i++) {
         const x = i % width, y = ~~(i / width);
         // todo: check dt is loaded
-        data[i] = nse.get3(x * noiseF, y * noiseF, noiseZ, noiseType);
+        data[i] = nse.get3(x, y, noiseZ, 0, 1, noiseF, noiseType);
     }
     return data;
 }
 
 function getReliefAt(scene, vec) {
-    let ground = group.find({name: groundName})[0];
+    const ground = scene.find({name: groundName})[0];
     if (ground && ground.userData.relief) {
         const wSegments = ground.geometry.parameters.widthSegments;
         const hSegments = ground.geometry.parameters.heightSegments;
         const x = ((vec.x + ground.geometry.parameters.width / 2) / ground.geometry.parameters.width) * wSegments;
-        const z = ((vec.y + ground.geometry.parameters.height / 2) / ground.geometry.parameters.height) * hSegments;
+        const zInput = typeof vec.z === 'number' ? vec.z : vec.y;
+        const z = ((zInput + ground.geometry.parameters.height / 2) / ground.geometry.parameters.height) * hSegments;
         const x1 = Math.floor(x);
         const z1 = Math.floor(z);
         const x2 = Math.ceil(x);

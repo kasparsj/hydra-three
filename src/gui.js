@@ -5,7 +5,10 @@ const guis = {};
 
 const init = async () => {
     if (!window.dat) {
-        await loadScript("https://unpkg.com/dat.gui");
+        if (typeof window.loadScript !== 'function') {
+            throw new Error('gui.init() requires window.loadScript to be available.');
+        }
+        await window.loadScript("https://unpkg.com/dat.gui");
     }
     patchDat();
 }

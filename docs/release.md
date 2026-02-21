@@ -10,6 +10,8 @@ Run:
 ```bash
 npm ci
 npm run release:verify-meta
+npm run lint
+npm run typecheck
 npm run ci:check
 npx playwright install chromium firefox
 npm run test:smoke:browser
@@ -17,6 +19,7 @@ npm run site:build
 ```
 
 Ensure:
+
 - CI is green.
 - `CHANGELOG.md` has release notes.
 - No uncommitted changes.
@@ -35,12 +38,14 @@ git tag -a vX.Y.Z -m "vX.Y.Z"
 5. Push commit + tag.
 
 Pushing a `v*` tag triggers `.github/workflows/release-verify.yml`, which reruns checks and uploads:
+
 - npm tarball artifact
 - sha256 checksum file (`release-checksums.txt`)
 
 ### Distribution
 
 Primary distribution paths for this fork:
+
 - GitHub tag + release artifacts
 - jsDelivr pinned to this repository's release tag
 - GitHub Pages site for docs and runnable examples
@@ -52,6 +57,7 @@ Primary distribution paths for this fork:
 - `.github/workflows/pages.yml` deploys the generated site on pushes to `main`.
 
 ### Post-release
+
 - Verify package contents and installability.
 - Verify CDN URL for the new version.
 - Verify checksum file matches uploaded tarball.

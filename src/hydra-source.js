@@ -39,7 +39,7 @@ class HydraSource {
     vid.autoplay = true
     vid.loop = true
     vid.muted = true // mute in order to load without user interaction
-    const onload = vid.addEventListener('loadeddata', () => {
+    vid.addEventListener('loadeddata', () => {
       this.src = vid
       vid.play()
       this.tex = new THREE.VideoTexture(this.src, options.mapping, options.wrapS, options.wrapT, options.magFilter, options.minFilter, options.format, options.type, options.anisotropy)
@@ -98,7 +98,7 @@ class HydraSource {
 
     const ctx = this.canvases[this.label]
     const canvas = ctx.canvas
-    if (canvas.width !== width && canvas.height !== height) {
+    if (canvas.width !== width || canvas.height !== height) {
       canvas.width = width
       canvas.height = height
     } else {

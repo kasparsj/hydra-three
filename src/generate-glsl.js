@@ -39,6 +39,9 @@ function generateParams(shaderParams, source, transforms) {
 // recursive function for generating shader string from object containing functions and user arguments. Order of functions in string depends on type of function
 // to do: improve variable names
 function generateGlsl (source, transforms, shaderParams) {
+  const srcFn = source && source.transforms && source.transforms[0] && source.transforms[0].synth && source.transforms[0].synth.generators
+    ? source.transforms[0].synth.generators.src
+    : null
   // transform function that outputs a shader string corresponding to gl_FragColor
   const empty = () => '';
   var fragColor = empty
@@ -86,15 +89,21 @@ function generateGlsl (source, transforms, shaderParams) {
         }));
         const trans = source.transforms.slice(0, source.transforms.indexOf(transform));
         source.passes.unshift(source.createPass(generateParams(params, source, trans), {renderTarget: source.output.temp0}));
-        const temp0 = src(source.output.temp0.texture);
+        if (typeof srcFn !== 'function') {
+          throw new Error('combine transform requires a src() generator')
+        }
+        const temp0 = srcFn(source.output.temp0.texture);
         f0 = (uv, returnType, alpha) => `${generateGlsl(temp0, temp0.transforms, shaderParams)(uv, returnType, alpha)}`
       }
-      var f1;
+      let f1
       if (typeof inputs[0].value.compile === 'function') {
         if (input0Vert || sourceVert) {
+          if (typeof srcFn !== 'function') {
+            throw new Error('combine transform requires a src() generator')
+          }
           inputs[0].value.output = source.output;
           source.passes.unshift(...inputs[0].value.compile({renderTarget: source.output.temp1}));
-          const temp1 = src(source.output.temp1.texture);
+          const temp1 = srcFn(source.output.temp1.texture);
           f1 = (uv, returnType, alpha) => `${generateGlsl(temp1, temp1.transforms, shaderParams)(uv, returnType, alpha)}`
         }
         else {
@@ -107,7 +116,7 @@ function generateGlsl (source, transforms, shaderParams) {
       fragColor = (uv, returnType, alpha) => `${shaderString(`${f0(uv, 'vec4')}, ${f1(uv, 'vec4')}`, transform, inputs.slice(1), shaderParams, returnType, alpha)}`
     } else if (transform.transform.type === 'combineCoord') {
       // combining two generated shader strings (i.e. for modulate functions)
-      var f1 = inputs[0].value && inputs[0].value.transforms
+      const f1 = inputs[0].value && inputs[0].value.transforms
           ? (uv, returnType, alpha) => `${generateGlsl(inputs[0].value, inputs[0].value.transforms, shaderParams)(uv, returnType, alpha)}`
           : (inputs[0].isUniform ? () => inputs[0].name : () => inputs[0].value)
       fragColor = (uv, returnType, alpha) => `${f0(`${shaderString(`${uv}, ${f1(uv, 'vec4')}`, transform, inputs.slice(1), shaderParams, 'vec2')}`, returnType, alpha)}`
@@ -150,6 +159,5 @@ function contains(object, arr) {
   }
   return false
 }
-
 
 

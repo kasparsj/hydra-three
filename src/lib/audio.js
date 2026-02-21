@@ -146,8 +146,9 @@ class Audio {
       smooth: this.smooth
     }))
     // to do: what to do in non-global mode?
+    const self = this
     this.bins.forEach((bin, index) => {
-      window['a' + index] = (scale = 1, offset = 0) => () => (a.fft[index] * scale + offset)
+      window['a' + index] = (scale = 1, offset = 0) => () => (self.fft[index] * scale + offset)
     })
   //  console.log(this.settings)
   }

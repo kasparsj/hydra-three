@@ -67,12 +67,15 @@ const update = (scene, camera, options = {}) => {
     ambOptions.intensity = ambOptions.intensity * options.intensity;
     updateAmbient(group, ambOptions);
 
+    const hemiSource = typeof options.hemisphere === 'object'
+        ? options.hemisphere
+        : (typeof options.hemi === 'object' ? options.hemi : {});
     const hemiOptions = Object.assign({
         groundColor: options.groundColor,
         skyColor: options.skyColor,
         intensity: options.hemiIntensity,
         visible: !!(options.hemisphere || options.hemi || options.all),
-    }, typeof options.hemisphere || options.hemi || {});
+    }, hemiSource);
     hemiOptions.intensity = hemiOptions.intensity * options.intensity;
     updateHemi(group, hemiOptions);
 }

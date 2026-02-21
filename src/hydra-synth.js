@@ -25,6 +25,7 @@ import * as arr from "./three/arr.js";
 import * as gui from "./gui.js";
 import * as el from "./el.js";
 import * as threeGlobals from "./three/globals.js";
+import { setRuntime } from "./three/runtime.js";
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 import { initCanvas } from "./canvas.js";
@@ -155,6 +156,7 @@ class HydraRenderer {
     this._initOutputs(numOutputs)
     this._initSources(numSources)
     this._generateGlslTransforms()
+    setRuntime(this)
 
     this.synth.screencap = () => {
       this.saveFrame = true

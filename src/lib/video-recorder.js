@@ -12,7 +12,7 @@ class VideoRecorder {
     this.mediaSource.addEventListener('sourceopen', () => {
       console.log('MediaSource opened');
       self.sourceBuffer = self.mediaSource.addSourceBuffer('video/webm; codecs="vp8"');
-      console.log('Source buffer: ', sourceBuffer);
+      console.log('Source buffer: ', self.sourceBuffer);
     })
   }
 
