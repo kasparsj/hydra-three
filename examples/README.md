@@ -3,31 +3,31 @@
 These scripts are grouped by visual primitive or workflow.
 
 ### General
-- `box.js`
-- `box-tex.js`
-- `box-instanced-grid.js`
-- `tex-map.js`
-- `cmp-noise.js`
-- `cmp-stack.js`
+- `box.js` - [Run](https://kasparsj.github.io/hydra-three/examples/box.html)
+- `box-tex.js` - [Run](https://kasparsj.github.io/hydra-three/examples/box-tex.html)
+- `box-instanced-grid.js` - [Run](https://kasparsj.github.io/hydra-three/examples/box-instanced-grid.html)
+- `tex-map.js` - [Run](https://kasparsj.github.io/hydra-three/examples/tex-map.html)
+- `cmp-noise.js` - [Run](https://kasparsj.github.io/hydra-three/examples/cmp-noise.html)
+- `cmp-stack.js` - [Run](https://kasparsj.github.io/hydra-three/examples/cmp-stack.html)
 
 ### Line loop
-- `lineloop/lineloop.js`
-- `lineloop/sphere.js`
-- `lineloop/thread.js`
+- `lineloop/lineloop.js` - [Run](https://kasparsj.github.io/hydra-three/examples/lineloop/lineloop.html)
+- `lineloop/sphere.js` - [Run](https://kasparsj.github.io/hydra-three/examples/lineloop/sphere.html)
+- `lineloop/thread.js` - [Run](https://kasparsj.github.io/hydra-three/examples/lineloop/thread.html)
 
 ### Lines
-- `lines/lines.js`
-- `lines/noise.js`
+- `lines/lines.js` - [Run](https://kasparsj.github.io/hydra-three/examples/lines/lines.html)
+- `lines/noise.js` - [Run](https://kasparsj.github.io/hydra-three/examples/lines/noise.html)
 
 ### Line strip
-- `linestrip/thread.js`
+- `linestrip/thread.js` - [Run](https://kasparsj.github.io/hydra-three/examples/linestrip/thread.html)
 
 ### Points
-- `points/dots.js`
-- `points/grid.js`
-- `points/noise.js`
-- `points/noise-flow.js`
-- `points/squares.js`
+- `points/dots.js` - [Run](https://kasparsj.github.io/hydra-three/examples/points/dots.html)
+- `points/grid.js` - [Run](https://kasparsj.github.io/hydra-three/examples/points/grid.html)
+- `points/noise.js` - [Run](https://kasparsj.github.io/hydra-three/examples/points/noise.html)
+- `points/noise-flow.js` - [Run](https://kasparsj.github.io/hydra-three/examples/points/noise-flow.html)
+- `points/squares.js` - [Run](https://kasparsj.github.io/hydra-three/examples/points/squares.html)
 
 ## Running examples locally
 
