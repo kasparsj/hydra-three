@@ -37,7 +37,7 @@ npm run site:build
 Use jsDelivr from this repository:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/kasparsj/hydra-three@v1.4.1/dist/hydra-synth.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/kasparsj/hydra-three@v1.0.0/dist/hydra-synth.js"></script>
 <script>
   const hydra = new Hydra({ detectAudio: false });
   osc(8, 0.1, 0.8).out();
@@ -54,7 +54,7 @@ Success criteria:
 ### Option B: npm + bundler
 
 ```bash
-npm i github:kasparsj/hydra-three#v1.4.1 three
+npm i github:kasparsj/hydra-three#v1.0.0 three
 ```
 
 ```js

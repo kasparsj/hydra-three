@@ -18,7 +18,7 @@
 
 ### Changed
 - Distribution docs now define this fork's release channel as Git tags + GitHub artifacts.
-- Quickstart install snippets are pinned to release tag `v1.4.1` instead of floating branch refs.
+- Quickstart install snippets are pinned to release tag `v1.0.0` instead of floating branch refs.
 - Runtime docs now explicitly define browser-only package execution and non-global mode usage.
 
 ### Fixed
@@ -31,7 +31,7 @@
 - Fixed `arr.image()` loading path to return resolved image data asynchronously instead of a permanently empty typed array.
 - Fixed undefined width/height usage in `cmp.lookAtBox()` orthographic path.
 
-## [1.4.1] - 2026-02-21
+## [1.0.0] - 2026-02-21
 ### Added
 - CI workflow for build, smoke testing, and package dry-run checks.
 - Release verification workflow for `v*` tags that uploads npm tarball artifacts.
@@ -48,6 +48,9 @@
   - `SECURITY.md`
 - Quickstart static example: `examples/quickstart.html`.
 
+### Changed
+- Versioning reset to `1.0.0` to establish an independent release line for hydra-three.
+
 ### Fixed
 - Constructor canvas initialization now uses the created canvas safely when no canvas is supplied.
 - Canvas resize helpers no longer rely on implicit global state.
@@ -58,7 +61,7 @@
 
 ## [1.4] - 2025-09-24
 
-This fork is based on hydra-synth 1.4
+Legacy upstream reference: this fork is based on hydra-synth 1.4.
 
 See original changelog:
 https://github.com/hydra-synth/hydra-synth/blob/main/CHANGELOG.md#14---2025-09-24

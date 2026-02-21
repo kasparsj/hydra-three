@@ -101,7 +101,7 @@
   - `package.json` `main` now points to `dist/hydra-synth.js`.
   - ESM import now routes through `src/package-entry.js`, which explicitly enforces browser runtime and then loads bundle.
 - Package metadata changed:
-  - Version bumped to `1.4.1`.
+  - Version line reset to `1.0.0` for hydra-three.
   - Repo/homepage/issues changed to `kasparsj/hydra-three`.
   - `files` allowlist added for pack contents.
 - Dependency set changed:
@@ -141,7 +141,7 @@
 
 - Added issue templates for bug/performance/creative regression reports.
 - Added release and site build scripts under `scripts/`.
-- Added tarball artifacts in repo (`hydra-synth-1.4.0.tgz`, `hydra-synth-1.4.1.tgz`) and release checksum workflow support.
+- Added tarball artifacts in repo (`hydra-synth-*.tgz`) and release checksum workflow support.
 
 ## 11) Components removed or replaced from upstream
 

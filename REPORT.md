@@ -59,7 +59,7 @@ Why:
 
 ## 4) Packaging audit
 
-- Name/version: `hydra-synth@1.4.1`
+- Name/version: `hydra-synth@1.0.0`
 - Main artifact: `/Users/kasparsj/Work2/hydra/hydra-three/dist/hydra-synth.js`
 - Build system: Vite + custom GLSL compile plugin
   - `/Users/kasparsj/Work2/hydra/hydra-three/vite.config.js`
@@ -70,7 +70,7 @@ Why:
   - `entryCount`: 92 files
   - package size: 403,609 bytes
   - unpacked size: 2,106,269 bytes
-  - filename: `hydra-synth-1.4.1.tgz`
+  - filename: `hydra-synth-1.0.0.tgz`
 - Metadata quality:
   - present: `exports`, `types`, `main`, `unpkg`, `files`, `repository`, `bugs`, `homepage`
   - license string is `AGPL` (works, but SPDX normalization would be cleaner)
