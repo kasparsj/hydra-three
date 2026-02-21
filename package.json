@@ -36,8 +36,9 @@
     "test:smoke": "npm run test:smoke:canvas && npm run test:smoke:module",
     "release:verify-meta": "node ./scripts/release/verify-release-meta.mjs",
     "release:checksums": "node ./scripts/release/generate-checksums.mjs",
+    "site:build": "node ./scripts/site/build-site.mjs",
     "pack:check": "npm pack --dry-run",
-    "ci:check": "npm run release:verify-meta && npm run build && npm run test:smoke && npm run pack:check"
+    "ci:check": "npm run release:verify-meta && npm run build && npm run site:build && npm run test:smoke && npm run pack:check"
   },
   "repository": {
     "type": "git",

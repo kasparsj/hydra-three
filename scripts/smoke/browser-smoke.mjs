@@ -91,8 +91,8 @@ page.on('console', (msg) => {
 
 try {
   await page.goto(url, { waitUntil: 'load', timeout: PAGE_LOAD_TIMEOUT_MS })
-  await page.waitForFunction(() => typeof window.Hydra === 'function', { timeout: READY_TIMEOUT_MS })
-  await page.waitForFunction(() => typeof window.osc === 'function', { timeout: READY_TIMEOUT_MS })
+  await page.waitForFunction(() => typeof window.Hydra === 'function', undefined, { timeout: READY_TIMEOUT_MS })
+  await page.waitForFunction(() => typeof window.osc === 'function', undefined, { timeout: READY_TIMEOUT_MS })
   await page.waitForSelector('canvas', { timeout: READY_TIMEOUT_MS })
 
   const canvas = await page.evaluate(() => {

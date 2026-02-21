@@ -48,6 +48,8 @@ perspective([2,2,3], [0,0,0], { controls: true })
 const sc = scene().lights().mesh(gm.box(), osc().phong()).out()
 ```
 
+You can also run examples from the GitHub Pages site examples gallery.
+
 ### 4. Local project setup
 
 ```bash

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 ### Added
+- GitHub Pages site build pipeline (`npm run site:build`) that generates docs and runnable example pages from repository sources.
+- GitHub Pages deployment workflow (`.github/workflows/pages.yml`) for automatic publishing on `main`.
 - Cross-browser smoke tests (`npm run test:smoke:browser`) using Playwright Chromium and Firefox against `examples/quickstart.html`.
 - Release metadata verification script (`npm run release:verify-meta`) for changelog/version/tag consistency.
 - Release checksum generation script (`npm run release:checksums`) that writes `release-checksums.txt`.

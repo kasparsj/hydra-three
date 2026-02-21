@@ -12,6 +12,17 @@ three.js-powered fork of [hydra-synth](https://github.com/hydra-synth/hydra-synt
 - CDN usage should reference a pinned tag in this repository.
 - The npm package name `hydra-synth` is owned upstream; this fork does not rely on upstream npm publishing for releases.
 
+## Project Site
+
+- GitHub Pages publishes docs and runnable examples from this repository.
+- Local site build output: `site-dist/`
+- Build locally:
+
+```bash
+npm run build
+npm run site:build
+```
+
 ## 10-minute quickstart
 
 ### Option A: Browser script tag (fastest)
@@ -76,6 +87,7 @@ Useful checks:
 npm run ci:check
 npx playwright install chromium firefox
 npm run test:smoke:browser
+npm run site:build
 ```
 
 ## Example
@@ -135,6 +147,7 @@ Use these docs before shipping:
 - CI runs build + smoke + package checks on Node 20 and 22.
 - CI runs real Chromium and Firefox smoke tests of `examples/quickstart.html` on Node 20.
 - Release tags (`v*`) run version/changelog/tag metadata verification and attach tarball + checksum artifacts.
+- GitHub Pages deploys generated docs and runnable examples from repository sources on every push to `main`.
 
 ## License
 

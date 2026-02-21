@@ -35,6 +35,10 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Build Site
+        if: matrix.node-version == 20
+        run: npm run site:build
+
       - name: Smoke test
         run: npm run test:smoke
 

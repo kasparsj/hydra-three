@@ -13,6 +13,7 @@ npm run release:verify-meta
 npm run ci:check
 npx playwright install chromium firefox
 npm run test:smoke:browser
+npm run site:build
 ```
 
 Ensure:
@@ -42,6 +43,13 @@ Pushing a `v*` tag triggers `.github/workflows/release-verify.yml`, which reruns
 Primary distribution paths for this fork:
 - GitHub tag + release artifacts
 - jsDelivr pinned to this repository's release tag
+- GitHub Pages site for docs and runnable examples
+
+### Site deployment
+
+- The site is generated with `npm run site:build`.
+- Output directory is `site-dist/`.
+- `.github/workflows/pages.yml` deploys the generated site on pushes to `main`.
 
 ### Post-release
 - Verify package contents and installability.

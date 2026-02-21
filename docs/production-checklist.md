@@ -22,6 +22,7 @@ Use this checklist before deploying hydra-three in a production creative-coding 
 
 ### Build and release safety
 - Run `npm run ci:check` in CI.
+- Run `npm run site:build` in CI to ensure docs/examples site generation stays healthy.
 - Run `npm run test:smoke:browser` in CI (with Playwright Chromium and Firefox installed).
 - Run browser smoke on both Chromium and Firefox in CI.
 - Keep changelog entries for user-visible behavior changes.
