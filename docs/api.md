@@ -69,6 +69,7 @@ Hydra generator methods:
 `makeGlobal: true`:
 
 - Synth methods are installed on `window` (for example `window.osc`).
+- Helper globals `window.loadScript` and `window.getCode` are installed while at least one global-mode instance is active, then restored on `dispose()`.
 
 `makeGlobal: false`:
 
@@ -86,3 +87,9 @@ Type definitions ship with the package at:
 - `src/index.d.ts`
 
 This provides baseline types for constructor options, `HydraRenderer`, and the `hydra.synth` contract.
+
+Current declarations include:
+
+- typed transform definition input for `setFunction(...)`
+- typed chain shape for generator outputs (`out`, `phong`, `lambert`, `basic`, `tex`)
+- typed scene API baseline (`scene().mesh(...).out()`, `scene().lights(...)`, `scene().world(...)`)

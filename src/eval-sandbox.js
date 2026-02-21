@@ -4,31 +4,73 @@ import Sandbox from './lib/sandbox.js'
 import ArrayUtils from './lib/array-utils.js'
 
 const MISSING_GLOBAL = Symbol('hydra-missing-global')
+const globalBindings = new Map()
+
+const setWindowGlobal = (name, value) => {
+  if (value === MISSING_GLOBAL) {
+    delete window[name]
+  } else {
+    window[name] = value
+  }
+}
+
+const ensureGlobalBinding = (name) => {
+  let binding = globalBindings.get(name)
+  if (!binding) {
+    binding = {
+      base: Object.prototype.hasOwnProperty.call(window, name)
+        ? window[name]
+        : MISSING_GLOBAL,
+      owners: [],
+    }
+    globalBindings.set(name, binding)
+  }
+  return binding
+}
+
+const registerGlobalOwner = (name, owner, value) => {
+  const binding = ensureGlobalBinding(name)
+  const ownerEntry = binding.owners.find((entry) => entry.owner === owner)
+  if (ownerEntry) {
+    ownerEntry.value = value
+  } else {
+    binding.owners.push({ owner, value })
+  }
+  setWindowGlobal(name, binding.owners[binding.owners.length - 1].value)
+}
+
+const unregisterGlobalOwner = (name, owner) => {
+  const binding = globalBindings.get(name)
+  if (!binding) return
+  binding.owners = binding.owners.filter((entry) => entry.owner !== owner)
+  if (binding.owners.length > 0) {
+    setWindowGlobal(name, binding.owners[binding.owners.length - 1].value)
+    return
+  }
+  setWindowGlobal(name, binding.base)
+  globalBindings.delete(name)
+}
 
 class EvalSandbox {
   constructor(parent, makeGlobal, userProps = []) {
     this.makeGlobal = makeGlobal
     this.sandbox = Sandbox(parent)
     this.parent = parent
-    this.globalSnapshot = new Map()
+    this.boundGlobalProps = new Set()
     var properties = Object.keys(parent)
     properties.forEach((property) => this.add(property))
     this.userProps = userProps
   }
 
-  _rememberGlobal(name) {
-    if (!this.makeGlobal || this.globalSnapshot.has(name)) return
-    if (Object.prototype.hasOwnProperty.call(window, name)) {
-      this.globalSnapshot.set(name, window[name])
-    } else {
-      this.globalSnapshot.set(name, MISSING_GLOBAL)
-    }
+  _bindGlobal(name, value) {
+    if (!this.makeGlobal) return
+    registerGlobalOwner(name, this, value)
+    this.boundGlobalProps.add(name)
   }
 
   add(name) {
     if (this.makeGlobal) {
-      this._rememberGlobal(name)
-      window[name] = this.parent[name]
+      this._bindGlobal(name, this.parent[name])
     }
     // this.sandbox.addToContext(name, `parent.${name}`)
   }
@@ -37,8 +79,7 @@ class EvalSandbox {
 
   set(property, value) {
     if(this.makeGlobal) {
-      this._rememberGlobal(property)
-      window[property] = value
+      this._bindGlobal(property, value)
     }
     this.parent[property] = value
   }
@@ -60,14 +101,10 @@ class EvalSandbox {
 
   destroy() {
     if (!this.makeGlobal) return
-    this.globalSnapshot.forEach((value, key) => {
-      if (value === MISSING_GLOBAL) {
-        delete window[key]
-      } else {
-        window[key] = value
-      }
+    this.boundGlobalProps.forEach((key) => {
+      unregisterGlobalOwner(key, this)
     })
-    this.globalSnapshot.clear()
+    this.boundGlobalProps.clear()
   }
 }
 

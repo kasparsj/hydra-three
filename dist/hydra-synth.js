@@ -6700,15 +6700,15 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         tan2[b].add(tdir);
         tan2[c].add(tdir);
       }
-      let groups2 = this.groups;
-      if (groups2.length === 0) {
-        groups2 = [{
+      let groups = this.groups;
+      if (groups.length === 0) {
+        groups = [{
           start: 0,
           count: indices.length
         }];
       }
-      for (let i = 0, il = groups2.length; i < il; ++i) {
-        const group = groups2[i];
+      for (let i = 0, il = groups.length; i < il; ++i) {
+        const group = groups[i];
         const start = group.start;
         const count = group.count;
         for (let j = start, jl = start + count; j < jl; j += 3) {
@@ -6735,8 +6735,8 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         tangents[v * 4 + 2] = tmp2.z;
         tangents[v * 4 + 3] = w;
       }
-      for (let i = 0, il = groups2.length; i < il; ++i) {
-        const group = groups2[i];
+      for (let i = 0, il = groups.length; i < il; ++i) {
+        const group = groups[i];
         const start = group.start;
         const count = group.count;
         for (let j = start, jl = start + count; j < jl; j += 3) {
@@ -6851,9 +6851,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         geometry2.morphAttributes[name] = morphArray;
       }
       geometry2.morphTargetsRelative = this.morphTargetsRelative;
-      const groups2 = this.groups;
-      for (let i = 0, l = groups2.length; i < l; i++) {
-        const group = groups2[i];
+      const groups = this.groups;
+      for (let i = 0, l = groups.length; i < l; i++) {
+        const group = groups[i];
         geometry2.addGroup(group.start, group.count, group.materialIndex);
       }
       return geometry2;
@@ -6908,9 +6908,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         data2.data.morphAttributes = morphAttributes;
         data2.data.morphTargetsRelative = this.morphTargetsRelative;
       }
-      const groups2 = this.groups;
-      if (groups2.length > 0) {
-        data2.data.groups = JSON.parse(JSON.stringify(groups2));
+      const groups = this.groups;
+      if (groups.length > 0) {
+        data2.data.groups = JSON.parse(JSON.stringify(groups));
       }
       const boundingSphere = this.boundingSphere;
       if (boundingSphere !== null) {
@@ -6952,9 +6952,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         this.morphAttributes[name] = array;
       }
       this.morphTargetsRelative = source.morphTargetsRelative;
-      const groups2 = source.groups;
-      for (let i = 0, l = groups2.length; i < l; i++) {
-        const group = groups2[i];
+      const groups = source.groups;
+      for (let i = 0, l = groups.length; i < l; i++) {
+        const group = groups[i];
         this.addGroup(group.start, group.count, group.materialIndex);
       }
       const boundingBox = source.boundingBox;
@@ -7082,12 +7082,12 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       const uv = geometry.attributes.uv;
       const uv1 = geometry.attributes.uv1;
       const normal = geometry.attributes.normal;
-      const groups2 = geometry.groups;
+      const groups = geometry.groups;
       const drawRange = geometry.drawRange;
       if (index !== null) {
         if (Array.isArray(material)) {
-          for (let i = 0, il = groups2.length; i < il; i++) {
-            const group = groups2[i];
+          for (let i = 0, il = groups.length; i < il; i++) {
+            const group = groups[i];
             const groupMaterial = material[group.materialIndex];
             const start = Math.max(group.start, drawRange.start);
             const end = Math.min(index.count, Math.min(group.start + group.count, drawRange.start + drawRange.count));
@@ -7119,8 +7119,8 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         }
       } else if (position !== void 0) {
         if (Array.isArray(material)) {
-          for (let i = 0, il = groups2.length; i < il; i++) {
-            const group = groups2[i];
+          for (let i = 0, il = groups.length; i < il; i++) {
+            const group = groups[i];
             const groupMaterial = material[group.materialIndex];
             const start = Math.max(group.start, drawRange.start);
             const end = Math.min(position.count, Math.min(group.start + group.count, drawRange.start + drawRange.count));
@@ -13501,9 +13501,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
           const geometry = _objects.update(object);
           const material = object.material;
           if (Array.isArray(material)) {
-            const groups2 = geometry.groups;
-            for (let k = 0, kl = groups2.length; k < kl; k++) {
-              const group = groups2[k];
+            const groups = geometry.groups;
+            for (let k = 0, kl = groups.length; k < kl; k++) {
+              const group = groups[k];
               const groupMaterial = material[group.materialIndex];
               if (groupMaterial && groupMaterial.visible) {
                 const depthMaterial = getDepthMaterial(object, groupMaterial, light, type);
@@ -17263,9 +17263,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
                 _vector32.applyMatrix4(object.matrixWorld).applyMatrix4(_projScreenMatrix2);
               }
               if (Array.isArray(material)) {
-                const groups2 = geometry.groups;
-                for (let i = 0, l = groups2.length; i < l; i++) {
-                  const group = groups2[i];
+                const groups = geometry.groups;
+                for (let i = 0, l = groups.length; i < l; i++) {
+                  const group = groups[i];
                   const groupMaterial = material[group.materialIndex];
                   if (groupMaterial && groupMaterial.visible) {
                     currentRenderList.push(object, geometry, groupMaterial, groupOrder, _vector32.z, group);
@@ -17621,10 +17621,10 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         p_uniforms.setValue(_gl, "normalMatrix", object.normalMatrix);
         p_uniforms.setValue(_gl, "modelMatrix", object.matrixWorld);
         if (material.isShaderMaterial || material.isRawShaderMaterial) {
-          const groups2 = material.uniformsGroups;
-          for (let i = 0, l = groups2.length; i < l; i++) {
+          const groups = material.uniformsGroups;
+          for (let i = 0, l = groups.length; i < l; i++) {
             if (capabilities.isWebGL2) {
-              const group = groups2[i];
+              const group = groups[i];
               uniformsGroups.update(group, program);
               uniformsGroups.bind(group, program);
             } else {
@@ -22604,12 +22604,12 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         if (geometry.index !== null) {
           const position = geometry.attributes.position;
           const indices = geometry.index;
-          let groups2 = geometry.groups;
-          if (groups2.length === 0) {
-            groups2 = [{ start: 0, count: indices.count, materialIndex: 0 }];
+          let groups = geometry.groups;
+          if (groups.length === 0) {
+            groups = [{ start: 0, count: indices.count, materialIndex: 0 }];
           }
-          for (let o = 0, ol = groups2.length; o < ol; ++o) {
-            const group = groups2[o];
+          for (let o = 0, ol = groups.length; o < ol; ++o) {
+            const group = groups[o];
             const groupStart = group.start;
             const groupCount = group.count;
             for (let i = groupStart, l = groupStart + groupCount; i < l; i += 3) {
@@ -25500,10 +25500,10 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       if (morphTargetsRelative) {
         geometry.morphTargetsRelative = true;
       }
-      const groups2 = json.data.groups || json.data.drawcalls || json.data.offsets;
-      if (groups2 !== void 0) {
-        for (let i = 0, n = groups2.length; i !== n; ++i) {
-          const group = groups2[i];
+      const groups = json.data.groups || json.data.drawcalls || json.data.offsets;
+      if (groups !== void 0) {
+        for (let i = 0, n = groups.length; i !== n; ++i) {
+          const group = groups[i];
           geometry.addGroup(group.start, group.count, group.materialIndex);
         }
       }
@@ -34543,15 +34543,15 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         tan2[b].add(tdir);
         tan2[c].add(tdir);
       }
-      let groups2 = this.groups;
-      if (groups2.length === 0) {
-        groups2 = [{
+      let groups = this.groups;
+      if (groups.length === 0) {
+        groups = [{
           start: 0,
           count: indices.length
         }];
       }
-      for (let i = 0, il = groups2.length; i < il; ++i) {
-        const group = groups2[i];
+      for (let i = 0, il = groups.length; i < il; ++i) {
+        const group = groups[i];
         const start = group.start;
         const count = group.count;
         for (let j = start, jl = start + count; j < jl; j += 3) {
@@ -34578,8 +34578,8 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         tangents[v * 4 + 2] = tmp2.z;
         tangents[v * 4 + 3] = w;
       }
-      for (let i = 0, il = groups2.length; i < il; ++i) {
-        const group = groups2[i];
+      for (let i = 0, il = groups.length; i < il; ++i) {
+        const group = groups[i];
         const start = group.start;
         const count = group.count;
         for (let j = start, jl = start + count; j < jl; j += 3) {
@@ -34694,9 +34694,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         geometry2.morphAttributes[name] = morphArray;
       }
       geometry2.morphTargetsRelative = this.morphTargetsRelative;
-      const groups2 = this.groups;
-      for (let i = 0, l = groups2.length; i < l; i++) {
-        const group = groups2[i];
+      const groups = this.groups;
+      for (let i = 0, l = groups.length; i < l; i++) {
+        const group = groups[i];
         geometry2.addGroup(group.start, group.count, group.materialIndex);
       }
       return geometry2;
@@ -34751,9 +34751,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         data2.data.morphAttributes = morphAttributes;
         data2.data.morphTargetsRelative = this.morphTargetsRelative;
       }
-      const groups2 = this.groups;
-      if (groups2.length > 0) {
-        data2.data.groups = JSON.parse(JSON.stringify(groups2));
+      const groups = this.groups;
+      if (groups.length > 0) {
+        data2.data.groups = JSON.parse(JSON.stringify(groups));
       }
       const boundingSphere = this.boundingSphere;
       if (boundingSphere !== null) {
@@ -34795,9 +34795,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         this.morphAttributes[name] = array;
       }
       this.morphTargetsRelative = source.morphTargetsRelative;
-      const groups2 = source.groups;
-      for (let i = 0, l = groups2.length; i < l; i++) {
-        const group = groups2[i];
+      const groups = source.groups;
+      for (let i = 0, l = groups.length; i < l; i++) {
+        const group = groups[i];
         this.addGroup(group.start, group.count, group.materialIndex);
       }
       const boundingBox = source.boundingBox;
@@ -39730,14 +39730,91 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     });
     return bound;
   };
-  const scenes = {};
-  const groups = {};
-  const namedMeshes = {};
-  const namedInstancedMeshes = {};
-  const namedLines = {};
-  const namedLineLoops = {};
-  const namedLineSegments = {};
-  const namedPoints = [];
+  const runtimeStores = /* @__PURE__ */ new WeakMap();
+  const createStore = () => ({
+    scenes: /* @__PURE__ */ Object.create(null),
+    groups: /* @__PURE__ */ Object.create(null),
+    meshes: [],
+    namedMeshes: /* @__PURE__ */ Object.create(null),
+    instancedMeshes: [],
+    namedInstancedMeshes: /* @__PURE__ */ Object.create(null),
+    lines: [],
+    namedLines: /* @__PURE__ */ Object.create(null),
+    lineLoops: [],
+    namedLineLoops: /* @__PURE__ */ Object.create(null),
+    lineSegments: [],
+    namedLineSegments: /* @__PURE__ */ Object.create(null),
+    points: [],
+    namedPoints: /* @__PURE__ */ Object.create(null)
+  });
+  const defaultStore = createStore();
+  const clearNamedStore = (namedStore) => {
+    Object.keys(namedStore).forEach((key) => {
+      delete namedStore[key];
+    });
+  };
+  const clearStore = (store) => {
+    Object.keys(store.scenes).forEach((key) => {
+      const scene = store.scenes[key];
+      if (scene && typeof scene.clear === "function") {
+        scene.clear();
+      }
+      delete store.scenes[key];
+    });
+    Object.keys(store.groups).forEach((key) => {
+      const group = store.groups[key];
+      if (group && typeof group.clear === "function") {
+        group.clear();
+      }
+      delete store.groups[key];
+    });
+    store.meshes.length = 0;
+    store.instancedMeshes.length = 0;
+    store.lines.length = 0;
+    store.lineLoops.length = 0;
+    store.lineSegments.length = 0;
+    store.points.length = 0;
+    clearNamedStore(store.namedMeshes);
+    clearNamedStore(store.namedInstancedMeshes);
+    clearNamedStore(store.namedLines);
+    clearNamedStore(store.namedLineLoops);
+    clearNamedStore(store.namedLineSegments);
+    clearNamedStore(store.namedPoints);
+  };
+  const resolveRuntime = (runtime) => {
+    if (runtime) {
+      return runtime;
+    }
+    try {
+      return getRuntime();
+    } catch (_error) {
+      return null;
+    }
+  };
+  const getStore = (runtime) => {
+    const runtimeRef = resolveRuntime(runtime);
+    if (!runtimeRef) {
+      return defaultStore;
+    }
+    let store = runtimeStores.get(runtimeRef);
+    if (!store) {
+      store = createStore();
+      runtimeStores.set(runtimeRef, store);
+    }
+    return store;
+  };
+  const clearSceneRuntime = (runtime) => {
+    if (!runtime) {
+      clearStore(defaultStore);
+      return;
+    }
+    const store = runtimeStores.get(runtime);
+    if (!store) {
+      return;
+    }
+    clearStore(store);
+    runtimeStores.delete(runtime);
+  };
   const add = (scene, ...children) => {
     scene.add(...children);
     return children.length === 1 ? children[0] : children;
@@ -39762,15 +39839,15 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       }
     }
   };
-  const setMeshAttrs = (mesh2, attributes) => {
+  const setMeshAttrs = (mesh2, attributes, runtime) => {
     setObject3DAttrs(mesh2, attributes);
     if (attributes.geometry) {
       if (attributes.lineMat || attributes.lineWidth || attributes.lineColor) {
-        createMeshEdges(mesh2, attributes);
+        createMeshEdges(mesh2, attributes, runtime);
       }
     }
   };
-  const createMeshEdges = (mesh2, attributes) => {
+  const createMeshEdges = (mesh2, attributes, runtime) => {
     const line2 = getOrCreateLineSegments({
       name: mesh2.name,
       geometry: new EdgesGeometry(attributes.geometry),
@@ -39778,16 +39855,18 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         color: attributes.lineColor || 0,
         linewidth: attributes.lineWidth || 3
       })
-    });
+    }, runtime);
     mesh2.add(line2);
   };
   const getOrCreateScene = (options2, attributes = {}) => {
+    const runtime = options2 && options2.runtime ? options2.runtime : null;
+    const store = getStore(runtime);
     const { name } = attributes;
-    let scene = scenes[name];
+    let scene = name ? store.scenes[name] : null;
     if (!name || !scene) {
       scene = new HydraScene(options2);
-    } else if (options2 && options2.runtime) {
-      scene._runtime = options2.runtime;
+    } else if (runtime) {
+      scene._runtime = runtime;
     }
     for (let attr in attributes) {
       if (!attributes.hasOwnProperty(attr)) continue;
@@ -39800,88 +39879,104 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
           break;
       }
     }
-    scenes[scene.name] = scene;
+    if (scene.name) {
+      store.scenes[scene.name] = scene;
+    }
     return scene;
   };
   const getOrCreateMesh = (attributes = {}, runtime) => {
+    const runtimeRef = resolveRuntime(runtime);
+    const store = getStore(runtimeRef);
     const { name } = attributes;
-    let mesh2 = namedMeshes[name];
+    let mesh2 = name ? store.namedMeshes[name] : null;
     if (!name || !mesh2) {
       mesh2 = new Mesh();
-      const renderer = getRuntime(runtime).renderer;
-      if (renderer.shadowMap.enabled) {
+      const renderer = runtimeRef && runtimeRef.renderer;
+      if (renderer && renderer.shadowMap.enabled) {
         mesh2.castShadow = true;
         mesh2.receiveShadow = true;
       }
+      store.meshes.push(mesh2);
     }
-    setMeshAttrs(mesh2, attributes);
+    setMeshAttrs(mesh2, attributes, runtimeRef);
     if (mesh2.name) {
-      namedMeshes[mesh2.name] = mesh2;
+      store.namedMeshes[mesh2.name] = mesh2;
     }
     return mesh2;
   };
   const getOrCreateInstancedMesh = (attributes, runtime) => {
+    const runtimeRef = resolveRuntime(runtime);
+    const store = getStore(runtimeRef);
     const { name, geometry, material, count } = attributes;
-    let mesh2 = namedInstancedMeshes[name];
+    let mesh2 = name ? store.namedInstancedMeshes[name] : null;
     if (!name || !mesh2) {
       mesh2 = new InstancedMesh(geometry, material, count);
-      const renderer = getRuntime(runtime).renderer;
-      if (renderer.shadowMap.enabled) {
+      const renderer = runtimeRef && runtimeRef.renderer;
+      if (renderer && renderer.shadowMap.enabled) {
         mesh2.castShadow = true;
         mesh2.receiveShadow = true;
       }
+      store.instancedMeshes.push(mesh2);
     }
-    setMeshAttrs(mesh2, attributes);
+    setMeshAttrs(mesh2, attributes, runtimeRef);
     if (mesh2.name) {
-      namedInstancedMeshes[mesh2.name] = mesh2;
+      store.namedInstancedMeshes[mesh2.name] = mesh2;
     }
     return mesh2;
   };
-  const getOrCreateLine = (attributes) => {
+  const getOrCreateLine = (attributes, runtime) => {
+    const store = getStore(runtime);
     const { name } = attributes;
-    let line2 = namedLines[name];
+    let line2 = name ? store.namedLines[name] : null;
     if (!name || !line2) {
       line2 = new Line();
+      store.lines.push(line2);
     }
     setObject3DAttrs(line2, attributes);
     if (line2.name) {
-      namedLines[line2.name] = line2;
+      store.namedLines[line2.name] = line2;
     }
     return line2;
   };
-  const getOrCreateLineLoop = (attributes) => {
+  const getOrCreateLineLoop = (attributes, runtime) => {
+    const store = getStore(runtime);
     const { name } = attributes;
-    let lineLoop = namedLineLoops[name];
+    let lineLoop = name ? store.namedLineLoops[name] : null;
     if (!name || !lineLoop) {
       lineLoop = new LineLoop();
+      store.lineLoops.push(lineLoop);
     }
     setObject3DAttrs(lineLoop, attributes);
     if (lineLoop.name) {
-      namedLineLoops[lineLoop.name] = lineLoop;
+      store.namedLineLoops[lineLoop.name] = lineLoop;
     }
     return lineLoop;
   };
-  const getOrCreateLineSegments = (attributes) => {
+  const getOrCreateLineSegments = (attributes, runtime) => {
+    const store = getStore(runtime);
     const { name } = attributes;
-    let line2 = namedLineSegments[name];
+    let line2 = name ? store.namedLineSegments[name] : null;
     if (!name || !line2) {
       line2 = new LineSegments();
+      store.lineSegments.push(line2);
     }
     setObject3DAttrs(line2, attributes);
     if (line2.name) {
-      namedLineSegments[line2.name] = line2;
+      store.namedLineSegments[line2.name] = line2;
     }
     return line2;
   };
-  const getOrCreatePoints = (attributes) => {
+  const getOrCreatePoints = (attributes, runtime) => {
+    const store = getStore(runtime);
     const { name } = attributes;
-    let point = namedPoints[name];
+    let point = name ? store.namedPoints[name] : null;
     if (!name || !point) {
       point = new Points();
+      store.points.push(point);
     }
     setObject3DAttrs(point, attributes);
     if (point.name) {
-      namedPoints[point.name] = point;
+      store.namedPoints[point.name] = point;
     }
     return point;
   };
@@ -39913,18 +40008,18 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         material = this._handleMaterial(geometry, material, options2);
         switch (type) {
           case "points":
-            object = getOrCreatePoints(Object.assign({ geometry, material }, options2));
+            object = getOrCreatePoints(Object.assign({ geometry, material }, options2), this._runtime);
             break;
           case "line loop":
           case "lineloop":
-            object = getOrCreateLineLoop(Object.assign({ geometry, material }, options2));
+            object = getOrCreateLineLoop(Object.assign({ geometry, material }, options2), this._runtime);
             break;
           case "line strip":
           case "linestrip":
-            object = getOrCreateLine(Object.assign({ geometry, material }, options2));
+            object = getOrCreateLine(Object.assign({ geometry, material }, options2), this._runtime);
             break;
           case "lines":
-            object = getOrCreateLineSegments(Object.assign({ geometry, material }, options2));
+            object = getOrCreateLineSegments(Object.assign({ geometry, material }, options2), this._runtime);
             break;
           case "quad":
           default:
@@ -40118,15 +40213,18 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       return this;
     },
     group(attributes = {}) {
+      const store = getStore(this._runtime);
       const { name } = attributes;
-      let group = groups[name];
+      let group = name ? store.groups[name] : null;
       if (!name || !group) {
         group = new HydraGroup(this._runtime);
       }
       addChild(this, group);
       setObject3DAttrs(group, attributes);
       group._runtime = this._runtime;
-      groups[group.name] = group;
+      if (group.name) {
+        store.groups[group.name] = group;
+      }
       return group;
     },
     css2d(element, attributes = {}) {
@@ -42059,9 +42157,6 @@ vec4 _mod289(vec4 x)
       console.warn(`type ${obj.type} not recognized`, obj);
     }
   }
-  if (typeof window !== "undefined") {
-    window.processFunction = processFunction;
-  }
   const worldPosVert = "#define GLSLIFY 1\nvarying vec3 vWorldPosition;\n\nvoid main() {\n\n    vec4 worldPosition = modelMatrix * vec4( position, 1.0 );\n    vWorldPosition = worldPosition.xyz;\n\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n\n}";
   const worldPosGradientYFrag = "#define GLSLIFY 1\nuniform vec3 topColor;\nuniform vec3 bottomColor;\nuniform float offset;\nuniform float exponent;\n\nvarying vec3 vWorldPosition;\n\nvoid main() {\n\n    float h = normalize( vWorldPosition + offset ).y;\n    gl_FragColor = vec4( mix( bottomColor, topColor, max( pow( max( h , 0.0), exponent ), 0.0 ) ), 1.0 );\n\n}";
   const pointsVert = "#define GLSLIFY 1\nvarying vec3 vPos;\nvarying float vSize;\nvarying vec4 vColor;\n\n// note: pos.z does not change anything with GL_POINTS\nvec4 points(vec2 _st, vec3 pos, float size, vec4 color, float fade) {\n    vPos = pos;\n    vSize = size;\n    vColor = color;\n    gl_PointSize = vSize;\n    return vec4(vPos.xy * 2.0 - 1.0, vPos.z, 1.0);\n}\n\n";
@@ -42514,7 +42609,7 @@ vec4 _mod289(vec4 x)
         }, uniforms)
       };
       super(passOptions);
-      this.needsSwap = false;
+      this.needsSwap = true;
     }
   }
   let rndFn = Math.random;
@@ -43351,7 +43446,11 @@ vec4 _mod289(vec4 x)
         }
       }
       for (let i = 0; i < passes.length; i++) {
-        let options2 = passes[i];
+        const options2 = Object.assign({}, passes[i]);
+        const explicitRenderTarget = options2.renderTarget || null;
+        if (explicitRenderTarget) {
+          delete options2.renderTarget;
+        }
         let pass, fxScene, fxCamera;
         if (options2.scene && !options2.scene.empty()) {
           options2.camera || (options2.camera = this._camera);
@@ -43362,10 +43461,10 @@ vec4 _mod289(vec4 x)
           fxCamera = options2.camera;
           pass = new HydraRenderPass(fxScene, fxCamera, options2);
           if (options2.layers && options2.layers.length) {
-            options2.layers.map((layer, i2) => {
+            options2.layers.forEach((layer, layerIndex) => {
               layer.compile(this.synth.renderer, fxCamera);
               options2.fx = options2.fx || {};
-              options2.fx["layer" + i2] = layer.getMixPass({ renderTarget: options2.renderTarget });
+              options2.fx["layer" + layerIndex] = layer.getMixPass();
             });
             this.layers.push(...options2.layers);
           }
@@ -43380,12 +43479,23 @@ vec4 _mod289(vec4 x)
           }
         }
         this.composer.addPass(pass);
+        let terminalPass = pass;
         if (options2.fx) {
+          const preFxPassCount = this.composer.passes.length;
           add$1(Object.assign({}, options2.fx, {
             composer: this.composer,
             scene: fxScene,
             camera: fxCamera
           }));
+          if (this.composer.passes.length > preFxPassCount) {
+            terminalPass = this.composer.passes[this.composer.passes.length - 1];
+          }
+        }
+        if (explicitRenderTarget) {
+          if (terminalPass !== pass) {
+            pass.renderTarget = null;
+          }
+          terminalPass.renderTarget = explicitRenderTarget;
         }
       }
     }
@@ -44703,35 +44813,70 @@ vec4 _mod289(vec4 x)
     }
   };
   const MISSING_GLOBAL = Symbol("hydra-missing-global");
+  const globalBindings = /* @__PURE__ */ new Map();
+  const setWindowGlobal = (name, value) => {
+    if (value === MISSING_GLOBAL) {
+      delete window[name];
+    } else {
+      window[name] = value;
+    }
+  };
+  const ensureGlobalBinding = (name) => {
+    let binding = globalBindings.get(name);
+    if (!binding) {
+      binding = {
+        base: Object.prototype.hasOwnProperty.call(window, name) ? window[name] : MISSING_GLOBAL,
+        owners: []
+      };
+      globalBindings.set(name, binding);
+    }
+    return binding;
+  };
+  const registerGlobalOwner = (name, owner, value) => {
+    const binding = ensureGlobalBinding(name);
+    const ownerEntry = binding.owners.find((entry) => entry.owner === owner);
+    if (ownerEntry) {
+      ownerEntry.value = value;
+    } else {
+      binding.owners.push({ owner, value });
+    }
+    setWindowGlobal(name, binding.owners[binding.owners.length - 1].value);
+  };
+  const unregisterGlobalOwner = (name, owner) => {
+    const binding = globalBindings.get(name);
+    if (!binding) return;
+    binding.owners = binding.owners.filter((entry) => entry.owner !== owner);
+    if (binding.owners.length > 0) {
+      setWindowGlobal(name, binding.owners[binding.owners.length - 1].value);
+      return;
+    }
+    setWindowGlobal(name, binding.base);
+    globalBindings.delete(name);
+  };
   class EvalSandbox {
     constructor(parent, makeGlobal, userProps = []) {
       this.makeGlobal = makeGlobal;
       this.sandbox = Sandbox();
       this.parent = parent;
-      this.globalSnapshot = /* @__PURE__ */ new Map();
+      this.boundGlobalProps = /* @__PURE__ */ new Set();
       var properties = Object.keys(parent);
       properties.forEach((property) => this.add(property));
       this.userProps = userProps;
     }
-    _rememberGlobal(name) {
-      if (!this.makeGlobal || this.globalSnapshot.has(name)) return;
-      if (Object.prototype.hasOwnProperty.call(window, name)) {
-        this.globalSnapshot.set(name, window[name]);
-      } else {
-        this.globalSnapshot.set(name, MISSING_GLOBAL);
-      }
+    _bindGlobal(name, value) {
+      if (!this.makeGlobal) return;
+      registerGlobalOwner(name, this, value);
+      this.boundGlobalProps.add(name);
     }
     add(name) {
       if (this.makeGlobal) {
-        this._rememberGlobal(name);
-        window[name] = this.parent[name];
+        this._bindGlobal(name, this.parent[name]);
       }
     }
     // sets on window as well as synth object if global (not needed for objects, which can be set directly)
     set(property, value) {
       if (this.makeGlobal) {
-        this._rememberGlobal(property);
-        window[property] = value;
+        this._bindGlobal(property, value);
       }
       this.parent[property] = value;
     }
@@ -44747,14 +44892,10 @@ vec4 _mod289(vec4 x)
     }
     destroy() {
       if (!this.makeGlobal) return;
-      this.globalSnapshot.forEach((value, key) => {
-        if (value === MISSING_GLOBAL) {
-          delete window[key];
-        } else {
-          window[key] = value;
-        }
+      this.boundGlobalProps.forEach((key) => {
+        unregisterGlobalOwner(key, this);
       });
-      this.globalSnapshot.clear();
+      this.boundGlobalProps.clear();
     }
   }
   const size = (object, precise = true) => {
@@ -45051,6 +45192,44 @@ vec4 _mod289(vec4 x)
     return canvas;
   };
   const Mouse = mouseListen();
+  const MISSING_HELPER_GLOBAL = Symbol("hydra-missing-helper-global");
+  const helperGlobalBindings = /* @__PURE__ */ new Map();
+  const installHelperGlobal = (key, owner, value) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    let state = helperGlobalBindings.get(key);
+    if (!state) {
+      const hasOwn = Object.prototype.hasOwnProperty.call(window, key);
+      state = {
+        base: hasOwn ? window[key] : MISSING_HELPER_GLOBAL,
+        owners: []
+      };
+      helperGlobalBindings.set(key, state);
+    }
+    state.owners.push({ owner, value });
+    window[key] = value;
+  };
+  const restoreHelperGlobal = (key, owner) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const state = helperGlobalBindings.get(key);
+    if (!state) {
+      return;
+    }
+    state.owners = state.owners.filter((entry) => entry.owner !== owner);
+    if (state.owners.length > 0) {
+      window[key] = state.owners[state.owners.length - 1].value;
+      return;
+    }
+    if (state.base === MISSING_HELPER_GLOBAL) {
+      delete window[key];
+    } else {
+      window[key] = state.base;
+    }
+    helperGlobalBindings.delete(key);
+  };
   class HydraRenderer {
     constructor({
       pb = null,
@@ -45079,6 +45258,7 @@ vec4 _mod289(vec4 x)
       this.makeGlobal = makeGlobal;
       this._disposed = false;
       this._loop = null;
+      this._globalHelpersInstalled = false;
       this.canvas = initCanvas(canvas, this);
       this.width = this.canvas.width;
       this.height = this.canvas.height;
@@ -45147,11 +45327,7 @@ vec4 _mod289(vec4 x)
       this.synth.arr = this.modules.arr;
       this.synth.el = this.modules.el;
       if (makeGlobal) {
-        window.loadScript = this.loadScript;
-        window.getCode = () => {
-          const urlParams = new URLSearchParams(window.location.search);
-          console.log(decodeURIComponent(urlParams.get("code")));
-        };
+        this._installGlobalHelpers();
       }
       this.timeSinceLastUpdate = 0;
       this._time = 0;
@@ -45223,9 +45399,34 @@ vec4 _mod289(vec4 x)
       });
     }
     loadScript(url = "", once = true) {
-      return loadScript(url, once, this || window).then(() => {
+      const browserWindow = typeof window !== "undefined" ? window : null;
+      const scope = this && browserWindow && this !== browserWindow ? this : browserWindow;
+      return loadScript(url, once, scope).then(() => {
         console.log(`loaded script ${url}`);
       });
+    }
+    _installGlobalHelpers() {
+      if (this._globalHelpersInstalled || typeof window === "undefined") {
+        return;
+      }
+      const loadScriptHelper = (url = "", once = true) => loadScript(url, once, window).then(() => {
+        console.log(`loaded script ${url}`);
+      });
+      const getCodeHelper = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        console.log(decodeURIComponent(urlParams.get("code")));
+      };
+      installHelperGlobal("loadScript", this, loadScriptHelper);
+      installHelperGlobal("getCode", this, getCodeHelper);
+      this._globalHelpersInstalled = true;
+    }
+    _restoreGlobalHelpers() {
+      if (!this._globalHelpersInstalled || typeof window === "undefined") {
+        return;
+      }
+      restoreHelperGlobal("loadScript", this);
+      restoreHelperGlobal("getCode", this);
+      this._globalHelpersInstalled = false;
     }
     setResolution(width, height) {
       console.log("setResolution", width, height);
@@ -45547,6 +45748,8 @@ vec4 _mod289(vec4 x)
       if (this.sandbox && typeof this.sandbox.destroy === "function") {
         this.sandbox.destroy();
       }
+      this._restoreGlobalHelpers();
+      clearSceneRuntime(this);
       clearRuntime(this);
     }
     shadowMap(options2) {

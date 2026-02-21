@@ -133,7 +133,6 @@ Output.prototype.dispose = function() {
 Output.prototype._set = function (passes, {cssRenderer = false}) {
   this.stop();
   if (passes.length > 0) {
-    // todo: output level clear and fade are not working properly
     if (this._autoClear && this._autoClear.amount > 0) {
       if (this._autoClear.amount >= 1) {
         this.composer.addPass(new ClearPass());
@@ -143,7 +142,11 @@ Output.prototype._set = function (passes, {cssRenderer = false}) {
       }
     }
     for (let i=0; i<passes.length; i++) {
-      let options = passes[i];
+      const options = Object.assign({}, passes[i]);
+      const explicitRenderTarget = options.renderTarget || null;
+      if (explicitRenderTarget) {
+        delete options.renderTarget;
+      }
       let pass, fxScene, fxCamera;
       if (options.scene && !options.scene.empty()) {
         options.camera || (options.camera = this._camera);
@@ -154,12 +157,10 @@ Output.prototype._set = function (passes, {cssRenderer = false}) {
         fxCamera = options.camera;
         pass = new HydraRenderPass(fxScene, fxCamera, options);
         if (options.layers && options.layers.length) {
-          options.layers.map((layer, i) => {
+          options.layers.forEach((layer, layerIndex) => {
             layer.compile(this.synth.renderer, fxCamera);
             options.fx = (options.fx || {});
-            // todo: composer does not work with 2 successive renderTarget - prevBuffer will not be prev renderTarget
-            // todo: maybe make sure only last pass has renderTarget?
-            options.fx[('layer' + i)] = layer.getMixPass({renderTarget: options.renderTarget});
+            options.fx[('layer' + layerIndex)] = layer.getMixPass();
           });
           this.layers.push(...options.layers);
         }
@@ -176,12 +177,23 @@ Output.prototype._set = function (passes, {cssRenderer = false}) {
         }
       }
       this.composer.addPass(pass);
+      let terminalPass = pass;
       if (options.fx) {
+        const preFxPassCount = this.composer.passes.length;
         fx.add(Object.assign({}, options.fx, {
           composer: this.composer,
           scene: fxScene,
           camera: fxCamera,
         }));
+        if (this.composer.passes.length > preFxPassCount) {
+          terminalPass = this.composer.passes[this.composer.passes.length - 1];
+        }
+      }
+      if (explicitRenderTarget) {
+        if (terminalPass !== pass) {
+          pass.renderTarget = null;
+        }
+        terminalPass.renderTarget = explicitRenderTarget;
       }
     }
   }

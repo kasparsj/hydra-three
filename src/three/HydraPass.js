@@ -279,7 +279,7 @@ class HydraFadePass extends HydraMaterialPass
             }, uniforms),
         };
         super(passOptions);
-        this.needsSwap = false;
+        this.needsSwap = true;
     }
 }
 

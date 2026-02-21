@@ -13,20 +13,98 @@ import * as gui from "../gui.js";
 import * as gm from "./gm.js";
 import { getRuntime } from "./runtime.js";
 
-const scenes = {};
-const groups = {};
-const meshes = [];
-const namedMeshes = {};
-const instancedMeshes = [];
-const namedInstancedMeshes = {};
-const lines = [];
-const namedLines = {};
-const lineLoops = [];
-const namedLineLoops = {};
-const lineSegments = [];
-const namedLineSegments = {};
-const points = [];
-const namedPoints = [];
+const runtimeStores = new WeakMap();
+
+const createStore = () => ({
+    scenes: Object.create(null),
+    groups: Object.create(null),
+    meshes: [],
+    namedMeshes: Object.create(null),
+    instancedMeshes: [],
+    namedInstancedMeshes: Object.create(null),
+    lines: [],
+    namedLines: Object.create(null),
+    lineLoops: [],
+    namedLineLoops: Object.create(null),
+    lineSegments: [],
+    namedLineSegments: Object.create(null),
+    points: [],
+    namedPoints: Object.create(null),
+});
+
+const defaultStore = createStore();
+
+const clearNamedStore = (namedStore) => {
+    Object.keys(namedStore).forEach((key) => {
+        delete namedStore[key];
+    });
+};
+
+const clearStore = (store) => {
+    Object.keys(store.scenes).forEach((key) => {
+        const scene = store.scenes[key];
+        if (scene && typeof scene.clear === 'function') {
+            scene.clear();
+        }
+        delete store.scenes[key];
+    });
+    Object.keys(store.groups).forEach((key) => {
+        const group = store.groups[key];
+        if (group && typeof group.clear === 'function') {
+            group.clear();
+        }
+        delete store.groups[key];
+    });
+    store.meshes.length = 0;
+    store.instancedMeshes.length = 0;
+    store.lines.length = 0;
+    store.lineLoops.length = 0;
+    store.lineSegments.length = 0;
+    store.points.length = 0;
+    clearNamedStore(store.namedMeshes);
+    clearNamedStore(store.namedInstancedMeshes);
+    clearNamedStore(store.namedLines);
+    clearNamedStore(store.namedLineLoops);
+    clearNamedStore(store.namedLineSegments);
+    clearNamedStore(store.namedPoints);
+};
+
+const resolveRuntime = (runtime) => {
+    if (runtime) {
+        return runtime;
+    }
+    try {
+        return getRuntime();
+    } catch (_error) {
+        return null;
+    }
+};
+
+const getStore = (runtime) => {
+    const runtimeRef = resolveRuntime(runtime);
+    if (!runtimeRef) {
+        return defaultStore;
+    }
+    let store = runtimeStores.get(runtimeRef);
+    if (!store) {
+        store = createStore();
+        runtimeStores.set(runtimeRef, store);
+    }
+    return store;
+};
+
+const clearSceneRuntime = (runtime) => {
+    if (!runtime) {
+        clearStore(defaultStore);
+        return;
+    }
+    const store = runtimeStores.get(runtime);
+    if (!store) {
+        return;
+    }
+    clearStore(store);
+    runtimeStores.delete(runtime);
+};
 
 const add = (scene, ...children) => {
     scene.add(...children);
@@ -55,16 +133,16 @@ const setObject3DAttrs = (object, attributes) => {
     }
 }
 
-const setMeshAttrs = (mesh, attributes) => {
+const setMeshAttrs = (mesh, attributes, runtime) => {
     setObject3DAttrs(mesh, attributes);
     if (attributes.geometry) {
         if (attributes.lineMat || attributes.lineWidth || attributes.lineColor) {
-            createMeshEdges(mesh, attributes);
+            createMeshEdges(mesh, attributes, runtime);
         }
     }
 }
 
-const createMeshEdges = (mesh, attributes) => {
+const createMeshEdges = (mesh, attributes, runtime) => {
     // todo: i don't think this will work with InstancedMesh
     const line = getOrCreateLineSegments({
         name: mesh.name,
@@ -73,17 +151,19 @@ const createMeshEdges = (mesh, attributes) => {
             color: attributes.lineColor || 0x000000,
             linewidth: attributes.lineWidth || 3
         })),
-    });
+    }, runtime);
     mesh.add(line);
 }
 
 const getOrCreateScene = (options, attributes = {}) => {
+    const runtime = options && options.runtime ? options.runtime : null;
+    const store = getStore(runtime);
     const {name} = attributes;
-    let scene = scenes[name];
+    let scene = name ? store.scenes[name] : null;
     if (!name || !scene) { // always recreate default scene?
         scene = new HydraScene(options);
-    } else if (options && options.runtime) {
-        scene._runtime = options.runtime;
+    } else if (runtime) {
+        scene._runtime = runtime;
     }
     for (let attr in attributes) {
         if (!attributes.hasOwnProperty(attr)) continue;
@@ -96,100 +176,110 @@ const getOrCreateScene = (options, attributes = {}) => {
                 break;
         }
     }
-    scenes[scene.name] = scene;
+    if (scene.name) {
+        store.scenes[scene.name] = scene;
+    }
     return scene;
 }
 
 const getOrCreateMesh = (attributes = {}, runtime) => {
+    const runtimeRef = resolveRuntime(runtime);
+    const store = getStore(runtimeRef);
     const {name} = attributes;
-    let mesh = namedMeshes[name];
+    let mesh = name ? store.namedMeshes[name] : null;
     if (!name || !mesh) {
         mesh = new THREE.Mesh();
-        const renderer = getRuntime(runtime).renderer;
-        if (renderer.shadowMap.enabled) {
+        const renderer = runtimeRef && runtimeRef.renderer;
+        if (renderer && renderer.shadowMap.enabled) {
             mesh.castShadow = true;
             mesh.receiveShadow = true;
         }
-        meshes.push(mesh);
+        store.meshes.push(mesh);
     }
-    setMeshAttrs(mesh, attributes);
+    setMeshAttrs(mesh, attributes, runtimeRef);
     if (mesh.name) {
-        namedMeshes[mesh.name] = mesh;
+        store.namedMeshes[mesh.name] = mesh;
     }
     return mesh;
 }
 
 const getOrCreateInstancedMesh = (attributes, runtime) => {
+    const runtimeRef = resolveRuntime(runtime);
+    const store = getStore(runtimeRef);
     const {name, geometry, material, count} = attributes;
-    let mesh = namedInstancedMeshes[name];
+    let mesh = name ? store.namedInstancedMeshes[name] : null;
     if (!name || !mesh) {
         mesh = new THREE.InstancedMesh(geometry, material, count);
-        const renderer = getRuntime(runtime).renderer;
-        if (renderer.shadowMap.enabled) {
+        const renderer = runtimeRef && runtimeRef.renderer;
+        if (renderer && renderer.shadowMap.enabled) {
             mesh.castShadow = true;
             mesh.receiveShadow = true;
         }
-        instancedMeshes.push(mesh);
+        store.instancedMeshes.push(mesh);
     }
-    setMeshAttrs(mesh, attributes);
+    setMeshAttrs(mesh, attributes, runtimeRef);
     if (mesh.name) {
-        namedInstancedMeshes[mesh.name] = mesh;
+        store.namedInstancedMeshes[mesh.name] = mesh;
     }
     return mesh;
 }
 
-const getOrCreateLine = (attributes) => {
+const getOrCreateLine = (attributes, runtime) => {
+    const store = getStore(runtime);
     const {name} = attributes;
-    let line = namedLines[name];
+    let line = name ? store.namedLines[name] : null;
     if (!name || !line) {
         line = new THREE.Line();
-        lines.push(line);
+        store.lines.push(line);
     }
     setObject3DAttrs(line, attributes);
     if (line.name) {
-        namedLines[line.name] = line;
+        store.namedLines[line.name] = line;
     }
     return line;
 }
 
-const getOrCreateLineLoop = (attributes) => {
+const getOrCreateLineLoop = (attributes, runtime) => {
+    const store = getStore(runtime);
     const {name} = attributes;
-    let lineLoop = namedLineLoops[name];
+    let lineLoop = name ? store.namedLineLoops[name] : null;
     if (!name || !lineLoop) {
         lineLoop = new THREE.LineLoop();
-        lineLoops.push(lineLoop);
+        store.lineLoops.push(lineLoop);
     }
     setObject3DAttrs(lineLoop, attributes);
     if (lineLoop.name) {
-        namedLineLoops[lineLoop.name] = lineLoop;
+        store.namedLineLoops[lineLoop.name] = lineLoop;
     }
     return lineLoop;
 }
 
-const getOrCreateLineSegments = (attributes) => {
+const getOrCreateLineSegments = (attributes, runtime) => {
+    const store = getStore(runtime);
     const {name} = attributes;
-    let line = namedLineSegments[name];
+    let line = name ? store.namedLineSegments[name] : null;
     if (!name || !line) {
         line = new THREE.LineSegments();
-        lineSegments.push(line);
+        store.lineSegments.push(line);
     }
     setObject3DAttrs(line, attributes);
     if (line.name) {
-        namedLineSegments[line.name] = line;
+        store.namedLineSegments[line.name] = line;
     }
     return line;
 }
 
-const getOrCreatePoints = (attributes) => {
+const getOrCreatePoints = (attributes, runtime) => {
+    const store = getStore(runtime);
     const {name} = attributes;
-    let point = namedPoints[name];
+    let point = name ? store.namedPoints[name] : null;
     if (!name || !point) {
         point = new THREE.Points();
-        points.push(point);
+        store.points.push(point);
     }
     setObject3DAttrs(point, attributes);
     if (point.name) {
-        namedPoints[point.name] = point;
+        store.namedPoints[point.name] = point;
     }
     return point;
 }
@@ -224,15 +314,15 @@ const sceneMixin = {
             material = this._handleMaterial(geometry, material, options);
             switch (type) {
                 case 'points':
-                    object = getOrCreatePoints(Object.assign({geometry, material}, options));
+                    object = getOrCreatePoints(Object.assign({geometry, material}, options), this._runtime);
                     break;
                 case 'line loop':
                 case 'lineloop':
-                    object = getOrCreateLineLoop(Object.assign({geometry, material}, options));
+                    object = getOrCreateLineLoop(Object.assign({geometry, material}, options), this._runtime);
                     break;
                 case 'line strip':
                 case 'linestrip':
-                    object = getOrCreateLine(Object.assign({geometry, material}, options))
+                    object = getOrCreateLine(Object.assign({geometry, material}, options), this._runtime)
                     break;
                 case 'lines':
                     // todo: support instanced
@@ -249,7 +339,7 @@ const sceneMixin = {
                     //     }
                     //     instancedGeometry.setAttribute('instancePosition', new THREE.InstancedBufferAttribute(instancePositions, 3));
                     // }
-                    object = getOrCreateLineSegments(Object.assign({geometry, material}, options));
+                    object = getOrCreateLineSegments(Object.assign({geometry, material}, options), this._runtime);
                     break;
                 case 'quad':
                 default:
@@ -479,15 +569,18 @@ const sceneMixin = {
     },
 
     group(attributes = {}) {
+        const store = getStore(this._runtime);
         const {name} = attributes;
-        let group = groups[name];
+        let group = name ? store.groups[name] : null;
         if (!name || !group) {
             group = new HydraGroup(this._runtime);
         }
         addChild(this, group);
         setObject3DAttrs(group, attributes);
         group._runtime = this._runtime;
-        groups[group.name] = group;
+        if (group.name) {
+            store.groups[group.name] = group;
+        }
         return group;
     },
 
@@ -619,4 +712,4 @@ class HydraScene extends THREE.Scene {
 
 mixClass(HydraScene, cameraMixin, autoClearMixin, sourceMixin, sceneMixin);
 
-export { HydraScene, HydraGroup, getOrCreateScene}
+export { HydraScene, HydraGroup, getOrCreateScene, clearSceneRuntime }

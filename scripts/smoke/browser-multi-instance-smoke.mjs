@@ -34,7 +34,13 @@ const smokeHtml = `<!doctype html>
     <div id="root"></div>
     <script src="/dist/hydra-synth.js"></script>
     <script>
-      window.__smoke = { ready: false, error: null };
+      window.__smoke = {
+        ready: false,
+        error: null,
+        globalHelpersInstalled: null,
+        globalHelpersPersistAfterFirstDispose: null,
+        globalHelpersRestored: null
+      };
       (async () => {
         const root = document.getElementById('root');
         const canvasA = document.createElement('canvas');
@@ -117,6 +123,18 @@ const smokeHtml = `<!doctype html>
           throw new Error('Failed to create meshes for both runtimes');
         }
 
+        const sharedSceneName = '__sharedScene';
+        const sharedMeshName = '__sharedMesh';
+        const namedSceneA = A.scene({ name: sharedSceneName });
+        const namedSceneB = B.scene({ name: sharedSceneName });
+        namedSceneA.mesh(A.gm.box(), A.solid(1, 0, 0).phong(), { name: sharedMeshName });
+        namedSceneB.mesh(B.gm.sphere(), B.solid(0, 0, 1).phong(), { name: sharedMeshName });
+        const namedMeshA = namedSceneA.find({ name: sharedMeshName })[0];
+        const namedMeshB = namedSceneB.find({ name: sharedMeshName })[0];
+        if (!namedMeshA || !namedMeshB || namedMeshA === namedMeshB) {
+          throw new Error('Per-runtime named scene/object cache isolation failed');
+        }
+
         const worldScene = A.scene().world({ sun: true, far: 20, ground: false, fog: false });
         const worldGroup = worldScene.group({ name: '__world' });
         const sun = worldGroup.find({ name: '__sun' })[0];
@@ -131,6 +149,36 @@ const smokeHtml = `<!doctype html>
         hydraB.tick(16);
         B.scene().mesh(B.gm.sphere(), B.osc(4, 0.1, 0.5).phong()).out();
         hydraB.tick(16);
+
+        const globalCanvasA = document.createElement('canvas');
+        const globalCanvasB = document.createElement('canvas');
+        root.appendChild(globalCanvasA);
+        root.appendChild(globalCanvasB);
+        const originalLoadScript = window.loadScript;
+        const originalGetCode = window.getCode;
+        const hydraGlobalA = new Hydra({
+          detectAudio: false,
+          makeGlobal: true,
+          autoLoop: false,
+          canvas: globalCanvasA
+        });
+        const hydraGlobalB = new Hydra({
+          detectAudio: false,
+          makeGlobal: true,
+          autoLoop: false,
+          canvas: globalCanvasB
+        });
+        window.__smoke.globalHelpersInstalled =
+          typeof window.loadScript === 'function' &&
+          typeof window.getCode === 'function';
+        hydraGlobalA.dispose();
+        window.__smoke.globalHelpersPersistAfterFirstDispose =
+          typeof window.loadScript === 'function' &&
+          typeof window.getCode === 'function';
+        hydraGlobalB.dispose();
+        window.__smoke.globalHelpersRestored =
+          window.loadScript === originalLoadScript &&
+          window.getCode === originalGetCode;
 
         window.__smoke.ready = true;
         window.__smoke.disposedState = hydraA._disposed === true && hydraB._disposed === false;
@@ -236,6 +284,21 @@ try {
     diagnostics.hasGlobalOsc,
     false,
     "Expected non-global mode to avoid window.osc",
+  );
+  assert.equal(
+    diagnostics.globalHelpersInstalled,
+    true,
+    "Expected global-mode helper globals to install",
+  );
+  assert.equal(
+    diagnostics.globalHelpersPersistAfterFirstDispose,
+    true,
+    "Expected helper globals to persist while one global instance remains",
+  );
+  assert.equal(
+    diagnostics.globalHelpersRestored,
+    true,
+    "Expected helper globals to restore after all global instances dispose",
   );
   assert.ok(
     diagnostics.canvasCount >= 2,

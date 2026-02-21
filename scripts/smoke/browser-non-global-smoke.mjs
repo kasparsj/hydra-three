@@ -47,7 +47,20 @@ const smokeHtml = `<!doctype html>
   <body>
     <script src="/dist/hydra-synth.js"></script>
     <script>
-      window.__smoke = { ready: false, error: null, hasGlobalOsc: null, canvasCount: 0 };
+      window.__smoke = {
+        ready: false,
+        error: null,
+        hasGlobalOsc: null,
+        hasLoadScript: null,
+        hasGetCode: null,
+        hasProcessFunction: null,
+        hasLoadScriptAfterDispose: null,
+        hasGetCodeAfterDispose: null,
+        fadeNeedsSwap: null,
+        scenePassRenderTargetCleared: null,
+        terminalPassRenderTargetApplied: null,
+        canvasCount: 0
+      };
       try {
         const hydra = new Hydra({ detectAudio: false, makeGlobal: false });
         const H = hydra.synth;
@@ -60,10 +73,40 @@ const smokeHtml = `<!doctype html>
         if (!sc || !sc.at(0)) {
           throw new Error('3D scene did not create a mesh')
         }
+        const output = hydra.o[0]
+        output.autoClear(0.5, 0x000000)
+        const outputRenderTarget = H.tx.fbo({ width: 64, height: 64 })
+        const pipelineScene = H.scene({ name: '__pipelineProbe' })
+          .mesh(H.gm.box(), H.osc(5, 0.05, 0.6).phong())
+        output._set([
+          {
+            scene: pipelineScene,
+            camera: output._camera,
+            autoClear: { amount: 1 },
+            layers: [],
+            fx: {
+              sepia: 0.2,
+              rgbShift: 0.001
+            },
+            renderTarget: outputRenderTarget
+          }
+        ], {})
         hydra.tick(16)
         hydra.tick(16)
+        const pipelinePasses = output.composer.passes
+        const scenePass = pipelinePasses.find((pass) => !!pass.scene)
+        const terminalPass = pipelinePasses[pipelinePasses.length - 1]
+        window.__smoke.fadeNeedsSwap = !!(pipelinePasses[0] && pipelinePasses[0].needsSwap === true)
+        window.__smoke.scenePassRenderTargetCleared = !!(scenePass && scenePass.renderTarget == null)
+        window.__smoke.terminalPassRenderTargetApplied = !!(terminalPass && terminalPass.renderTarget === outputRenderTarget)
         window.__smoke.hasGlobalOsc = typeof window.osc === 'function'
+        window.__smoke.hasLoadScript = typeof window.loadScript === 'function'
+        window.__smoke.hasGetCode = typeof window.getCode === 'function'
+        window.__smoke.hasProcessFunction = typeof window.processFunction === 'function'
         window.__smoke.canvasCount = document.querySelectorAll('canvas').length
+        hydra.dispose()
+        window.__smoke.hasLoadScriptAfterDispose = typeof window.loadScript === 'function'
+        window.__smoke.hasGetCodeAfterDispose = typeof window.getCode === 'function'
         window.__smoke.ready = true
       } catch (error) {
         window.__smoke.error = error && error.stack ? error.stack : String(error)
@@ -162,6 +205,46 @@ try {
     diagnostics.hasGlobalOsc,
     false,
     "Expected makeGlobal:false to avoid installing window.osc",
+  );
+  assert.equal(
+    diagnostics.hasLoadScript,
+    false,
+    "Expected makeGlobal:false to avoid installing window.loadScript",
+  );
+  assert.equal(
+    diagnostics.hasGetCode,
+    false,
+    "Expected makeGlobal:false to avoid installing window.getCode",
+  );
+  assert.equal(
+    diagnostics.hasProcessFunction,
+    false,
+    "Expected non-global runtime to avoid leaking window.processFunction",
+  );
+  assert.equal(
+    diagnostics.hasLoadScriptAfterDispose,
+    false,
+    "Expected no window.loadScript after non-global dispose",
+  );
+  assert.equal(
+    diagnostics.hasGetCodeAfterDispose,
+    false,
+    "Expected no window.getCode after non-global dispose",
+  );
+  assert.equal(
+    diagnostics.fadeNeedsSwap,
+    true,
+    "Expected output auto-clear fade pass to swap buffers",
+  );
+  assert.equal(
+    diagnostics.scenePassRenderTargetCleared,
+    true,
+    "Expected scene pass renderTarget to be cleared when fx passes follow",
+  );
+  assert.equal(
+    diagnostics.terminalPassRenderTargetApplied,
+    true,
+    "Expected terminal pass to receive explicit renderTarget",
   );
   assert.deepEqual(
     errors,

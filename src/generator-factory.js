@@ -136,8 +136,4 @@ function processFunction(obj) {
 
 }
 
-if (typeof window !== 'undefined') {
-  window.processFunction = processFunction
-}
-
 export { GeneratorFactory, processFunction }

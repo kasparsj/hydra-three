@@ -37,6 +37,46 @@ import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 import { initCanvas } from "./canvas.js";
 
 const Mouse = MouseTools()
+const MISSING_HELPER_GLOBAL = Symbol('hydra-missing-helper-global')
+const helperGlobalBindings = new Map()
+
+const installHelperGlobal = (key, owner, value) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+  let state = helperGlobalBindings.get(key)
+  if (!state) {
+    const hasOwn = Object.prototype.hasOwnProperty.call(window, key)
+    state = {
+      base: hasOwn ? window[key] : MISSING_HELPER_GLOBAL,
+      owners: [],
+    }
+    helperGlobalBindings.set(key, state)
+  }
+  state.owners.push({ owner, value })
+  window[key] = value
+}
+
+const restoreHelperGlobal = (key, owner) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+  const state = helperGlobalBindings.get(key)
+  if (!state) {
+    return
+  }
+  state.owners = state.owners.filter((entry) => entry.owner !== owner)
+  if (state.owners.length > 0) {
+    window[key] = state.owners[state.owners.length - 1].value
+    return
+  }
+  if (state.base === MISSING_HELPER_GLOBAL) {
+    delete window[key]
+  } else {
+    window[key] = state.base
+  }
+  helperGlobalBindings.delete(key)
+}
 // to do: add ability to pass in certain uniforms and transforms
 class HydraRenderer {
 
@@ -69,6 +109,7 @@ class HydraRenderer {
     this.makeGlobal = makeGlobal
     this._disposed = false
     this._loop = null
+    this._globalHelpersInstalled = false
 
     this.canvas = initCanvas(canvas, this);
     this.width = this.canvas.width
@@ -134,11 +175,7 @@ class HydraRenderer {
     this.synth.el = this.modules.el
 
     if (makeGlobal) {
-      window.loadScript = this.loadScript
-      window.getCode = () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        console.log(decodeURIComponent(urlParams.get('code')));
-      }
+      this._installGlobalHelpers()
     }
 
 
@@ -233,10 +270,38 @@ class HydraRenderer {
   }
 
   loadScript(url = "", once = true) {
-   return loadExternalScript(url, once, this || window).then(() => {
+   const browserWindow = typeof window !== 'undefined' ? window : null
+   const scope = this && browserWindow && this !== browserWindow ? this : browserWindow
+   return loadExternalScript(url, once, scope).then(() => {
      console.log(`loaded script ${url}`)
    })
  }
+
+  _installGlobalHelpers() {
+    if (this._globalHelpersInstalled || typeof window === 'undefined') {
+      return
+    }
+    const loadScriptHelper = (url = "", once = true) =>
+      loadExternalScript(url, once, window).then(() => {
+        console.log(`loaded script ${url}`)
+      })
+    const getCodeHelper = () => {
+      const urlParams = new URLSearchParams(window.location.search)
+      console.log(decodeURIComponent(urlParams.get('code')))
+    }
+    installHelperGlobal('loadScript', this, loadScriptHelper)
+    installHelperGlobal('getCode', this, getCodeHelper)
+    this._globalHelpersInstalled = true
+  }
+
+  _restoreGlobalHelpers() {
+    if (!this._globalHelpersInstalled || typeof window === 'undefined') {
+      return
+    }
+    restoreHelperGlobal('loadScript', this)
+    restoreHelperGlobal('getCode', this)
+    this._globalHelpersInstalled = false
+  }
 
   setResolution(width, height) {
     console.log("setResolution", width, height)
@@ -597,6 +662,8 @@ class HydraRenderer {
       this.sandbox.destroy()
     }
 
+    this._restoreGlobalHelpers()
+    scene.clearSceneRuntime(this)
     clearRuntime(this)
   }
 
