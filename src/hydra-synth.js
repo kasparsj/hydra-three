@@ -61,8 +61,8 @@ class HydraRenderer {
     this.detectAudio = detectAudio
 
     this.canvas = initCanvas(canvas, this);
-    this.width = canvas.width
-    this.height = canvas.height
+    this.width = this.canvas.width
+    this.height = this.canvas.height
 
     //global.window.test = 'hi'
     // object that contains all properties that will be made available on the global context and during local evaluation

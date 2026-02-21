@@ -12560,6 +12560,33 @@ exports.initCanvas = void 0;
 // based on: https://hydra-extensions.glitch.me/hydra-canvas.js
 
 const initCanvas = (canvas, synth) => {
+  const setResolution = (width, height) => synth.setResolution(width, height);
+  const setResolutionWithRatio = (width, height, aspectRatio) => {
+    if (aspectRatio > 1) {
+      // horizontal
+      const scaledHeight = width * (1 / aspectRatio);
+      setResolution(width, scaledHeight);
+    } else if (aspectRatio < 1) {
+      // vertical
+      const scaledWidth = height * aspectRatio;
+      setResolution(scaledWidth, height);
+    } else {
+      // square
+      const size = Math.min(width, height);
+      setResolution(size, size);
+    }
+  };
+  const resizeHandler = () => {
+    let ratio = 1;
+    if (canvas.style.width && canvas.style.width !== '100%') {
+      ratio = canvas.width / parseFloat(canvas.style.width);
+      canvas.setHiDPI(ratio);
+    } else if (canvas.aspectRatio) {
+      canvas.setHiDPI(1.0);
+    } else {
+      setResolution(window.innerWidth, window.innerHeight);
+    }
+  };
   if (!canvas) {
     // create main output canvas and add to screen
     canvas = document.createElement('canvas');
@@ -12570,24 +12597,27 @@ const initCanvas = (canvas, synth) => {
     canvas.style.imageRendering = 'pixelated';
     document.body.appendChild(canvas);
   }
-  canvas.addEventListener("click", event => {
-    typeof synth.synth.click === 'function' && synth.synth.click(event);
-  });
-  canvas.addEventListener("mousedown", event => {
-    typeof synth.synth.mousedown === 'function' && synth.synth.mousedown(event);
-  });
-  canvas.addEventListener("mouseup", event => {
-    typeof synth.synth.mouseup === 'function' && synth.synth.mouseup(event);
-  });
-  canvas.addEventListener("mousemove", event => {
-    typeof synth.synth.mousemove === 'function' && synth.synth.mousemove(event);
-  });
-  document.addEventListener("keydown", event => {
-    typeof synth.synth.keydown === 'function' && synth.synth.keydown(event);
-  });
-  document.addEventListener("keyup", event => {
-    typeof synth.synth.keyup === 'function' && synth.synth.keyup(event);
-  });
+  if (!canvas._hydraInputListenersBound) {
+    canvas.addEventListener('click', event => {
+      typeof synth.synth.click === 'function' && synth.synth.click(event);
+    });
+    canvas.addEventListener('mousedown', event => {
+      typeof synth.synth.mousedown === 'function' && synth.synth.mousedown(event);
+    });
+    canvas.addEventListener('mouseup', event => {
+      typeof synth.synth.mouseup === 'function' && synth.synth.mouseup(event);
+    });
+    canvas.addEventListener('mousemove', event => {
+      typeof synth.synth.mousemove === 'function' && synth.synth.mousemove(event);
+    });
+    document.addEventListener('keydown', event => {
+      typeof synth.synth.keydown === 'function' && synth.synth.keydown(event);
+    });
+    document.addEventListener('keyup', event => {
+      typeof synth.synth.keyup === 'function' && synth.synth.keyup(event);
+    });
+    canvas._hydraInputListenersBound = true;
+  }
   canvas.setAutoResize = function (enable = true) {
     if (enable) {
       window.addEventListener('resize', resizeHandler);
@@ -12597,10 +12627,10 @@ const initCanvas = (canvas, synth) => {
     }
   };
   canvas.setLinear = function () {
-    this.style.imageRendering = "auto";
+    this.style.imageRendering = 'auto';
   };
   canvas.setNearest = function () {
-    this.style.imageRendering = "pixelated";
+    this.style.imageRendering = 'pixelated';
   };
   canvas.setHiDPI = function (ratio) {
     if (canvas.aspectRatio) {
@@ -12609,48 +12639,22 @@ const initCanvas = (canvas, synth) => {
       setResolution(window.innerWidth * ratio, window.innerHeight * ratio);
     }
     const rec = 1 / ratio;
-    this.style.width = "" + canvas.width * rec + "px";
-    this.style.height = "" + canvas.height * rec + "px";
+    this.style.width = '' + canvas.width * rec + 'px';
+    this.style.height = '' + canvas.height * rec + 'px';
   };
   canvas.setAspectRatio = function (ratio) {
     canvas.aspectRatio = ratio;
     resizeHandler();
   };
-  canvas.setAlign = function (align = "right") {
-    this.parentElement.style["text-align"] = align;
+  canvas.setAlign = function (align = 'right') {
+    if (this.parentElement && this.parentElement.style) {
+      this.parentElement.style['text-align'] = align;
+    }
     this.style.position = 'relative';
   };
   return canvas;
 };
 exports.initCanvas = initCanvas;
-const resizeHandler = () => {
-  let ratio = 1;
-  if (canvas.style.width && canvas.style.width !== '100%') {
-    ratio = canvas.width / parseFloat(canvas.style.width);
-    canvas.setHiDPI(ratio);
-  } else {
-    if (canvas.aspectRatio) {
-      canvas.setHiDPI(1.0);
-    } else {
-      setResolution(window.innerWidth, window.innerHeight);
-    }
-  }
-};
-const setResolutionWithRatio = (width, height, aspectRatio) => {
-  if (aspectRatio > 1) {
-    // horizontal
-    const scaledHeight = width * (1 / aspectRatio);
-    setResolution(width, scaledHeight);
-  } else if (aspectRatio < 1) {
-    // vertical
-    const scaledWidth = height * aspectRatio;
-    setResolution(scaledWidth, height);
-  } else {
-    // square
-    const size = Math.min(width, height);
-    setResolution(size, size);
-  }
-};
 
 },{}],63:[function(require,module,exports){
 "use strict";
@@ -15140,8 +15144,8 @@ class HydraRenderer {
     this.renderAll = false;
     this.detectAudio = detectAudio;
     this.canvas = (0, _canvas.initCanvas)(canvas, this);
-    this.width = canvas.width;
-    this.height = canvas.height;
+    this.width = this.canvas.width;
+    this.height = this.canvas.height;
 
     //global.window.test = 'hi'
     // object that contains all properties that will be made available on the global context and during local evaluation

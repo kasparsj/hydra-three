@@ -1,9 +1,9 @@
 {
   "name": "hydra-synth",
   "version": "1.4.0",
-  "description": "base synth for hydra-editor",
+  "description": "hydra-three: three.js-powered hydra fork for creative coding",
   "type": "module",
-  "main": "./src/index.js",
+  "main": "./dist/hydra-synth.js",
   "exports": {
     ".": {
       "import": "./src/hydra-synth.js",
@@ -15,15 +15,26 @@
     }
   },
   "unpkg": "./dist/hydra-synth.js",
+  "files": [
+    "dist/",
+    "src/",
+    "examples/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "dev-ssl": "budo ./dev/index.js --ssl --open --live --port 8000 --",
     "dev": "budo ./dev/index.js --open --live --port 8000 -- -p esmify -t glslify",
     "build": "browserify ./src/index.js -p esmify -t glslify --standalone Hydra > dist/hydra-synth.js",
-    "build:debug": "browserify ./src/index.js --debug -p esmify -t glslify --standalone Hydra > dist/hydra-synth.js"
+    "build:debug": "browserify ./src/index.js --debug -p esmify -t glslify --standalone Hydra > dist/hydra-synth.js",
+    "test:smoke": "node ./scripts/smoke/canvas-smoke.mjs",
+    "pack:check": "npm pack --dry-run",
+    "ci:check": "npm run build && npm run test:smoke && npm run pack:check"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ojack/hydra-synth.git"
+    "url": "git+https://github.com/kasparsj/hydra-three.git"
   },
   "keywords": [
     "webgl",
@@ -35,9 +46,9 @@
   "author": "ojack",
   "license": "AGPL",
   "bugs": {
-    "url": "https://github.com/ojack/hydra-synth/issues"
+    "url": "https://github.com/kasparsj/hydra-three/issues"
   },
-  "homepage": "https://github.com/ojack/hydra-synth#readme",
+  "homepage": "https://github.com/kasparsj/hydra-three#readme",
   "dependencies": {
     "gl-mat4": "^1.2.0",
     "glsl-film-grain": "^1.0.4",

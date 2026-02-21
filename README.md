@@ -1,75 +1,126 @@
 ## hydra-three
 
-### Status: experimental / in-progress
+three.js-powered fork of [hydra-synth](https://github.com/hydra-synth/hydra-synth) focused on creative coding with 3D scene APIs while keeping Hydra-style live coding workflows.
 
-This is a fork [Hydra](https://github.com/hydra-synth/hydra-synth) that is running on [three.js](https://threejs.org/), which brings 3D capabilities to it. It's a drop in replacement for the [video synth engine](https://github.com/hydra-synth/hydra-synth) for hydra.
+### Project status
+- Experimental, actively maintained.
+- API goal: remain compatible with core Hydra patterns and add 3D-specific capabilities.
 
-It is fully compatible with the original Hydra, 
-so you can use all the same functions, 
-and it adds [new features and functions that are specific to 3D](#new-features-and-3d-apis).
+## 10-minute quickstart
 
-### Installation
-Replace the hydra-synth script tag with the hydra-three script tag:
+### Option A: Browser script tag (fastest)
+Use jsDelivr from this repository:
+
 ```html
-<!--<script src="https://unpkg.com/hydra-synth"></script>-->
 <script src="https://cdn.jsdelivr.net/gh/kasparsj/hydra-three@main/dist/hydra-synth.js"></script>
+<script>
+  const hydra = new Hydra({ detectAudio: false })
+  osc(8, 0.1, 0.8).out()
+</script>
 ```
 
-### Example
-Rotating cube with a hydra texture as material:
+For production, pin to a tag or commit instead of `@main`.
+
+Success criteria:
+- You see animated output immediately.
+- `Hydra` is available on `window`.
+
+### Option B: npm + bundler
+
+```bash
+npm i github:kasparsj/hydra-three#main three
+```
+
+```js
+import Hydra from 'hydra-synth'
+
+const hydra = new Hydra({
+  detectAudio: false,
+  makeGlobal: true
+})
+
+osc(8, 0.1, 0.8).out()
+```
+
+#### Vite note
+If Vite reports `ReferenceError: global is not defined`, add:
+
+```js
+define: {
+  global: {},
+}
+```
+
+Refs:
+- <https://github.com/vitejs/vite/discussions/5912#discussioncomment-1724947>
+- <https://github.com/vitejs/vite/discussions/5912#discussioncomment-2908994>
+
+## Local development
+
+```bash
+npm ci
+npm run dev
+```
+
+This starts a live-reload dev server using `dev/index.js`.
+
+Useful checks:
+
+```bash
+npm run build
+npm run test:smoke
+npm run pack:check
+```
+
+## Example
+
 ```javascript
 // setup perspective camera, enabling camera controls (alt+click to rotate, alt+scroll to zoom)
 perspective([2,2,3], [0,0,0], {controls: true});
 
 // create geometry and material
-const geom = gm.box(); // cube geometry
-const mat = osc().rotate(noise(1).mult(45)).phong(); // use a hydra texture mapped onto a phong material
+const geom = gm.box();
+const mat = osc().rotate(noise(1).mult(45)).phong();
 
 // compose scene
 const sc = scene()
-    .lights() // default lighting setup
-    .mesh(geom, mat) // add mesh to scene
-    .out();
+  .lights()
+  .mesh(geom, mat)
+  .out();
 
 update = () => {
-    const box = sc.at(0);
-    box.rotation.x += 0.01;
-    box.rotation.y += 0.01;
+  const box = sc.at(0);
+  box.rotation.x += 0.01;
+  box.rotation.y += 0.01;
 }
 ```
-Check other [examples](./examples), while documentation is being worked on.
 
-### 3D functions and APIs (WIP)
+More examples: [`examples/README.md`](./examples/README.md)
 
-#### Camera API
+## 3D APIs (summary)
 
-`perspective(eye, target, options)` - sets up a perspective camera and controls for it.
+### Camera
+- `perspective(eye, target, options)`
+- `ortho(eye, target, options)`
 
-`ortho(eye, target, options)` - sets up an orthographic camera and controls for it.
+### Scene
+- `scene()` creates a scene handle and exposes scene composition helpers.
 
-#### Scene API
+### Geometry
+- Geometry functions are exposed under `gm`.
+- Example: `gm.box()`.
 
-`const sc = scene()` - creates a new scene object through which the Scene API is accessible.
+### Material
+- Material functions are exposed under `mt`.
+- Example: `mt.meshPhong()`.
 
-#### Geometry API
+## Production guidance
 
-Geometry API for creating and manipulating geometries is accessible through the `gm` object, e.g.
+Use these docs before shipping:
+- Getting started: [`docs/getting-started.md`](./docs/getting-started.md)
+- Production checklist: [`docs/production-checklist.md`](./docs/production-checklist.md)
+- Release process: [`docs/release.md`](./docs/release.md)
 
-`gm.box()` - creates a box geometry.
+## License
 
-#### Material API
-
-Material API for creating and manipulating materials is accessible through the `mt` object, e.g.
-
-`mt.meshPhong()` - creates a [MeshPhongMaterial](https://threejs.org/docs/#api/en/materials/MeshPhongMaterial) for shiny surfaces with specular highlights.
-
-#### Vite
-When using hydra with Vite, you might see the error `Uncaught ReferenceError: global is not defined`. This is an issue in `hydra-synth` dependency, which further depends on node's `global`.
-
-- To fully mitigate the issue: add a polyfill for `global`. (See [ref](https://github.com/vitejs/vite/discussions/5912#discussioncomment-1724947))
-- To workaround: add the following snippet to `vite.config.json`. (See [ref](https://github.com/vitejs/vite/discussions/5912#discussioncomment-2908994))
-```js
-define: {
-  global: {},
-},
-```
+AGPL (see [`LICENSE`](./LICENSE)).

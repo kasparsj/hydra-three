@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased]
+### Added
+- CI workflow for build, smoke testing, and package dry-run checks.
+- Canvas smoke test script (`npm run test:smoke`).
+- Local dev entrypoint restored at `dev/index.js`.
+- New onboarding and operations docs:
+  - `docs/getting-started.md`
+  - `docs/production-checklist.md`
+  - `docs/release.md`
+  - `examples/README.md`
+
+### Fixed
+- Constructor canvas initialization now uses the created canvas safely when no canvas is supplied.
+- Canvas resize helpers no longer rely on implicit global state.
+
 ## [1.4] - 2025-09-24
 ### Fixed
 - hard crashing when inputting invalid texture, fixed by @ojack and @ffd8

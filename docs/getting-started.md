@@ -1,0 +1,71 @@
+## Getting Started
+
+This guide is optimized for first success in under 10 minutes.
+
+### 1. Choose your runtime path
+
+#### Script tag (fastest)
+
+```html
+<script src="https://cdn.jsdelivr.net/gh/kasparsj/hydra-three@main/dist/hydra-synth.js"></script>
+<script>
+  const hydra = new Hydra({ detectAudio: false })
+  osc(8, 0.1, 0.8).out()
+</script>
+```
+
+For production, pin to a tag or commit instead of `@main`.
+
+#### npm + bundler
+
+```bash
+npm i github:kasparsj/hydra-three#main three
+```
+
+```js
+import Hydra from 'hydra-synth'
+
+const hydra = new Hydra({
+  detectAudio: false,
+  makeGlobal: true,
+})
+
+osc(8, 0.1, 0.8).out()
+```
+
+### 2. Confirm baseline behavior
+
+You should see:
+- a canvas attached to the page
+- animated output
+- no runtime exceptions in console
+
+### 3. Try a 3D sample
+
+```js
+perspective([2,2,3], [0,0,0], { controls: true })
+const sc = scene().lights().mesh(gm.box(), osc().phong()).out()
+```
+
+### 4. Local project setup
+
+```bash
+npm ci
+npm run dev
+```
+
+The repo dev entrypoint is `dev/index.js`.
+
+### 5. Known Vite issue
+
+If you get `ReferenceError: global is not defined`, add:
+
+```js
+define: {
+  global: {},
+}
+```
+
+See:
+- <https://github.com/vitejs/vite/discussions/5912#discussioncomment-1724947>
+- <https://github.com/vitejs/vite/discussions/5912#discussioncomment-2908994>
