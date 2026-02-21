@@ -13,7 +13,9 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # Queue newer runs instead of canceling active ones; canceling can leave a
+  # Pages deployment in-progress and cause deploy-pages to fail with HTTP 400.
+  cancel-in-progress: false
 
 jobs:
   build:

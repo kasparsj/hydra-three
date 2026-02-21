@@ -12,6 +12,12 @@ const browserArg = process.argv.find((arg) => arg.startsWith('--browser='))
 const browserName = browserArg ? browserArg.replace('--browser=', '').toLowerCase() : 'chromium'
 const PAGE_LOAD_TIMEOUT_MS = 30000
 const READY_TIMEOUT_MS = 60000
+const FIREFOX_WEBGL_FAILURE_PATTERNS = [
+  /WebGL context could not be created/i,
+  /WebGL creation failed/i,
+  /FEATURE_FAILURE_WEBGL_EXHAUSTED_DRIVERS/i,
+  /Error creating WebGL context/i
+]
 
 const launchers = {
   chromium,
@@ -102,6 +108,12 @@ const collectDiagnostics = async () => {
   }
 }
 
+const isKnownWebGLFailure = (message) =>
+  FIREFOX_WEBGL_FAILURE_PATTERNS.some((pattern) => pattern.test(message))
+
+const hasKnownWebGLFailures = (errorMessages) => errorMessages.some(isKnownWebGLFailure)
+const shouldAllowFirefoxWebGLFallback = browserName === 'firefox' && process.env.CI === 'true'
+
 const waitForGlobalFunction = async (name) => {
   try {
     await page.waitForFunction(
@@ -123,24 +135,44 @@ const waitForGlobalFunction = async (name) => {
 try {
   await page.goto(url, { waitUntil: 'load', timeout: PAGE_LOAD_TIMEOUT_MS })
   await waitForGlobalFunction('Hydra')
-  await waitForGlobalFunction('osc')
-  await page.waitForSelector('canvas', { timeout: READY_TIMEOUT_MS })
+  let fallbackToLoadOnlyAssertions = false
 
-  const canvas = await page.evaluate(() => {
-    const el = document.querySelector('canvas')
-    if (!el) {
-      return null
+  try {
+    await waitForGlobalFunction('osc')
+  } catch (error) {
+    if (shouldAllowFirefoxWebGLFallback && hasKnownWebGLFailures(errors)) {
+      fallbackToLoadOnlyAssertions = true
+      console.warn('Firefox WebGL is unavailable in this CI environment; using load-only smoke assertions.')
+    } else {
+      throw error
     }
-    return {
-      width: el.width,
-      height: el.height
-    }
-  })
+  }
 
-  assert.ok(canvas, 'Expected quickstart to create a canvas')
-  assert.ok(canvas.width > 0, `Expected canvas width > 0, got ${canvas.width}`)
-  assert.ok(canvas.height > 0, `Expected canvas height > 0, got ${canvas.height}`)
-  assert.deepEqual(errors, [], `Unexpected browser runtime errors:\n${errors.join('\n')}`)
+  if (!fallbackToLoadOnlyAssertions) {
+    await page.waitForSelector('canvas', { timeout: READY_TIMEOUT_MS })
+
+    const canvas = await page.evaluate(() => {
+      const el = document.querySelector('canvas')
+      if (!el) {
+        return null
+      }
+      return {
+        width: el.width,
+        height: el.height
+      }
+    })
+
+    assert.ok(canvas, 'Expected quickstart to create a canvas')
+    assert.ok(canvas.width > 0, `Expected canvas width > 0, got ${canvas.width}`)
+    assert.ok(canvas.height > 0, `Expected canvas height > 0, got ${canvas.height}`)
+    assert.deepEqual(errors, [], `Unexpected browser runtime errors:\n${errors.join('\n')}`)
+  } else {
+    const diagnostics = await collectDiagnostics()
+    assert.equal(diagnostics.hydraType, 'function', 'Expected hydra bundle to define window.Hydra in Firefox CI fallback mode')
+
+    const nonWebGLErrors = errors.filter((errorMessage) => !isKnownWebGLFailure(errorMessage))
+    assert.deepEqual(nonWebGLErrors, [], `Unexpected non-WebGL runtime errors:\n${nonWebGLErrors.join('\n')}`)
+  }
 } finally {
   await browser.close()
   await closeServer()
