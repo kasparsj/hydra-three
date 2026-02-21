@@ -129,6 +129,7 @@ class HydraRenderer {
     css2DElement,
     css3DElement,
     precision,
+    onError,
     extendTransforms = {} // add your own functions on init
   } = {}) {
 
@@ -145,6 +146,7 @@ class HydraRenderer {
     this._loop = null
     this._globalHelpersInstalled = false
     this._mathHelpersInstalled = false
+    this._runtimeErrorHandler = typeof onError === 'function' ? onError : null
 
     this.canvas = initCanvas(canvas, this);
     this.width = this.canvas.width
@@ -174,6 +176,7 @@ class HydraRenderer {
       keydown: (event) => {},
       keyup: (event) => {},
       afterUpdate: (dt) => {},// user defined function run after update
+      onError: this._runtimeErrorHandler,
       hush: this.hush.bind(this),
       tick: this.tick.bind(this),
       shadowMap: this.shadowMap.bind(this),
@@ -359,6 +362,31 @@ class HydraRenderer {
       restoreMathHelper(key, this)
     })
     this._mathHelpersInstalled = false
+  }
+
+  _getRuntimeErrorHandler() {
+    if (this.synth && typeof this.synth.onError === 'function') {
+      return this.synth.onError
+    }
+    if (typeof this._runtimeErrorHandler === 'function') {
+      return this._runtimeErrorHandler
+    }
+    return null
+  }
+
+  _handleRuntimeError(error, context = 'tick') {
+    const handler = this._getRuntimeErrorHandler()
+    if (handler) {
+      try {
+        handler(error, {
+          context,
+          time: this.synth ? this.synth.time : 0,
+        })
+      } catch (handlerError) {
+        console.warn('Error in onError handler:', handlerError)
+      }
+    }
+    console.warn(`Error during ${context}():`, error)
   }
 
   setResolution(width, height) {
@@ -611,7 +639,7 @@ class HydraRenderer {
     //  console.log(1000/this.timeSinceLastUpdate)
       this.synth.stats.fps = Math.ceil(1000/this.timeSinceLastUpdate)
       if(this.synth.update) {
-        try { this.synth.update(this.timeSinceLastUpdate) } catch (e) { console.log(e) }
+        try { this.synth.update(this.timeSinceLastUpdate) } catch (e) { this._handleRuntimeError(e, 'update') }
       }
       for (let i = 0; i < this.s.length; i++) {
         this.s[i].tick(this.synth.time)
@@ -628,7 +656,7 @@ class HydraRenderer {
       }
       this.composer.render();
       if(this.synth.afterUpdate) {
-        try { this.synth.afterUpdate(this.timeSinceLastUpdate) } catch (e) { console.log(e) }
+        try { this.synth.afterUpdate(this.timeSinceLastUpdate) } catch (e) { this._handleRuntimeError(e, 'afterUpdate') }
       }
       this.timeSinceLastUpdate = 0
     }
@@ -637,7 +665,7 @@ class HydraRenderer {
       this.saveFrame = false
     }
   } catch(e) {
-    console.warn('Error during tick():', e)
+    this._handleRuntimeError(e, 'tick')
   //  this.regl.poll()
   }
   }

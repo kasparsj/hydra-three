@@ -3,14 +3,29 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { chromium, firefox } from "playwright";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..", "..");
+const browserArg = process.argv.find((arg) => arg.startsWith("--browser="));
+const browserName = browserArg
+  ? browserArg.replace("--browser=", "").toLowerCase()
+  : "chromium";
 const PAGE_LOAD_TIMEOUT_MS = 30000;
 const READY_TIMEOUT_MS = 60000;
 const smokePath = "/__multi_instance_smoke__.html";
+
+const launchers = {
+  chromium,
+  firefox,
+};
+
+if (!launchers[browserName]) {
+  throw new Error(
+    `Unsupported browser "${browserName}". Use one of: ${Object.keys(launchers).join(", ")}`,
+  );
+}
 
 const contentTypes = {
   ".html": "text/html; charset=utf-8",
@@ -43,7 +58,8 @@ const smokeHtml = `<!doctype html>
         mathHelpersInstalled: null,
         mathHelpersPersistAfterFirstDispose: null,
         mathHelpersRestored: null,
-        guiFallbackUsed: null
+        guiFallbackUsed: null,
+        datGuiLoadOrder: []
       };
       (async () => {
         const root = document.getElementById('root');
@@ -67,6 +83,7 @@ const smokeHtml = `<!doctype html>
             typeof node.src === 'string' &&
             node.src.includes('dat.gui')
           ) {
+            window.__smoke.datGuiLoadOrder.push(node.src);
             if (typeof node.onerror === 'function') node.onerror(new Error('mock dat.gui load error'));
             return node;
           }
@@ -223,7 +240,7 @@ const closeServer = () =>
 const port = await listen();
 const url = `http://127.0.0.1:${port}${smokePath}`;
 
-const browser = await chromium.launch({ headless: true });
+const browser = await launchers[browserName].launch({ headless: true });
 const page = await browser.newPage();
 const errors = [];
 
@@ -294,6 +311,12 @@ try {
     "Expected gui.init() to succeed with fallback when dat.gui script cannot load",
   );
   assert.ok(
+    Array.isArray(diagnostics.datGuiLoadOrder) &&
+      diagnostics.datGuiLoadOrder.length > 0 &&
+      /\/vendor\/dat\.gui\.min\.js/.test(diagnostics.datGuiLoadOrder[0]),
+    `Expected local-first dat.gui load attempt, got ${JSON.stringify(diagnostics.datGuiLoadOrder)}`,
+  );
+  assert.ok(
     diagnostics.canvasCount >= 2,
     `Expected at least 2 canvases, got ${diagnostics.canvasCount}`,
   );
@@ -307,4 +330,4 @@ try {
   await closeServer();
 }
 
-console.log("chromium multi-instance smoke test passed");
+console.log(`${browserName} multi-instance smoke test passed`);

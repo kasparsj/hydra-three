@@ -1,6 +1,7 @@
 {
   "name": "hydra-synth",
   "version": "1.0.0",
+  "private": true,
   "description": "hydra-three: three.js-powered hydra fork for creative coding",
   "type": "module",
   "main": "./dist/hydra-synth.js",
@@ -20,6 +21,7 @@
   "files": [
     "dist/",
     "src/",
+    "vendor/",
     "examples/",
     "README.md",
     "LICENSE",
@@ -38,15 +40,19 @@
     "test:smoke:regression": "node ./scripts/smoke/regression-smoke.mjs",
     "test:smoke:browser:chromium": "node ./scripts/smoke/browser-smoke.mjs --browser=chromium",
     "test:smoke:browser:firefox": "node ./scripts/smoke/browser-smoke.mjs --browser=firefox",
-    "test:smoke:browser:non-global": "node ./scripts/smoke/browser-non-global-smoke.mjs --browser=chromium",
+    "test:smoke:browser:non-global:chromium": "node ./scripts/smoke/browser-non-global-smoke.mjs --browser=chromium",
+    "test:smoke:browser:non-global:firefox": "node ./scripts/smoke/browser-non-global-smoke.mjs --browser=firefox",
+    "test:smoke:browser:non-global": "npm run test:smoke:browser:non-global:chromium && npm run test:smoke:browser:non-global:firefox",
+    "test:smoke:browser:multi-instance:chromium": "node ./scripts/smoke/browser-multi-instance-smoke.mjs --browser=chromium",
+    "test:smoke:browser:multi-instance:firefox": "node ./scripts/smoke/browser-multi-instance-smoke.mjs --browser=firefox",
+    "test:smoke:browser:multi-instance": "npm run test:smoke:browser:multi-instance:chromium && npm run test:smoke:browser:multi-instance:firefox",
     "test:smoke:browser": "npm run test:smoke:browser:chromium && npm run test:smoke:browser:firefox && npm run test:smoke:browser:non-global && npm run test:smoke:browser:multi-instance",
     "test:smoke": "npm run test:smoke:canvas && npm run test:smoke:module && npm run test:smoke:regression",
     "release:verify-meta": "node ./scripts/release/verify-release-meta.mjs",
     "release:checksums": "node ./scripts/release/generate-checksums.mjs",
     "site:build": "node ./scripts/site/build-site.mjs",
     "pack:check": "npm pack --dry-run",
-    "ci:check": "npm run release:verify-meta && npm run lint && npm run typecheck && npm run build && npm run site:build && npm run test:smoke && npm run pack:check",
-    "test:smoke:browser:multi-instance": "node ./scripts/smoke/browser-multi-instance-smoke.mjs"
+    "ci:check": "npm run release:verify-meta && npm run lint && npm run typecheck && npm run build && npm run site:build && npm run test:smoke && npm run pack:check"
   },
   "repository": {
     "type": "git",
@@ -60,7 +66,7 @@
     "synth"
   ],
   "author": "ojack",
-  "license": "AGPL",
+  "license": "AGPL-3.0-only",
   "bugs": {
     "url": "https://github.com/kasparsj/hydra-three/issues"
   },

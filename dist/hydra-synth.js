@@ -30258,17 +30258,42 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       }
       this.tex = null;
     }
+    _sourceDimensions() {
+      if (!this.src) {
+        return null;
+      }
+      const width = this.src.videoWidth || this.src.width || 0;
+      const height = this.src.videoHeight || this.src.height || 0;
+      if (!width || !height) {
+        return null;
+      }
+      return { width, height };
+    }
+    _syncTextureSource() {
+      if (!this.tex || !this.src) {
+        return;
+      }
+      if (this.tex.image !== this.src) {
+        this.tex.image = this.src;
+        this.tex.needsUpdate = true;
+      }
+    }
+    _updateDimensionsFromSource() {
+      const dims = this._sourceDimensions();
+      if (!dims) {
+        return;
+      }
+      const { width, height } = dims;
+      if (this.width !== width || this.height !== height) {
+        this.width = width;
+        this.height = height;
+      }
+    }
     tick(time) {
-      if (this.src && this.dynamic === true) {
-        if (this.src.videoWidth && this.src.videoWidth !== this.tex.width) {
-          console.log(
-            this.src.videoWidth,
-            this.src.videoHeight,
-            this.tex.width,
-            this.tex.height
-          );
-        }
-        if (this.src.width && this.src.width !== this.tex.width) ;
+      if (this.src && this.dynamic === true && this.tex) {
+        this._syncTextureSource();
+        this._updateDimensionsFromSource();
+        this.tex.needsUpdate = true;
       }
     }
     getTexture() {
@@ -39532,6 +39557,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
   const guis = {};
   const DAT_GUI_URLS = [
     "/vendor/dat.gui.min.js",
+    "vendor/dat.gui.min.js",
     "https://unpkg.com/dat.gui"
   ];
   const createNoopController = () => ({
@@ -39845,7 +39871,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     points: [],
     namedPoints: /* @__PURE__ */ Object.create(null)
   });
-  const defaultStore = createStore();
+  const createDetachedRuntime = () => /* @__PURE__ */ Object.create(null);
   const clearNamedStore = (namedStore) => {
     Object.keys(namedStore).forEach((key) => {
       delete namedStore[key];
@@ -39892,7 +39918,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
   const getStore = (runtime) => {
     const runtimeRef = resolveRuntime(runtime);
     if (!runtimeRef) {
-      return defaultStore;
+      return createStore();
     }
     let store = runtimeStores.get(runtimeRef);
     if (!store) {
@@ -39903,7 +39929,6 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
   };
   const clearSceneRuntime = (runtime) => {
     if (!runtime) {
-      clearStore(defaultStore);
       return;
     }
     const store = runtimeStores.get(runtime);
@@ -39957,13 +39982,14 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     mesh2.add(line2);
   };
   const getOrCreateScene = (options2, attributes = {}) => {
-    const runtime = options2 && options2.runtime ? options2.runtime : null;
+    const runtime = resolveRuntime(options2 && options2.runtime ? options2.runtime : null) || createDetachedRuntime();
+    const sceneOptions = Object.assign({}, options2, { runtime });
     const store = getStore(runtime);
     const { name } = attributes;
     let scene = name ? store.scenes[name] : null;
     if (!name || !scene) {
-      scene = new HydraScene(options2);
-    } else if (runtime) {
+      scene = new HydraScene(sceneOptions);
+    } else {
       scene._runtime = runtime;
     }
     for (let attr in attributes) {
@@ -45376,6 +45402,7 @@ vec4 _mod289(vec4 x)
       css2DElement,
       css3DElement,
       precision,
+      onError,
       extendTransforms = {}
       // add your own functions on init
     } = {}) {
@@ -45390,6 +45417,7 @@ vec4 _mod289(vec4 x)
       this._loop = null;
       this._globalHelpersInstalled = false;
       this._mathHelpersInstalled = false;
+      this._runtimeErrorHandler = typeof onError === "function" ? onError : null;
       this.canvas = initCanvas(canvas, this);
       this.width = this.canvas.width;
       this.height = this.canvas.height;
@@ -45425,6 +45453,7 @@ vec4 _mod289(vec4 x)
         afterUpdate: (dt) => {
         },
         // user defined function run after update
+        onError: this._runtimeErrorHandler,
         hush: this.hush.bind(this),
         tick: this.tick.bind(this),
         shadowMap: this.shadowMap.bind(this),
@@ -45579,6 +45608,29 @@ vec4 _mod289(vec4 x)
         restoreMathHelper(key, this);
       });
       this._mathHelpersInstalled = false;
+    }
+    _getRuntimeErrorHandler() {
+      if (this.synth && typeof this.synth.onError === "function") {
+        return this.synth.onError;
+      }
+      if (typeof this._runtimeErrorHandler === "function") {
+        return this._runtimeErrorHandler;
+      }
+      return null;
+    }
+    _handleRuntimeError(error, context = "tick") {
+      const handler = this._getRuntimeErrorHandler();
+      if (handler) {
+        try {
+          handler(error, {
+            context,
+            time: this.synth ? this.synth.time : 0
+          });
+        } catch (handlerError) {
+          console.warn("Error in onError handler:", handlerError);
+        }
+      }
+      console.warn(`Error during ${context}():`, error);
     }
     setResolution(width, height) {
       console.log("setResolution", width, height);
@@ -45806,7 +45858,7 @@ vec4 _mod289(vec4 x)
             try {
               this.synth.update(this.timeSinceLastUpdate);
             } catch (e) {
-              console.log(e);
+              this._handleRuntimeError(e, "update");
             }
           }
           for (let i = 0; i < this.s.length; i++) {
@@ -45827,7 +45879,7 @@ vec4 _mod289(vec4 x)
             try {
               this.synth.afterUpdate(this.timeSinceLastUpdate);
             } catch (e) {
-              console.log(e);
+              this._handleRuntimeError(e, "afterUpdate");
             }
           }
           this.timeSinceLastUpdate = 0;
@@ -45837,7 +45889,7 @@ vec4 _mod289(vec4 x)
           this.saveFrame = false;
         }
       } catch (e) {
-        console.warn("Error during tick():", e);
+        this._handleRuntimeError(e, "tick");
       }
     }
     dispose() {

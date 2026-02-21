@@ -189,6 +189,17 @@ try {
   source.initCanvas(100, 300);
   assert.equal(ctx.canvas.width, 100);
   assert.equal(ctx.canvas.height, 300);
+  const sourceTexture = source.getTexture();
+  const sourceVersion = sourceTexture.version;
+  ctx.canvas.width = 160;
+  ctx.canvas.height = 90;
+  source.tick(16);
+  assert.equal(source.width, 160);
+  assert.equal(source.height, 90);
+  assert.ok(
+    sourceTexture.version > sourceVersion,
+    `Expected texture version to increment after source resize tick (before=${sourceVersion}, after=${sourceTexture.version})`,
+  );
 
   // arr.image(): should resolve image pixels and metadata
   let callbackData = null;

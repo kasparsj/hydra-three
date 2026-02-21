@@ -28,6 +28,7 @@ Constructor options:
 - `numSources`, `numOutputs`: source/output slots
 - `webgl`: `1` or `2`
 - `precision`: `"lowp" | "mediump" | "highp"`
+- `onError`: optional runtime error callback `(error, { context, time })`
 - `enableStreamCapture`: enable `vidRecorder` support
 - `extendTransforms`: custom transform definitions
 
@@ -47,6 +48,7 @@ Core:
 
 - `render`, `setResolution`, `tick`, `hush`
 - lifecycle hooks: `update`, `afterUpdate`
+- runtime error hook: `onError`
 - timing/state: `time`, `bpm`, `fps`, `stats`
 
 Camera and scene:
@@ -80,6 +82,11 @@ Hydra generator methods:
 const H = hydra.synth;
 H.osc(8, 0.1, 0.8).out();
 ```
+
+## GUI loading behavior
+
+- GUI init attempts local vendored `dat.gui` script paths first (`/vendor/dat.gui.min.js`, `vendor/dat.gui.min.js`).
+- If script loading fails, it falls back to a no-op GUI adapter so scenes still run.
 
 ## TypeScript support
 

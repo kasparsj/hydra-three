@@ -2,6 +2,7 @@
 
 This guide is optimized for first success in under 10 minutes.
 Official distribution for this fork is via pinned Git tags and artifacts in this repository.
+This repository is intentionally `private: true` in `package.json` to prevent accidental npm registry publish under the upstream package name.
 
 Runtime note: this package targets browser execution. Importing it in pure Node/SSR without a browser-like runtime is unsupported.
 
@@ -52,6 +53,13 @@ const H = hydra.synth;
 H.osc(8, 0.1, 0.8).out();
 ```
 
+In non-global mode, assign lifecycle hooks through `hydra.synth`:
+
+```js
+const H = hydra.synth;
+H.update = () => {};
+```
+
 ### 2. Confirm baseline behavior
 
 You should see:
@@ -80,6 +88,11 @@ npm run test:smoke:browser
 ```
 
 The repo dev entrypoint is `dev/index.js`.
+
+GUI fallback behavior:
+
+- GUI init tries local vendored `dat.gui` first.
+- If unavailable, runtime falls back to a no-op GUI adapter instead of throwing.
 
 ### 5. Known Vite issue
 

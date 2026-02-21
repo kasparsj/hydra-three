@@ -5,6 +5,7 @@ import { loadScript } from "./lib/load-script.js";
 const guis = {};
 const DAT_GUI_URLS = [
     "/vendor/dat.gui.min.js",
+    "vendor/dat.gui.min.js",
     "https://unpkg.com/dat.gui",
 ];
 

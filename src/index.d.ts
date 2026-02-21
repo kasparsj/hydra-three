@@ -13,12 +13,23 @@ export interface HydraOptions {
   css2DElement?: HTMLElement;
   css3DElement?: HTMLElement;
   precision?: "lowp" | "mediump" | "highp";
+  onError?: HydraRuntimeErrorHandler;
   extendTransforms?: Record<string, unknown> | Array<Record<string, unknown>>;
 }
 
 export interface HydraStats {
   fps: number;
 }
+
+export interface HydraRuntimeErrorContext {
+  context: "update" | "afterUpdate" | "tick" | string;
+  time: number;
+}
+
+export type HydraRuntimeErrorHandler = (
+  error: unknown,
+  context: HydraRuntimeErrorContext,
+) => void;
 
 export type HydraModuleMethod = (...args: unknown[]) => unknown;
 export type HydraNumericTuple = [number, number] | [number, number, number];
@@ -154,6 +165,7 @@ export interface HydraSynthApi {
   mousemove: (event: Event) => void;
   keydown: (event: KeyboardEvent) => void;
   keyup: (event: KeyboardEvent) => void;
+  onError?: HydraRuntimeErrorHandler;
   render: (output?: unknown) => void;
   setResolution: (width: number, height: number) => void;
   hush: () => void;

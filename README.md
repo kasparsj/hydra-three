@@ -12,6 +12,7 @@ three.js-powered fork of [hydra-synth](https://github.com/hydra-synth/hydra-synt
 - Official distribution for this fork is via GitHub tags and release artifacts from this repository.
 - CDN usage should reference a pinned tag in this repository.
 - The npm package name `hydra-synth` is owned upstream; this fork does not rely on upstream npm publishing for releases.
+- `package.json` is marked `private: true` to avoid accidental npm registry publish under the upstream package name.
 - Do not use `npm i hydra-synth` for this fork unless you intentionally want upstream hydra-synth.
 - For this fork, install from this repository tag: `npm i github:kasparsj/hydra-three#v1.0.0 three`.
 
@@ -121,6 +122,11 @@ npm run test:smoke:browser
 npm run site:build
 ```
 
+GUI note:
+
+- `gui.init()` now tries local vendored `dat.gui` first (`/vendor/dat.gui.min.js`, `vendor/dat.gui.min.js`), then CDN fallback.
+- If all script loads fail, it falls back to a no-op GUI object so runtime code does not crash.
+
 ## Example
 
 ```javascript
@@ -181,10 +187,10 @@ Use these docs before shipping:
 
 - CI runs build + smoke + package checks on Node 20 and 22.
 - CI runs real Chromium and Firefox smoke tests of `examples/quickstart.html` on Node 20.
-- CI runs a non-global 3D browser smoke test to catch implicit-global regressions.
+- CI runs non-global and multi-instance 3D browser smoke tests on Chromium and Firefox.
 - Release tags (`v*`) run version/changelog/tag metadata verification and attach tarball + checksum artifacts.
 - GitHub Pages deploys generated docs and runnable examples from repository sources on every push to `main`.
 
 ## License
 
-AGPL (see [`LICENSE`](./LICENSE)).
+AGPL-3.0-only (see [`LICENSE`](./LICENSE)).

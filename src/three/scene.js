@@ -32,7 +32,7 @@ const createStore = () => ({
     namedPoints: Object.create(null),
 });
 
-const defaultStore = createStore();
+const createDetachedRuntime = () => Object.create(null);
 
 const clearNamedStore = (namedStore) => {
     Object.keys(namedStore).forEach((key) => {
@@ -83,7 +83,7 @@ const resolveRuntime = (runtime) => {
 const getStore = (runtime) => {
     const runtimeRef = resolveRuntime(runtime);
     if (!runtimeRef) {
-        return defaultStore;
+        return createStore();
     }
     let store = runtimeStores.get(runtimeRef);
     if (!store) {
@@ -95,7 +95,6 @@ const getStore = (runtime) => {
 
 const clearSceneRuntime = (runtime) => {
     if (!runtime) {
-        clearStore(defaultStore);
         return;
     }
     const store = runtimeStores.get(runtime);
@@ -156,13 +155,14 @@ const createMeshEdges = (mesh, attributes, runtime) => {
 }
 
 const getOrCreateScene = (options, attributes = {}) => {
-    const runtime = options && options.runtime ? options.runtime : null;
+    const runtime = resolveRuntime(options && options.runtime ? options.runtime : null) || createDetachedRuntime();
+    const sceneOptions = Object.assign({}, options, { runtime });
     const store = getStore(runtime);
     const {name} = attributes;
     let scene = name ? store.scenes[name] : null;
     if (!name || !scene) { // always recreate default scene?
-        scene = new HydraScene(options);
-    } else if (runtime) {
+        scene = new HydraScene(sceneOptions);
+    } else {
         scene._runtime = runtime;
     }
     for (let attr in attributes) {

@@ -65,6 +65,9 @@ const smokeHtml = `<!doctype html>
         terminalPassRenderTargetApplied: null,
         edgeChainFirstSegmentTargetApplied: null,
         edgeChainSecondSceneTargetIsolated: null,
+        onErrorCaptured: null,
+        onErrorContext: null,
+        onErrorMessage: null,
         canvasCount: 0
       };
       try {
@@ -140,6 +143,16 @@ const smokeHtml = `<!doctype html>
           window.__smoke.edgeChainFirstSegmentTargetApplied = false
           window.__smoke.edgeChainSecondSceneTargetIsolated = false
         }
+        H.onError = (error, context) => {
+          window.__smoke.onErrorCaptured = true
+          window.__smoke.onErrorContext = context && context.context
+          window.__smoke.onErrorMessage = error && error.message ? error.message : String(error)
+        }
+        H.update = () => {
+          throw new Error('__smoke_update_error__')
+        }
+        hydra.tick(16)
+        H.update = () => {}
         window.__smoke.hasGlobalOsc = typeof window.osc === 'function'
         window.__smoke.hasLoadScript = typeof window.loadScript === 'function'
         window.__smoke.hasGetCode = typeof window.getCode === 'function'
@@ -320,6 +333,21 @@ try {
     diagnostics.edgeChainSecondSceneTargetIsolated,
     true,
     "Expected second scene pass in chained pipeline to remain target-isolated",
+  );
+  assert.equal(
+    diagnostics.onErrorCaptured,
+    true,
+    "Expected synth.onError hook to capture runtime update errors",
+  );
+  assert.equal(
+    diagnostics.onErrorContext,
+    "update",
+    `Expected onError context "update", got ${diagnostics.onErrorContext}`,
+  );
+  assert.equal(
+    diagnostics.onErrorMessage,
+    "__smoke_update_error__",
+    `Expected onError to receive update error message, got ${diagnostics.onErrorMessage}`,
   );
   assert.deepEqual(
     errors,

@@ -128,27 +128,45 @@ class HydraSource {
     this.tex = null
   }
 
+  _sourceDimensions() {
+    if (!this.src) {
+      return null
+    }
+    const width = this.src.videoWidth || this.src.width || 0
+    const height = this.src.videoHeight || this.src.height || 0
+    if (!width || !height) {
+      return null
+    }
+    return { width, height }
+  }
+
+  _syncTextureSource() {
+    if (!this.tex || !this.src) {
+      return
+    }
+    if (this.tex.image !== this.src) {
+      this.tex.image = this.src
+      this.tex.needsUpdate = true
+    }
+  }
+
+  _updateDimensionsFromSource() {
+    const dims = this._sourceDimensions()
+    if (!dims) {
+      return
+    }
+    const { width, height } = dims
+    if (this.width !== width || this.height !== height) {
+      this.width = width
+      this.height = height
+    }
+  }
+
   tick (time) {
-    //  console.log(this.src, this.tex.width, this.tex.height)
-    if (this.src && this.dynamic === true) {
-      if (this.src.videoWidth && this.src.videoWidth !== this.tex.width) {
-        console.log(
-          this.src.videoWidth,
-          this.src.videoHeight,
-          this.tex.width,
-          this.tex.height
-        )
-        // todo: implement resize?
-        //this.tex.resize(this.src.videoWidth, this.src.videoHeight)
-      }
-
-      if (this.src.width && this.src.width !== this.tex.width) {
-        // todo: implement resize?
-        //this.tex.resize(this.src.width, this.src.height)
-      }
-
-      // todo: implement resize?
-      //this.tex.subimage(this.src)
+    if (this.src && this.dynamic === true && this.tex) {
+      this._syncTextureSource()
+      this._updateDimensionsFromSource()
+      this.tex.needsUpdate = true
     }
   }
 
