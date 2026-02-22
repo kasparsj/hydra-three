@@ -15,8 +15,8 @@
 
 3. Scene layer
 
-- `scene()` resolves to `HydraScene` via `src/hydra-synth.js:768` and `src/three/scene.js:631`.
-- Scene graph methods include mesh/points/lines/lights/world/group/out in `src/three/scene.js:521`, `src/three/scene.js:531`, `src/three/scene.js:663`, `src/three/scene.js:677`.
+- `scene()` resolves to `HydraScene` via `src/hydra-synth.js:799` and `src/three/scene.js:376`.
+- Scene graph methods include mesh/points/lines/lights/world/group/out in `src/three/scene.js:774`, `src/three/scene.js:783`, `src/three/scene.js:823`, `src/three/scene.js:938`, `src/three/scene.js:952`.
 
 4. Signal-chain layer and compile path
 
@@ -26,7 +26,7 @@
 
 5. Render lifecycle and event model
 
-- Tick/update/render flow is `src/hydra-synth.js:628`.
+- Tick/update/render flow is `src/hydra-synth.js:659`.
 - Output pass assembly and terminal routing are in `src/output.js:133`.
 - Input hooks are canvas/document listeners mapped to user handlers in `src/canvas.js:43`.
 
@@ -34,15 +34,15 @@
 
 | Issue                                                 | Evidence (`file:line`)                                                                                                              | Why confusing                                                                                                 | Severity | Suggested fix                                                                                                            |
 | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Globals mutate by default                             | `src/hydra-synth.js:123`; `src/hydra-synth.js:331`; `src/hydra-synth.js:351`; `src/eval-sandbox.js:88`                              | Live-coders get speed, but sketches become host-coupled and harder to reason about in multi-instance contexts | High     | vNext default `globals: false`; add explicit `liveGlobals(true)` for stage/live sessions                                 |
+| Globals mutate by default                             | `src/hydra-synth.js:123`; `src/hydra-synth.js:350`; `src/hydra-synth.js:362`; `src/eval-sandbox.js:88`                              | Live-coders get speed, but sketches become host-coupled and harder to reason about in multi-instance contexts | High     | vNext default `globals: false`; add explicit `liveGlobals(true)` for stage/live sessions                                 |
 | Hidden active-runtime context                         | `src/three/runtime.js:25`; `src/three/runtime.js:67`; `src/three/mt.js:151`; `src/three/tx.js:264`                                  | Same helper call can target different runtime depending implicit active state                                 | High     | Bind helper namespaces per instance only (`H.tex`, `H.geom`, etc.) and remove fallback to global active runtime in vNext |
 | Internal API leaks into user workflow                 | `docs/reference/semantic-clarifications.md:56`; `docs/reference/semantic-clarifications.md:58`; `examples/box-instanced-grid.js:34` | Users copy `_mesh` from examples despite docs saying internal                                                 | High     | Replace example usage with public `.mesh(..., { instanced })`; warn on `_` method calls                                  |
 | Rotation unit mismatch                                | `src/glsl/glsl-functions.js:376`; `docs/reference/semantic-clarifications.md:7`; `examples/box.js:16`                               | Shader `rotate()` expects degrees while object rotation uses radians; context-switch tax during improvisation | High     | Add `rotateDeg()` and `rotateRad()`; keep `rotate()` as compatibility alias with warning                                 |
 | Orbit controls require `Alt` with no API-level signal | `src/three/HydraOrbitControls.js:833`; `src/three/HydraOrbitControls.js:1034`; `README.md:136`                                      | “Controls don’t work” is a common live-coding interruption if modifier key behavior is not obvious            | High     | Add `controls.modifier` option (`none`, `alt`, `shift`, `meta`)                                                          |
 | Surface is broad and abbreviation-heavy               | `docs/api.md:15`; `docs/api.md:18`; `docs/api.md:136`; `src/hydra-synth.js:194`                                                     | Memorization load is high for newcomers and occasional users                                                  | Medium   | Add long-name aliases (`geom`, `mat`, `tex`, `compose`, `random`, `noise`) and a smaller “fast path” Stage API           |
-| Implicit scene/object reuse by name                   | `src/three/scene.js:161`; `src/three/scene.js:163`; `src/three/scene.js:189`                                                        | Re-running snippets may mutate prior objects unexpectedly if names match                                      | Medium   | Make reuse explicit (`reuse: true`) and default to fresh scene in live mode                                              |
+| Implicit scene/object reuse by name                   | `src/three/scene.js:382`; `src/three/scene.js:411`; `src/three/scene.js:827`                                                        | Re-running snippets may mutate prior objects unexpectedly if names match                                      | Medium   | Make reuse explicit (`reuse: true`) and default to fresh scene in live mode                                              |
 | `.out()` pass routing is hard to predict              | `src/output.js:181`; `src/output.js:192`; `docs/reference/semantic-clarifications.md:46`                                            | FX + renderTarget combinations require understanding internals                                                | Medium   | Add explicit `render({ to, fx, target })` API with deterministic routing                                                 |
-| Synonyms/aliases are inconsistent                     | `src/three/scene.js:319`; `src/three/scene.js:320`; `src/three/scene.js:323`; `src/output.js:200`                                   | Multiple spellings increase cognitive branching while live-editing                                            | Medium   | Define canonical names (`lineLoop`, `lineStrip`, `css2d`, `css3d`) and keep aliases as deprecations only                 |
+| Synonyms/aliases are inconsistent                     | `src/three/scene.js:564`; `src/three/scene.js:568`; `src/three/scene.js:660`; `src/output.js:201`                                   | Multiple spellings increase cognitive branching while live-editing                                            | Medium   | Define canonical names (`lineLoop`, `lineStrip`, `css2d`, `css3d`) and keep aliases as deprecations only                 |
 
 ## C) Proposed API vNext
 
