@@ -245,7 +245,95 @@ const findSceneRoot = (object) => {
     return current && current.isScene ? current : null;
 };
 
-const pruneUntouchedChildren = (parent, touched) => {
+const createResourceSnapshot = () => ({
+    geometries: new Set(),
+    materials: new Set(),
+});
+
+const isDisposable = (value) => !!value && typeof value.dispose === "function";
+
+const toMaterialArray = (value) => {
+    if (!value) {
+        return [];
+    }
+    return Array.isArray(value) ? value : [value];
+};
+
+const visitObjectTree = (object, visit) => {
+    if (!object || typeof visit !== "function") {
+        return;
+    }
+    visit(object);
+    if (Array.isArray(object.children)) {
+        object.children.forEach((child) => visitObjectTree(child, visit));
+    }
+};
+
+const collectObjectResources = (object, resources) => {
+    if (!object || !resources) {
+        return;
+    }
+    if (isDisposable(object.geometry)) {
+        resources.geometries.add(object.geometry);
+    }
+    toMaterialArray(object.material).forEach((material) => {
+        if (isDisposable(material)) {
+            resources.materials.add(material);
+        }
+    });
+};
+
+const disposeRemovedResources = (removedRoots, retained) => {
+    if (!Array.isArray(removedRoots) || removedRoots.length === 0) {
+        return;
+    }
+    const retainedResources = retained || createResourceSnapshot();
+    const disposed = createResourceSnapshot();
+    const disposeResource = (resource, bucket) => {
+        if (!isDisposable(resource) || bucket.has(resource)) {
+            return;
+        }
+        try {
+            resource.dispose();
+        } catch (_error) {}
+        bucket.add(resource);
+    };
+
+    removedRoots.forEach((root) => {
+        visitObjectTree(root, (object) => {
+            const geometry = object.geometry;
+            if (
+                isDisposable(geometry) &&
+                !retainedResources.geometries.has(geometry)
+            ) {
+                disposeResource(geometry, disposed.geometries);
+            }
+            toMaterialArray(object.material).forEach((material) => {
+                if (
+                    isDisposable(material) &&
+                    !retainedResources.materials.has(material)
+                ) {
+                    disposeResource(material, disposed.materials);
+                }
+            });
+        });
+    });
+};
+
+const clearRemovedRoots = (removedRoots) => {
+    if (!Array.isArray(removedRoots)) {
+        return;
+    }
+    removedRoots.forEach((root) => {
+        if (root && typeof root.clear === "function") {
+            try {
+                root.clear();
+            } catch (_error) {}
+        }
+    });
+};
+
+const pruneUntouchedChildren = (parent, touched, removedRoots) => {
     if (!parent || !Array.isArray(parent.children) || !touched) {
         return;
     }
@@ -253,14 +341,12 @@ const pruneUntouchedChildren = (parent, touched) => {
     children.forEach((child) => {
         if (!touched.has(child)) {
             parent.remove(child);
-            if (typeof child.clear === "function") {
-                try {
-                    child.clear();
-                } catch (_error) {}
+            if (Array.isArray(removedRoots)) {
+                removedRoots.push(child);
             }
             return;
         }
-        pruneUntouchedChildren(child, touched);
+        pruneUntouchedChildren(child, touched, removedRoots);
     });
 };
 
@@ -411,17 +497,29 @@ const endSceneEval = (runtime) => {
     }
     const store = runtimeStores.get(runtimeRef);
     if (store) {
+        const removedRoots = [];
         Object.keys(store.scenes).forEach((key) => {
             const scene = store.scenes[key];
             if (!state.touchedScenes.has(scene)) {
-                if (scene && typeof scene.clear === "function") {
-                    scene.clear();
+                if (scene) {
+                    removedRoots.push(scene);
                 }
                 delete store.scenes[key];
                 return;
             }
-            pruneUntouchedChildren(scene, state.touched);
+            pruneUntouchedChildren(scene, state.touched, removedRoots);
         });
+        if (removedRoots.length > 0) {
+            const retained = createResourceSnapshot();
+            Object.keys(store.scenes).forEach((key) => {
+                const scene = store.scenes[key];
+                visitObjectTree(scene, (object) => {
+                    collectObjectResources(object, retained);
+                });
+            });
+            disposeRemovedResources(removedRoots, retained);
+            clearRemovedRoots(removedRoots);
+        }
         rebuildStore(store);
     }
     resetLiveEvalState(state);

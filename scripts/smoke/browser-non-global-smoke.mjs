@@ -71,6 +71,8 @@ const smokeHtml = `<!doctype html>
         continuousPruneRemovedStaleMesh: null,
         continuousPrunePreservedTouchedMesh: null,
         continuousKeyedIdentityStable: null,
+        continuousDisposeReleasedRemovedResources: null,
+        continuousDisposeRetainedSharedMaterial: null,
         canvasCount: 0
       };
       try {
@@ -205,6 +207,47 @@ const smokeHtml = `<!doctype html>
           keyedAfter.length === 2 &&
           keyedBeforeByKey["mesh-a"] === keyedAfterByKey["mesh-a"] &&
           keyedBeforeByKey["mesh-b"] === keyedAfterByKey["mesh-b"]
+
+        const disposableGeometry = H.gm.box()
+        const disposableMaterial = H.mt.meshBasic({ color: 0xaaff66 })
+        let staleGeometryDisposeCount = 0
+        let staleMaterialDisposeCount = 0
+        const disposeGeometry = disposableGeometry.dispose.bind(disposableGeometry)
+        const disposeMaterial = disposableMaterial.dispose.bind(disposableMaterial)
+        disposableGeometry.dispose = () => {
+          staleGeometryDisposeCount += 1
+          disposeGeometry()
+        }
+        disposableMaterial.dispose = () => {
+          staleMaterialDisposeCount += 1
+          disposeMaterial()
+        }
+        H.scene({ name: "__continuousDispose" })
+          .mesh(disposableGeometry, disposableMaterial, { key: "dispose-mesh" })
+          .out()
+        hydra.eval(
+          'const H = window.__smokeRuntime.synth; H.scene({ name: "__continuousDispose" }).out();',
+        )
+        window.__smoke.continuousDisposeReleasedRemovedResources =
+          staleGeometryDisposeCount === 1 && staleMaterialDisposeCount === 1
+
+        let sharedMaterialDisposeCount = 0
+        const sharedMaterial = H.mt.meshBasic({ color: 0x3388ff })
+        const disposeSharedMaterial = sharedMaterial.dispose.bind(sharedMaterial)
+        sharedMaterial.dispose = () => {
+          sharedMaterialDisposeCount += 1
+          disposeSharedMaterial()
+        }
+        window.__smokeSharedMaterial = sharedMaterial
+        const sharedScene = H.scene({ name: "__continuousSharedMaterial" }).out()
+        sharedScene.mesh(H.gm.box(), sharedMaterial, { key: "keep" })
+        sharedScene.mesh(H.gm.box(), sharedMaterial, { key: "drop" })
+        hydra.eval(
+          'const H = window.__smokeRuntime.synth; const sc = H.scene({ name: "__continuousSharedMaterial" }).out(); sc.mesh(H.gm.box(), window.__smokeSharedMaterial, { key: "keep" });',
+        )
+        window.__smoke.continuousDisposeRetainedSharedMaterial =
+          sharedMaterialDisposeCount === 0
+        delete window.__smokeSharedMaterial
         delete window.__smokeRuntime
         window.__smoke.hasGlobalOsc = typeof window.osc === 'function'
         window.__smoke.hasLoadScript = typeof window.loadScript === 'function'
@@ -416,6 +459,16 @@ try {
     diagnostics.continuousKeyedIdentityStable,
     true,
     "Expected keyed meshes to preserve identity across reorder in continuous eval",
+  );
+  assert.equal(
+    diagnostics.continuousDisposeReleasedRemovedResources,
+    true,
+    "Expected continuous eval prune to dispose removed mesh geometry and material",
+  );
+  assert.equal(
+    diagnostics.continuousDisposeRetainedSharedMaterial,
+    true,
+    "Expected shared material to stay undisposed while still referenced after prune",
   );
   assert.deepEqual(
     errors,
