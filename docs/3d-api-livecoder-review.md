@@ -375,20 +375,20 @@ This specific redesign goal is now implemented as the default runtime behavior.
 
 ## G) Continuous Mode: Remaining Gaps (Post-Implementation)
 
-Update (2026-02-22): stale-object deletion on subtractive eval has been addressed by scene-touch reconciliation in `src/three/scene.js:310`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:163`, `scripts/smoke/browser-non-global-smoke.mjs:375`.
+Update (2026-02-22): stale-object deletion on subtractive eval has been addressed by scene-touch reconciliation in `src/three/scene.js:406`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:163`, `scripts/smoke/browser-non-global-smoke.mjs:406`. Stable identity keys are now supported through `key` in scene/object attrs via `src/three/scene.js:489`, `src/three/scene.js:523`, `src/three/scene.js:965`, and typed in `src/index.d.ts:53`, `src/index.d.ts:60`.
 
 | Issue                                                      | Evidence (`file:line`)                                                                                           | Why confusing                                                                                                                                           | Severity | Suggested fix                                                                                                            |
 | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Eval-order object identity drift                           | `src/three/scene.js:138`; `src/three/scene.js:143`; `src/three/scene.js:286`; `src/three/scene.js:148`           | Reordering lines in a live sketch can retarget objects unexpectedly because unnamed identities are index-based per eval cycle                           | High     | Add explicit stable `key` support for scene/group/object APIs; keep current name fallback as compatibility behavior      |
+| Eval-order object identity drift (when `key` is omitted)   | `src/three/scene.js:138`; `src/three/scene.js:148`; `src/three/scene.js:489`; `src/index.d.ts:53`                | Reordering lines can still retarget unnamed objects because fallback identity remains eval-order-based for sketches that do not opt into `key`          | Medium   | Migrate examples/docs to `key` in continuous mode and add runtime hint when auto live names are used repeatedly          |
 | Pruned nodes are not fully disposed                        | `src/three/scene.js:192`; `src/three/scene.js:194`; `src/output.js:113`                                          | Removed meshes/materials/geometries can survive in GPU memory over long sessions because prune only removes from parent and optionally calls `.clear()` | High     | Add recursive disposal for geometry/material/texture when removing untouched nodes                                       |
 | Auto-generated live names can collide with user naming     | `src/three/scene.js:17`; `src/three/scene.js:145`; `src/three/scene.js:382`; `src/three/scene.js:411`            | Users can accidentally pick `__live_*` names and trigger unexpected reuse behavior in continuous mode                                                   | Medium   | Reserve live identity in `userData` (symbol/private key) and stop relying on public object names for unnamed tracking    |
 | Canvas input handlers can bind to stale runtime on restart | `src/canvas.js:42`; `src/canvas.js:49`; `site/playground/playground.js:317`; `site/playground/playground.js:341` | Recreating a runtime on the same canvas can leave input events routed to the old synth closures because listeners are only bound once per canvas        | Medium   | Bind handlers through a canvas runtime pointer (or rebind on runtime replace) so events always target the active runtime |
 
 ## H) Updated Quick Wins (next 1-2 sprints)
 
-1. Add stable object identity keys for continuous mode  
-   Files: `src/three/scene.js:148`, `src/index.d.ts:57`, `docs/reference/parameter-reference.md:29`  
-   Why: avoids identity flicker when live-coders reorder code quickly.
+1. Migrate continuous examples/docs to explicit `key` usage  
+   Files: `site/playground/examples.js:55`, `examples/box.js:9`, `docs/reference/parameter-reference.md:29`  
+   Why: captures the new stable-identity path in the sketches users copy first.
 
 2. Dispose orphaned scene resources during prune  
    Files: `src/three/scene.js:186`, `src/three/scene.js:192`  
@@ -406,12 +406,12 @@ Update (2026-02-22): stale-object deletion on subtractive eval has been addresse
 
 | Rank | Issue                                                       | Impact evidence (`file:line`)                                                           | Frequency evidence (`file:line`)                                                         | Score (I x F) |
 | ---- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------- |
-| 1    | Eval-order identity drift for unnamed objects               | `src/three/scene.js:138`; `src/three/scene.js:148`; `src/three/scene.js:286`            | `site/playground/examples.js:55`; `site/playground/examples.js:666`; `examples/box.js:9` | 5 x 4 = 20    |
-| 2    | Globals still default-on in runtime and playground          | `src/hydra-synth.js:123`; `src/hydra-synth.js:350`; `site/playground/playground.js:344` | `examples/box.js:2`; `site/playground/examples.js:55`                                    | 4 x 4 = 16    |
-| 3    | Pruned nodes are not fully disposed                         | `src/three/scene.js:192`; `src/three/scene.js:194`; `src/output.js:113`                 | `src/hydra-synth.js:133`; `src/hydra-synth.js:289`                                       | 4 x 3 = 12    |
-| 4    | Orbit controls hard-gated by `Alt` modifier                 | `src/three/HydraOrbitControls.js:833`; `src/three/HydraOrbitControls.js:1034`           | `examples/box.js:1`; `site/playground/examples.js:49`; `site/playground/examples.js:812` | 4 x 3 = 12    |
-| 5    | Rotation unit mismatch (`rotate` degrees vs object radians) | `src/glsl/glsl-functions.js:376`; `examples/box.js:6`; `examples/box.js:16`             | `site/playground/examples.js:52`; `examples/box.js:6`                                    | 3 x 4 = 12    |
-| 6    | Hidden runtime fallback context in helper modules           | `src/three/runtime.js:25`; `src/three/mt.js:151`; `src/three/tx.js:264`                 | `site/playground/examples.js:57`; `site/playground/examples.js:116`                      | 4 x 2 = 8     |
+| 1    | Globals still default-on in runtime and playground          | `src/hydra-synth.js:123`; `src/hydra-synth.js:350`; `site/playground/playground.js:344` | `examples/box.js:2`; `site/playground/examples.js:55`                                    | 4 x 4 = 16    |
+| 2    | Pruned nodes are not fully disposed                         | `src/three/scene.js:192`; `src/three/scene.js:194`; `src/output.js:113`                 | `src/hydra-synth.js:133`; `src/hydra-synth.js:289`                                       | 4 x 3 = 12    |
+| 3    | Orbit controls hard-gated by `Alt` modifier                 | `src/three/HydraOrbitControls.js:833`; `src/three/HydraOrbitControls.js:1034`           | `examples/box.js:1`; `site/playground/examples.js:49`; `site/playground/examples.js:812` | 4 x 3 = 12    |
+| 4    | Rotation unit mismatch (`rotate` degrees vs object radians) | `src/glsl/glsl-functions.js:376`; `examples/box.js:6`; `examples/box.js:16`             | `site/playground/examples.js:52`; `examples/box.js:6`                                    | 3 x 4 = 12    |
+| 5    | Hidden runtime fallback context in helper modules           | `src/three/runtime.js:25`; `src/three/mt.js:151`; `src/three/tx.js:264`                 | `site/playground/examples.js:57`; `site/playground/examples.js:116`                      | 4 x 2 = 8     |
+| 6    | Eval-order drift for sketches that omit `key`               | `src/three/scene.js:138`; `src/three/scene.js:489`; `src/index.d.ts:53`                 | `site/playground/examples.js:55`; `examples/box.js:9`                                    | 3 x 2 = 6     |
 | 7    | Canvas input handlers can bind to stale runtime on restart  | `src/canvas.js:42`; `src/canvas.js:49`; `site/playground/playground.js:317`             | `site/playground/playground.js:317`; `site/playground/playground.js:371`                 | 3 x 2 = 6     |
 
 ## J) Speed/Creativity Success Metrics
@@ -419,8 +419,10 @@ Update (2026-02-22): stale-object deletion on subtractive eval has been addresse
 1. Speed metric: time-to-first-visible-3D should stay one sketch block with no mandatory boilerplate.
    Evidence baseline: first playground example reaches render via `scene().lights().mesh(...).out()` in `site/playground/examples.js:55`.
 2. Creativity metric: iterative reruns in continuous mode should not duplicate stale graph content after subtractive edits.
-   Evidence baseline: reconciliation gate includes touched-scene evals in `src/three/scene.js:310`, with browser smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:163` and `scripts/smoke/browser-non-global-smoke.mjs:375`.
-3. Safety metric: long sessions should not accumulate unreleased scene resources after prune cycles.
+   Evidence baseline: reconciliation gate includes touched-scene evals in `src/three/scene.js:406`, with browser smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:163` and `scripts/smoke/browser-non-global-smoke.mjs:406`.
+3. Stability metric: keyed objects should preserve identity across eval reorder in continuous mode.
+   Evidence baseline: keyed identity binding in `src/three/scene.js:203` and smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:204`, `scripts/smoke/browser-non-global-smoke.mjs:416`.
+4. Safety metric: long sessions should not accumulate unreleased scene resources after prune cycles.
    Evidence baseline: prune removes children in `src/three/scene.js:192` but does not recurse disposal of mesh/material/geometry assets.
-4. Stability metric: generated API docs should always reflect public typings before merge.
+5. Stability metric: generated API docs should always reflect public typings before merge.
    Evidence baseline: docs are generated (`docs/api.md:3`) and CI includes docs-sync verification (`package.json:63`).

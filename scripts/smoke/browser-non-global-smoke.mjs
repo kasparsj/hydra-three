@@ -70,6 +70,7 @@ const smokeHtml = `<!doctype html>
         onErrorMessage: null,
         continuousPruneRemovedStaleMesh: null,
         continuousPrunePreservedTouchedMesh: null,
+        continuousKeyedIdentityStable: null,
         canvasCount: 0
       };
       try {
@@ -175,6 +176,35 @@ const smokeHtml = `<!doctype html>
         )
         const touchAfter = H.scene({ name: "__continuousTouch" }).find({ isMesh: true }).length
         window.__smoke.continuousPrunePreservedTouchedMesh = touchAfter === 1
+
+        const keyedScene = H.scene({ name: "__continuousKeyed" }).out()
+        keyedScene.mesh(
+          H.gm.box(),
+          H.mt.meshBasic({ color: 0x33aaff }),
+          { key: "mesh-a" },
+        )
+        keyedScene.mesh(
+          H.gm.box(),
+          H.mt.meshBasic({ color: 0xffaa33 }),
+          { key: "mesh-b" },
+        )
+        const keyedBefore = H.scene({ name: "__continuousKeyed" }).find({ isMesh: true })
+        const keyedBeforeByKey = {}
+        keyedBefore.forEach((mesh) => {
+          keyedBeforeByKey[mesh.userData && mesh.userData.__hydraLiveKey] = mesh.uuid
+        })
+        hydra.eval(
+          'const H = window.__smokeRuntime.synth; const sc = H.scene({ name: "__continuousKeyed" }).out(); sc.mesh(H.gm.box(), H.mt.meshBasic({ color: 0x44ccff }), { key: "mesh-b" }); sc.mesh(H.gm.box(), H.mt.meshBasic({ color: 0xffcc44 }), { key: "mesh-a" });',
+        )
+        const keyedAfter = H.scene({ name: "__continuousKeyed" }).find({ isMesh: true })
+        const keyedAfterByKey = {}
+        keyedAfter.forEach((mesh) => {
+          keyedAfterByKey[mesh.userData && mesh.userData.__hydraLiveKey] = mesh.uuid
+        })
+        window.__smoke.continuousKeyedIdentityStable =
+          keyedAfter.length === 2 &&
+          keyedBeforeByKey["mesh-a"] === keyedAfterByKey["mesh-a"] &&
+          keyedBeforeByKey["mesh-b"] === keyedAfterByKey["mesh-b"]
         delete window.__smokeRuntime
         window.__smoke.hasGlobalOsc = typeof window.osc === 'function'
         window.__smoke.hasLoadScript = typeof window.loadScript === 'function'
@@ -381,6 +411,11 @@ try {
     diagnostics.continuousPrunePreservedTouchedMesh,
     true,
     "Expected continuous eval to preserve mesh touched via scene.at(0)",
+  );
+  assert.equal(
+    diagnostics.continuousKeyedIdentityStable,
+    true,
+    "Expected keyed meshes to preserve identity across reorder in continuous eval",
   );
   assert.deepEqual(
     errors,

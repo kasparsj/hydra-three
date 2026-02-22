@@ -6,25 +6,25 @@ For behavior-level edge cases (units, precedence, and internal/public boundaries
 
 ## Hydra constructor options
 
-| Option                | Type                             | Default            | Notes                                                |
-| --------------------- | -------------------------------- | ------------------ | ---------------------------------------------------- |
-| `width`               | `number`                         | `1280`             | Initial canvas width.                                |
-| `height`              | `number`                         | `720`              | Initial canvas height.                               |
-| `canvas`              | `HTMLCanvasElement`              | auto-created       | Provide your own canvas for embedding.               |
-| `makeGlobal`          | `boolean`                        | `true`             | Installs globals like `osc`, `scene`, etc.           |
-| `autoLoop`            | `boolean`                        | `true`             | Starts internal RAF loop automatically.              |
-| `detectAudio`         | `boolean`                        | `true`             | Initializes audio analyzer (`a` bins).               |
-| `numSources`          | `number`                         | `4`                | Number of source slots `s0..sN`.                     |
-| `numOutputs`          | `number`                         | `4`                | Number of output slots `o0..oN`.                     |
-| `webgl`               | `1 \| 2`                         | `2`                | Select WebGL renderer backend.                       |
-| `precision`           | `"lowp" \| "mediump" \| "highp"` | platform-dependent | Shader precision hint.                               |
-| `onError`             | `(error, context) => void`       | unset              | Runtime hook for `update/afterUpdate/tick` failures. |
+| Option                | Type                             | Default            | Notes                                                                  |
+| --------------------- | -------------------------------- | ------------------ | ---------------------------------------------------------------------- |
+| `width`               | `number`                         | `1280`             | Initial canvas width.                                                  |
+| `height`              | `number`                         | `720`              | Initial canvas height.                                                 |
+| `canvas`              | `HTMLCanvasElement`              | auto-created       | Provide your own canvas for embedding.                                 |
+| `makeGlobal`          | `boolean`                        | `true`             | Installs globals like `osc`, `scene`, etc.                             |
+| `autoLoop`            | `boolean`                        | `true`             | Starts internal RAF loop automatically.                                |
+| `detectAudio`         | `boolean`                        | `true`             | Initializes audio analyzer (`a` bins).                                 |
+| `numSources`          | `number`                         | `4`                | Number of source slots `s0..sN`.                                       |
+| `numOutputs`          | `number`                         | `4`                | Number of output slots `o0..oN`.                                       |
+| `webgl`               | `1 \| 2`                         | `2`                | Select WebGL renderer backend.                                         |
+| `precision`           | `"lowp" \| "mediump" \| "highp"` | platform-dependent | Shader precision hint.                                                 |
+| `onError`             | `(error, context) => void`       | unset              | Runtime hook for `update/afterUpdate/tick` failures.                   |
 | `liveMode`            | `"restart" \| "continuous"`      | `"continuous"`     | Eval behavior: rebuild on each run vs persistent scene reconciliation. |
-| `enableStreamCapture` | `boolean`                        | `true`             | Enables `vidRecorder` capture setup.                 |
-| `extendTransforms`    | object/array                     | `{}`               | Registers custom transforms at startup.              |
-| `css2DElement`        | `HTMLElement`                    | auto               | Target element for CSS2D renderer if used.           |
-| `css3DElement`        | `HTMLElement`                    | auto               | Target element for CSS3D renderer if used.           |
-| `pb`                  | `unknown`                        | `null`             | Legacy/peer stream source integration input.         |
+| `enableStreamCapture` | `boolean`                        | `true`             | Enables `vidRecorder` capture setup.                                   |
+| `extendTransforms`    | object/array                     | `{}`               | Registers custom transforms at startup.                                |
+| `css2DElement`        | `HTMLElement`                    | auto               | Target element for CSS2D renderer if used.                             |
+| `css3DElement`        | `HTMLElement`                    | auto               | Target element for CSS3D renderer if used.                             |
+| `pb`                  | `unknown`                        | `null`             | Legacy/peer stream source integration input.                           |
 
 ## Scene composition methods
 
@@ -39,6 +39,10 @@ For behavior-level edge cases (units, precedence, and internal/public boundaries
 | `.world(options)`             | Configure sky/ground/fog helpers | `.world({ ground: true, fog: true })` |
 | `.group(attrs)`               | Create/attach subgroup           | `scene().group({ name: "cluster" })`  |
 | `.out(output, options)`       | Bind scene to output pipeline    | `.out(o0)`                            |
+
+Identity note for live coding:
+
+- `scene({ key: "main" })`, `.group({ key: "cluster" })`, and primitive `options.key` provide stable object reuse keys in `liveMode: "continuous"` when line order changes between evals.
 
 ## Camera helper options
 

@@ -16,22 +16,31 @@ import { getRuntime } from "./runtime.js";
 const runtimeStores = new WeakMap();
 const LIVE_NAME_PREFIX = "__live";
 const LIVE_CYCLE_KEY = "__hydraLiveCycle";
+const LIVE_IDENTITY_KEY = "__hydraLiveKey";
 
 const createStore = () => ({
     scenes: Object.create(null),
+    keyedScenes: Object.create(null),
     groups: Object.create(null),
+    keyedGroups: Object.create(null),
     meshes: [],
     namedMeshes: Object.create(null),
+    keyedMeshes: Object.create(null),
     instancedMeshes: [],
     namedInstancedMeshes: Object.create(null),
+    keyedInstancedMeshes: Object.create(null),
     lines: [],
     namedLines: Object.create(null),
+    keyedLines: Object.create(null),
     lineLoops: [],
     namedLineLoops: Object.create(null),
+    keyedLineLoops: Object.create(null),
     lineSegments: [],
     namedLineSegments: Object.create(null),
+    keyedLineSegments: Object.create(null),
     points: [],
     namedPoints: Object.create(null),
+    keyedPoints: Object.create(null),
 });
 
 const createDetachedRuntime = () => Object.create(null);
@@ -64,11 +73,19 @@ const clearStore = (store) => {
     store.lineSegments.length = 0;
     store.points.length = 0;
     clearNamedStore(store.namedMeshes);
+    clearNamedStore(store.keyedMeshes);
     clearNamedStore(store.namedInstancedMeshes);
+    clearNamedStore(store.keyedInstancedMeshes);
     clearNamedStore(store.namedLines);
+    clearNamedStore(store.keyedLines);
     clearNamedStore(store.namedLineLoops);
+    clearNamedStore(store.keyedLineLoops);
     clearNamedStore(store.namedLineSegments);
+    clearNamedStore(store.keyedLineSegments);
     clearNamedStore(store.namedPoints);
+    clearNamedStore(store.keyedPoints);
+    clearNamedStore(store.keyedScenes);
+    clearNamedStore(store.keyedGroups);
 };
 
 const resolveRuntime = (runtime) => {
@@ -154,6 +171,51 @@ const withLiveName = (runtime, attributes = {}, type = "object") => {
     });
 };
 
+const normalizeLiveKey = (value) => {
+    if (typeof value !== "string") {
+        return null;
+    }
+    const key = value.trim();
+    return key.length > 0 ? key : null;
+};
+
+const getLiveKey = (object) => {
+    if (!object || !object.userData) {
+        return null;
+    }
+    return normalizeLiveKey(object.userData[LIVE_IDENTITY_KEY]);
+};
+
+const setLiveKey = (object, key) => {
+    if (!object) {
+        return null;
+    }
+    const normalized = normalizeLiveKey(key);
+    object.userData || (object.userData = {});
+    if (!normalized) {
+        delete object.userData[LIVE_IDENTITY_KEY];
+        return null;
+    }
+    object.userData[LIVE_IDENTITY_KEY] = normalized;
+    return normalized;
+};
+
+const bindLiveIdentity = (object, key, keyedStore) => {
+    if (!object || !keyedStore) {
+        return null;
+    }
+    const previousKey = getLiveKey(object);
+    const normalized = normalizeLiveKey(key);
+    if (previousKey && previousKey !== normalized) {
+        delete keyedStore[previousKey];
+    }
+    const stored = setLiveKey(object, normalized);
+    if (stored) {
+        keyedStore[stored] = object;
+    }
+    return stored;
+};
+
 const markLiveTouch = (runtime, object, { scene = false } = {}) => {
     const state = getLiveEvalState(runtime);
     if (!state || !state.active || !object) {
@@ -205,28 +267,44 @@ const pruneUntouchedChildren = (parent, touched) => {
 const rebuildStore = (store) => {
     const scenes = Object.values(store.scenes);
     store.scenes = Object.create(null);
+    store.keyedScenes = Object.create(null);
     store.groups = Object.create(null);
+    store.keyedGroups = Object.create(null);
     store.meshes = [];
     store.namedMeshes = Object.create(null);
+    store.keyedMeshes = Object.create(null);
     store.instancedMeshes = [];
     store.namedInstancedMeshes = Object.create(null);
+    store.keyedInstancedMeshes = Object.create(null);
     store.lines = [];
     store.namedLines = Object.create(null);
+    store.keyedLines = Object.create(null);
     store.lineLoops = [];
     store.namedLineLoops = Object.create(null);
+    store.keyedLineLoops = Object.create(null);
     store.lineSegments = [];
     store.namedLineSegments = Object.create(null);
+    store.keyedLineSegments = Object.create(null);
     store.points = [];
     store.namedPoints = Object.create(null);
+    store.keyedPoints = Object.create(null);
 
     const visit = (object) => {
         if (!object) {
             return;
         }
+        const key = getLiveKey(object);
         if (object.isScene && object.name) {
             store.scenes[object.name] = object;
-        } else if (object.isGroup && object.name) {
+        }
+        if (object.isScene && key) {
+            store.keyedScenes[key] = object;
+        }
+        if (object.isGroup && object.name) {
             store.groups[object.name] = object;
+        }
+        if (object.isGroup && key) {
+            store.keyedGroups[key] = object;
         }
 
         if (object.isInstancedMesh) {
@@ -234,10 +312,16 @@ const rebuildStore = (store) => {
             if (object.name) {
                 store.namedInstancedMeshes[object.name] = object;
             }
+            if (key) {
+                store.keyedInstancedMeshes[key] = object;
+            }
         } else if (object.isMesh) {
             store.meshes.push(object);
             if (object.name) {
                 store.namedMeshes[object.name] = object;
+            }
+            if (key) {
+                store.keyedMeshes[key] = object;
             }
         }
 
@@ -246,15 +330,24 @@ const rebuildStore = (store) => {
             if (object.name) {
                 store.namedLineSegments[object.name] = object;
             }
+            if (key) {
+                store.keyedLineSegments[key] = object;
+            }
         } else if (object.isLineLoop) {
             store.lineLoops.push(object);
             if (object.name) {
                 store.namedLineLoops[object.name] = object;
             }
+            if (key) {
+                store.keyedLineLoops[key] = object;
+            }
         } else if (object.isLine) {
             store.lines.push(object);
             if (object.name) {
                 store.namedLines[object.name] = object;
+            }
+            if (key) {
+                store.keyedLines[key] = object;
             }
         }
 
@@ -262,6 +355,9 @@ const rebuildStore = (store) => {
             store.points.push(object);
             if (object.name) {
                 store.namedPoints[object.name] = object;
+            }
+            if (key) {
+                store.keyedPoints[key] = object;
             }
         }
 
@@ -389,9 +485,13 @@ const getOrCreateScene = (options, attributes = {}) => {
     const sceneOptions = Object.assign({}, options, { runtime });
     const store = getStore(runtime);
     const sceneAttributes = withLiveName(runtime, attributes, "scene");
-    const {name} = sceneAttributes;
-    let scene = name ? store.scenes[name] : null;
-    if (!name || !scene) { // always recreate default scene?
+    const {name, key} = sceneAttributes;
+    const normalizedKey = normalizeLiveKey(key);
+    let scene = normalizedKey ? store.keyedScenes[normalizedKey] : null;
+    if (!scene && name) {
+        scene = store.scenes[name];
+    }
+    if (!scene) { // always recreate default scene?
         scene = new HydraScene(sceneOptions);
     } else {
         scene._runtime = runtime;
@@ -410,6 +510,7 @@ const getOrCreateScene = (options, attributes = {}) => {
     if (scene.name) {
         store.scenes[scene.name] = scene;
     }
+    bindLiveIdentity(scene, normalizedKey, store.keyedScenes);
     markLiveTouch(runtime, scene, { scene: true });
     return scene;
 }
@@ -418,9 +519,13 @@ const getOrCreateMesh = (attributes = {}, runtime) => {
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
     const meshAttrs = withLiveName(runtimeRef, attributes, "mesh");
-    const {name} = meshAttrs;
-    let mesh = name ? store.namedMeshes[name] : null;
-    if (!name || !mesh) {
+    const {name, key} = meshAttrs;
+    const normalizedKey = normalizeLiveKey(key);
+    let mesh = normalizedKey ? store.keyedMeshes[normalizedKey] : null;
+    if (!mesh && name) {
+        mesh = store.namedMeshes[name];
+    }
+    if (!mesh) {
         mesh = new THREE.Mesh();
         const renderer = runtimeRef && runtimeRef.renderer;
         if (renderer && renderer.shadowMap.enabled) {
@@ -433,6 +538,7 @@ const getOrCreateMesh = (attributes = {}, runtime) => {
     if (mesh.name) {
         store.namedMeshes[mesh.name] = mesh;
     }
+    bindLiveIdentity(mesh, normalizedKey, store.keyedMeshes);
     markLiveTouch(runtimeRef, mesh);
     return mesh;
 }
@@ -441,9 +547,13 @@ const getOrCreateInstancedMesh = (attributes, runtime) => {
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
     const instancedAttrs = withLiveName(runtimeRef, attributes, "instancedMesh");
-    const {name, geometry, material, count} = instancedAttrs;
-    let mesh = name ? store.namedInstancedMeshes[name] : null;
-    if (!name || !mesh) {
+    const {name, key, geometry, material, count} = instancedAttrs;
+    const normalizedKey = normalizeLiveKey(key);
+    let mesh = normalizedKey ? store.keyedInstancedMeshes[normalizedKey] : null;
+    if (!mesh && name) {
+        mesh = store.namedInstancedMeshes[name];
+    }
+    if (!mesh) {
         mesh = new THREE.InstancedMesh(geometry, material, count);
         const renderer = runtimeRef && runtimeRef.renderer;
         if (renderer && renderer.shadowMap.enabled) {
@@ -456,6 +566,7 @@ const getOrCreateInstancedMesh = (attributes, runtime) => {
     if (mesh.name) {
         store.namedInstancedMeshes[mesh.name] = mesh;
     }
+    bindLiveIdentity(mesh, normalizedKey, store.keyedInstancedMeshes);
     markLiveTouch(runtimeRef, mesh);
     return mesh;
 }
@@ -464,9 +575,13 @@ const getOrCreateLine = (attributes, runtime) => {
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
     const lineAttrs = withLiveName(runtimeRef, attributes, "line");
-    const {name} = lineAttrs;
-    let line = name ? store.namedLines[name] : null;
-    if (!name || !line) {
+    const {name, key} = lineAttrs;
+    const normalizedKey = normalizeLiveKey(key);
+    let line = normalizedKey ? store.keyedLines[normalizedKey] : null;
+    if (!line && name) {
+        line = store.namedLines[name];
+    }
+    if (!line) {
         line = new THREE.Line();
         store.lines.push(line);
     }
@@ -474,6 +589,7 @@ const getOrCreateLine = (attributes, runtime) => {
     if (line.name) {
         store.namedLines[line.name] = line;
     }
+    bindLiveIdentity(line, normalizedKey, store.keyedLines);
     markLiveTouch(runtimeRef, line);
     return line;
 }
@@ -482,9 +598,13 @@ const getOrCreateLineLoop = (attributes, runtime) => {
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
     const lineLoopAttrs = withLiveName(runtimeRef, attributes, "lineLoop");
-    const {name} = lineLoopAttrs;
-    let lineLoop = name ? store.namedLineLoops[name] : null;
-    if (!name || !lineLoop) {
+    const {name, key} = lineLoopAttrs;
+    const normalizedKey = normalizeLiveKey(key);
+    let lineLoop = normalizedKey ? store.keyedLineLoops[normalizedKey] : null;
+    if (!lineLoop && name) {
+        lineLoop = store.namedLineLoops[name];
+    }
+    if (!lineLoop) {
         lineLoop = new THREE.LineLoop();
         store.lineLoops.push(lineLoop);
     }
@@ -492,6 +612,7 @@ const getOrCreateLineLoop = (attributes, runtime) => {
     if (lineLoop.name) {
         store.namedLineLoops[lineLoop.name] = lineLoop;
     }
+    bindLiveIdentity(lineLoop, normalizedKey, store.keyedLineLoops);
     markLiveTouch(runtimeRef, lineLoop);
     return lineLoop;
 }
@@ -500,9 +621,13 @@ const getOrCreateLineSegments = (attributes, runtime) => {
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
     const lineAttrs = withLiveName(runtimeRef, attributes, "lineSegments");
-    const {name} = lineAttrs;
-    let line = name ? store.namedLineSegments[name] : null;
-    if (!name || !line) {
+    const {name, key} = lineAttrs;
+    const normalizedKey = normalizeLiveKey(key);
+    let line = normalizedKey ? store.keyedLineSegments[normalizedKey] : null;
+    if (!line && name) {
+        line = store.namedLineSegments[name];
+    }
+    if (!line) {
         line = new THREE.LineSegments();
         store.lineSegments.push(line);
     }
@@ -510,6 +635,7 @@ const getOrCreateLineSegments = (attributes, runtime) => {
     if (line.name) {
         store.namedLineSegments[line.name] = line;
     }
+    bindLiveIdentity(line, normalizedKey, store.keyedLineSegments);
     markLiveTouch(runtimeRef, line);
     return line;
 }
@@ -518,9 +644,13 @@ const getOrCreatePoints = (attributes, runtime) => {
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
     const pointAttrs = withLiveName(runtimeRef, attributes, "points");
-    const {name} = pointAttrs;
-    let point = name ? store.namedPoints[name] : null;
-    if (!name || !point) {
+    const {name, key} = pointAttrs;
+    const normalizedKey = normalizeLiveKey(key);
+    let point = normalizedKey ? store.keyedPoints[normalizedKey] : null;
+    if (!point && name) {
+        point = store.namedPoints[name];
+    }
+    if (!point) {
         point = new THREE.Points();
         store.points.push(point);
     }
@@ -528,6 +658,7 @@ const getOrCreatePoints = (attributes, runtime) => {
     if (point.name) {
         store.namedPoints[point.name] = point;
     }
+    bindLiveIdentity(point, normalizedKey, store.keyedPoints);
     markLiveTouch(runtimeRef, point);
     return point;
 }
@@ -834,10 +965,14 @@ const sceneMixin = {
     group(attributes = {}) {
         const groupAttributes = withLiveName(this._runtime, attributes, "group");
         const store = getStore(this._runtime);
-        const {name} = groupAttributes;
-        let group = name ? store.groups[name] : null;
+        const {name, key} = groupAttributes;
+        const normalizedKey = normalizeLiveKey(key);
+        let group = normalizedKey ? store.keyedGroups[normalizedKey] : null;
+        if (!group && name) {
+            group = store.groups[name];
+        }
         const hasExistingGroup = !!group;
-        if (!name || !group) {
+        if (!group) {
             group = new HydraGroup(this._runtime);
         }
         const previousParent = group.parent;
@@ -850,6 +985,7 @@ const sceneMixin = {
         if (group.name) {
             store.groups[group.name] = group;
         }
+        bindLiveIdentity(group, normalizedKey, store.keyedGroups);
         markLiveTouch(this._runtime, group);
         markLiveTouch(this._runtime, this, { scene: !!this.isScene });
         const sceneRoot = findSceneRoot(this);

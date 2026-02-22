@@ -50,12 +50,14 @@ export interface HydraTransformRenderOptions {
 
 export interface HydraSceneAttributes {
   name?: string;
+  key?: string;
   background?: number | string;
   [key: string]: unknown;
 }
 
 export interface HydraObjectOptions {
   name?: string;
+  key?: string;
   type?: string;
   instanced?: number;
   lineColor?: number | string;
