@@ -39855,6 +39855,8 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     return bound;
   };
   const runtimeStores = /* @__PURE__ */ new WeakMap();
+  const LIVE_NAME_PREFIX = "__live";
+  const LIVE_CYCLE_KEY = "__hydraLiveCycle";
   const createStore = () => ({
     scenes: /* @__PURE__ */ Object.create(null),
     groups: /* @__PURE__ */ Object.create(null),
@@ -39933,13 +39935,223 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     }
     const store = runtimeStores.get(runtime);
     if (!store) {
+      if (runtime._liveEvalState) {
+        runtime._liveEvalState = null;
+      }
       return;
     }
     clearStore(store);
     runtimeStores.delete(runtime);
+    if (runtime._liveEvalState) {
+      runtime._liveEvalState = null;
+    }
+  };
+  const getLiveEvalState = (runtime) => {
+    if (!runtime) {
+      return null;
+    }
+    if (!runtime._liveEvalState) {
+      runtime._liveEvalState = {
+        active: false,
+        cycle: 0,
+        counters: /* @__PURE__ */ Object.create(null),
+        touched: /* @__PURE__ */ new Set(),
+        touchedScenes: /* @__PURE__ */ new Set(),
+        hasGraphMutations: false
+      };
+    }
+    return runtime._liveEvalState;
+  };
+  const isLiveEvalActive = (runtime) => {
+    const state = getLiveEvalState(runtime);
+    return !!(state && state.active);
+  };
+  const nextLiveName = (runtime, type) => {
+    const state = getLiveEvalState(runtime);
+    if (!state || !state.active) {
+      return null;
+    }
+    const nextId = state.counters[type] || 0;
+    state.counters[type] = nextId + 1;
+    return `${LIVE_NAME_PREFIX}_${type}_${nextId}`;
+  };
+  const withLiveName = (runtime, attributes = {}, type = "object") => {
+    if (!isLiveEvalActive(runtime) || attributes.name) {
+      return attributes;
+    }
+    return Object.assign({}, attributes, {
+      name: nextLiveName(runtime, type)
+    });
+  };
+  const markLiveTouch = (runtime, object, { scene = false } = {}) => {
+    const state = getLiveEvalState(runtime);
+    if (!state || !state.active || !object) {
+      return;
+    }
+    object.userData || (object.userData = {});
+    object.userData[LIVE_CYCLE_KEY] = state.cycle;
+    state.touched.add(object);
+    if (scene) {
+      state.touchedScenes.add(object);
+    }
+  };
+  const markLiveGraphMutation = (runtime) => {
+    const state = getLiveEvalState(runtime);
+    if (!state || !state.active) {
+      return;
+    }
+    state.hasGraphMutations = true;
+  };
+  const findSceneRoot = (object) => {
+    let current = object || null;
+    while (current && !current.isScene) {
+      current = current.parent || null;
+    }
+    return current && current.isScene ? current : null;
+  };
+  const pruneUntouchedChildren = (parent, touched) => {
+    if (!parent || !Array.isArray(parent.children) || !touched) {
+      return;
+    }
+    const children = parent.children.slice();
+    children.forEach((child) => {
+      if (!touched.has(child)) {
+        parent.remove(child);
+        if (typeof child.clear === "function") {
+          try {
+            child.clear();
+          } catch (_error) {
+          }
+        }
+        return;
+      }
+      pruneUntouchedChildren(child, touched);
+    });
+  };
+  const rebuildStore = (store) => {
+    const scenes = Object.values(store.scenes);
+    store.scenes = /* @__PURE__ */ Object.create(null);
+    store.groups = /* @__PURE__ */ Object.create(null);
+    store.meshes = [];
+    store.namedMeshes = /* @__PURE__ */ Object.create(null);
+    store.instancedMeshes = [];
+    store.namedInstancedMeshes = /* @__PURE__ */ Object.create(null);
+    store.lines = [];
+    store.namedLines = /* @__PURE__ */ Object.create(null);
+    store.lineLoops = [];
+    store.namedLineLoops = /* @__PURE__ */ Object.create(null);
+    store.lineSegments = [];
+    store.namedLineSegments = /* @__PURE__ */ Object.create(null);
+    store.points = [];
+    store.namedPoints = /* @__PURE__ */ Object.create(null);
+    const visit = (object) => {
+      if (!object) {
+        return;
+      }
+      if (object.isScene && object.name) {
+        store.scenes[object.name] = object;
+      } else if (object.isGroup && object.name) {
+        store.groups[object.name] = object;
+      }
+      if (object.isInstancedMesh) {
+        store.instancedMeshes.push(object);
+        if (object.name) {
+          store.namedInstancedMeshes[object.name] = object;
+        }
+      } else if (object.isMesh) {
+        store.meshes.push(object);
+        if (object.name) {
+          store.namedMeshes[object.name] = object;
+        }
+      }
+      if (object.isLineSegments) {
+        store.lineSegments.push(object);
+        if (object.name) {
+          store.namedLineSegments[object.name] = object;
+        }
+      } else if (object.isLineLoop) {
+        store.lineLoops.push(object);
+        if (object.name) {
+          store.namedLineLoops[object.name] = object;
+        }
+      } else if (object.isLine) {
+        store.lines.push(object);
+        if (object.name) {
+          store.namedLines[object.name] = object;
+        }
+      }
+      if (object.isPoints) {
+        store.points.push(object);
+        if (object.name) {
+          store.namedPoints[object.name] = object;
+        }
+      }
+      if (Array.isArray(object.children)) {
+        object.children.forEach((child) => visit(child));
+      }
+    };
+    scenes.forEach((scene) => {
+      visit(scene);
+    });
+  };
+  const beginSceneEval = (runtime) => {
+    const runtimeRef = resolveRuntime(runtime);
+    if (!runtimeRef) {
+      return;
+    }
+    const state = getLiveEvalState(runtimeRef);
+    state.active = true;
+    state.cycle += 1;
+    state.counters = /* @__PURE__ */ Object.create(null);
+    state.touched = /* @__PURE__ */ new Set();
+    state.touchedScenes = /* @__PURE__ */ new Set();
+    state.hasGraphMutations = false;
+  };
+  const resetLiveEvalState = (state) => {
+    if (!state) {
+      return;
+    }
+    state.active = false;
+    state.touched.clear();
+    state.touchedScenes.clear();
+  };
+  const endSceneEval = (runtime) => {
+    const runtimeRef = resolveRuntime(runtime);
+    if (!runtimeRef) {
+      return;
+    }
+    const state = getLiveEvalState(runtimeRef);
+    if (!state || !state.active) {
+      return;
+    }
+    const shouldReconcile = state.hasGraphMutations || state.touchedScenes.size > 0;
+    if (!shouldReconcile) {
+      resetLiveEvalState(state);
+      return;
+    }
+    const store = runtimeStores.get(runtimeRef);
+    if (store) {
+      Object.keys(store.scenes).forEach((key) => {
+        const scene = store.scenes[key];
+        if (!state.touchedScenes.has(scene)) {
+          if (scene && typeof scene.clear === "function") {
+            scene.clear();
+          }
+          delete store.scenes[key];
+          return;
+        }
+        pruneUntouchedChildren(scene, state.touched);
+      });
+      rebuildStore(store);
+    }
+    resetLiveEvalState(state);
   };
   const add = (scene, ...children) => {
-    scene.add(...children);
+    if (scene && typeof scene._addObject3D === "function") {
+      scene._addObject3D(...children);
+    } else if (scene && typeof scene.add === "function") {
+      scene.add(...children);
+    }
     return children.length === 1 ? children[0] : children;
   };
   const addChild = (scene, child) => {
@@ -39985,33 +40197,36 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     const runtime = resolveRuntime(options2 && options2.runtime ? options2.runtime : null) || createDetachedRuntime();
     const sceneOptions = Object.assign({}, options2, { runtime });
     const store = getStore(runtime);
-    const { name } = attributes;
+    const sceneAttributes = withLiveName(runtime, attributes, "scene");
+    const { name } = sceneAttributes;
     let scene = name ? store.scenes[name] : null;
     if (!name || !scene) {
       scene = new HydraScene(sceneOptions);
     } else {
       scene._runtime = runtime;
     }
-    for (let attr in attributes) {
-      if (!attributes.hasOwnProperty(attr)) continue;
+    for (let attr in sceneAttributes) {
+      if (!sceneAttributes.hasOwnProperty(attr)) continue;
       switch (attr) {
         case "background":
-          scene[attr] = new Color(attributes[attr]);
+          scene[attr] = new Color(sceneAttributes[attr]);
           break;
         default:
-          scene[attr] = attributes[attr];
+          scene[attr] = sceneAttributes[attr];
           break;
       }
     }
     if (scene.name) {
       store.scenes[scene.name] = scene;
     }
+    markLiveTouch(runtime, scene, { scene: true });
     return scene;
   };
   const getOrCreateMesh = (attributes = {}, runtime) => {
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
-    const { name } = attributes;
+    const meshAttrs = withLiveName(runtimeRef, attributes, "mesh");
+    const { name } = meshAttrs;
     let mesh2 = name ? store.namedMeshes[name] : null;
     if (!name || !mesh2) {
       mesh2 = new Mesh();
@@ -40022,16 +40237,18 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       }
       store.meshes.push(mesh2);
     }
-    setMeshAttrs(mesh2, attributes, runtimeRef);
+    setMeshAttrs(mesh2, meshAttrs, runtimeRef);
     if (mesh2.name) {
       store.namedMeshes[mesh2.name] = mesh2;
     }
+    markLiveTouch(runtimeRef, mesh2);
     return mesh2;
   };
   const getOrCreateInstancedMesh = (attributes, runtime) => {
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
-    const { name, geometry, material, count } = attributes;
+    const instancedAttrs = withLiveName(runtimeRef, attributes, "instancedMesh");
+    const { name, geometry, material, count } = instancedAttrs;
     let mesh2 = name ? store.namedInstancedMeshes[name] : null;
     if (!name || !mesh2) {
       mesh2 = new InstancedMesh(geometry, material, count);
@@ -40042,66 +40259,79 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       }
       store.instancedMeshes.push(mesh2);
     }
-    setMeshAttrs(mesh2, attributes, runtimeRef);
+    setMeshAttrs(mesh2, instancedAttrs, runtimeRef);
     if (mesh2.name) {
       store.namedInstancedMeshes[mesh2.name] = mesh2;
     }
+    markLiveTouch(runtimeRef, mesh2);
     return mesh2;
   };
   const getOrCreateLine = (attributes, runtime) => {
-    const store = getStore(runtime);
-    const { name } = attributes;
+    const runtimeRef = resolveRuntime(runtime);
+    const store = getStore(runtimeRef);
+    const lineAttrs = withLiveName(runtimeRef, attributes, "line");
+    const { name } = lineAttrs;
     let line2 = name ? store.namedLines[name] : null;
     if (!name || !line2) {
       line2 = new Line();
       store.lines.push(line2);
     }
-    setObject3DAttrs(line2, attributes);
+    setObject3DAttrs(line2, lineAttrs);
     if (line2.name) {
       store.namedLines[line2.name] = line2;
     }
+    markLiveTouch(runtimeRef, line2);
     return line2;
   };
   const getOrCreateLineLoop = (attributes, runtime) => {
-    const store = getStore(runtime);
-    const { name } = attributes;
+    const runtimeRef = resolveRuntime(runtime);
+    const store = getStore(runtimeRef);
+    const lineLoopAttrs = withLiveName(runtimeRef, attributes, "lineLoop");
+    const { name } = lineLoopAttrs;
     let lineLoop = name ? store.namedLineLoops[name] : null;
     if (!name || !lineLoop) {
       lineLoop = new LineLoop();
       store.lineLoops.push(lineLoop);
     }
-    setObject3DAttrs(lineLoop, attributes);
+    setObject3DAttrs(lineLoop, lineLoopAttrs);
     if (lineLoop.name) {
       store.namedLineLoops[lineLoop.name] = lineLoop;
     }
+    markLiveTouch(runtimeRef, lineLoop);
     return lineLoop;
   };
   const getOrCreateLineSegments = (attributes, runtime) => {
-    const store = getStore(runtime);
-    const { name } = attributes;
+    const runtimeRef = resolveRuntime(runtime);
+    const store = getStore(runtimeRef);
+    const lineAttrs = withLiveName(runtimeRef, attributes, "lineSegments");
+    const { name } = lineAttrs;
     let line2 = name ? store.namedLineSegments[name] : null;
     if (!name || !line2) {
       line2 = new LineSegments();
       store.lineSegments.push(line2);
     }
-    setObject3DAttrs(line2, attributes);
+    setObject3DAttrs(line2, lineAttrs);
     if (line2.name) {
       store.namedLineSegments[line2.name] = line2;
     }
+    markLiveTouch(runtimeRef, line2);
     return line2;
   };
   const getOrCreatePoints = (attributes, runtime) => {
-    const store = getStore(runtime);
-    const { name } = attributes;
+    const runtimeRef = resolveRuntime(runtime);
+    const store = getStore(runtimeRef);
+    const pointAttrs = withLiveName(runtimeRef, attributes, "points");
+    const { name } = pointAttrs;
     let point = name ? store.namedPoints[name] : null;
     if (!name || !point) {
       point = new Points();
       store.points.push(point);
     }
-    setObject3DAttrs(point, attributes);
+    setObject3DAttrs(point, pointAttrs);
     if (point.name) {
       store.namedPoints[point.name] = point;
     }
+    markLiveTouch(runtimeRef, point);
     return point;
   };
   const sceneMixin = {
@@ -40120,7 +40350,15 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       let object;
       if (geometry instanceof Object3D$1) {
         object = geometry;
-        return this._addObject3D(object);
+        addChild(this, object);
+        markLiveGraphMutation(this._runtime);
+        markLiveTouch(this._runtime, object);
+        markLiveTouch(this._runtime, this, { scene: !!this.isScene });
+        const sceneRoot2 = findSceneRoot(this);
+        if (sceneRoot2) {
+          markLiveTouch(this._runtime, sceneRoot2, { scene: true });
+        }
+        return object;
       } else {
         if (geometry instanceof GlslSource || material && material.type === "quad") {
           options2 = material;
@@ -40152,6 +40390,13 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         }
       }
       addChild(this, object);
+      markLiveGraphMutation(this._runtime);
+      markLiveTouch(this._runtime, object);
+      markLiveTouch(this._runtime, this, { scene: !!this.isScene });
+      const sceneRoot = findSceneRoot(this);
+      if (sceneRoot) {
+        markLiveTouch(this._runtime, sceneRoot, { scene: true });
+      }
       return object;
     },
     _handleGeometry(geometry, options2) {
@@ -40337,42 +40582,86 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       return this;
     },
     group(attributes = {}) {
+      const groupAttributes = withLiveName(this._runtime, attributes, "group");
       const store = getStore(this._runtime);
-      const { name } = attributes;
+      const { name } = groupAttributes;
       let group = name ? store.groups[name] : null;
+      const hasExistingGroup = !!group;
       if (!name || !group) {
         group = new HydraGroup(this._runtime);
       }
+      const previousParent = group.parent;
       addChild(this, group);
-      setObject3DAttrs(group, attributes);
+      if (!hasExistingGroup || group.parent !== previousParent) {
+        markLiveGraphMutation(this._runtime);
+      }
+      setObject3DAttrs(group, groupAttributes);
       group._runtime = this._runtime;
       if (group.name) {
         store.groups[group.name] = group;
+      }
+      markLiveTouch(this._runtime, group);
+      markLiveTouch(this._runtime, this, { scene: !!this.isScene });
+      const sceneRoot = findSceneRoot(this);
+      if (sceneRoot) {
+        markLiveTouch(this._runtime, sceneRoot, { scene: true });
       }
       return group;
     },
     css2d(element, attributes = {}) {
       const obj = new CSS2DObject(element);
       setObject3DAttrs(obj, attributes);
-      return this._addObject3D(obj);
+      addChild(this, obj);
+      markLiveGraphMutation(this._runtime);
+      markLiveTouch(this._runtime, obj);
+      markLiveTouch(this._runtime, this, { scene: !!this.isScene });
+      const sceneRoot = findSceneRoot(this);
+      if (sceneRoot) {
+        markLiveTouch(this._runtime, sceneRoot, { scene: true });
+      }
+      return obj;
     },
     css3d(element, attributes = {}) {
       const obj = new CSS3DObject(element);
       setObject3DAttrs(obj, attributes);
-      return this._addObject3D(obj);
+      addChild(this, obj);
+      markLiveGraphMutation(this._runtime);
+      markLiveTouch(this._runtime, obj);
+      markLiveTouch(this._runtime, this, { scene: !!this.isScene });
+      const sceneRoot = findSceneRoot(this);
+      if (sceneRoot) {
+        markLiveTouch(this._runtime, sceneRoot, { scene: true });
+      }
+      return obj;
     },
     // todo: does having just lights count as empty?
     empty() {
       return this.children.length === 0;
     },
     at(index = 0) {
-      return this.children.filter((o) => o.name !== groupName$1 && o.name !== groupName)[index];
+      const object = this.children.filter((o) => o.name !== groupName$1 && o.name !== groupName)[index];
+      markLiveTouch(this._runtime, object);
+      markLiveTouch(this._runtime, this, { scene: !!this.isScene });
+      const sceneRoot = findSceneRoot(this);
+      if (sceneRoot) {
+        markLiveTouch(this._runtime, sceneRoot, { scene: true });
+      }
+      return object;
     },
     find(filter = { isMesh: true }) {
       const props = Object.keys(filter);
-      return this.children.filter((o) => {
+      const objects = this.children.filter((o) => {
         return props.find((p) => o[p] !== filter[p]) === void 0;
       });
+      objects.forEach((object) => {
+        markLiveTouch(this._runtime, object);
+      });
+      markLiveTouch(this._runtime, this, { scene: !!this.isScene });
+      const sceneRoot = findSceneRoot(this);
+      if (sceneRoot) {
+        markLiveTouch(this._runtime, sceneRoot, { scene: true });
+      }
+      return objects;
     }
   };
   class HydraGroup extends Group {
@@ -45403,6 +45692,7 @@ vec4 _mod289(vec4 x)
       css3DElement,
       precision,
       onError,
+      liveMode = "continuous",
       extendTransforms = {}
       // add your own functions on init
     } = {}) {
@@ -45413,6 +45703,7 @@ vec4 _mod289(vec4 x)
       this.renderAll = false;
       this.detectAudio = detectAudio;
       this.makeGlobal = makeGlobal;
+      this.liveMode = liveMode === "continuous" ? "continuous" : "restart";
       this._disposed = false;
       this._loop = null;
       this._globalHelpersInstalled = false;
@@ -45454,7 +45745,9 @@ vec4 _mod289(vec4 x)
         },
         // user defined function run after update
         onError: this._runtimeErrorHandler,
+        liveMode: this.liveMode,
         hush: this.hush.bind(this),
+        resetRuntime: this.resetRuntime.bind(this),
         tick: this.tick.bind(this),
         shadowMap: this.shadowMap.bind(this),
         scene: this.scene.bind(this),
@@ -45528,7 +45821,17 @@ vec4 _mod289(vec4 x)
       this.sandbox = new EvalSandbox(this.synth, makeGlobal, ["speed", "update", "afterUpdate", "click", "mousedown", "mouseup", "mousemove", "keydown", "keyup", "bpm", "fps"]);
     }
     eval(code) {
-      this.sandbox.eval(code);
+      const continuousEval = this.liveMode === "continuous";
+      if (continuousEval) {
+        beginSceneEval(this);
+      }
+      try {
+        this.sandbox.eval(code);
+      } finally {
+        if (continuousEval) {
+          endSceneEval(this);
+        }
+      }
     }
     getScreenImage(callback) {
       this.imageCallback = callback;
@@ -45558,6 +45861,22 @@ vec4 _mod289(vec4 x)
       });
       this.sandbox.set("afterUpdate", (dt) => {
       });
+    }
+    resetRuntime() {
+      if (this._disposed) {
+        return;
+      }
+      withRuntime(this, () => {
+        this.hush();
+        clearSceneRuntime(this);
+      });
+      this.synth.time = 0;
+      this.sandbox.set("time", 0);
+      this.timeSinceLastUpdate = 0;
+      this._time = 0;
+      if (this.synth.stats && typeof this.synth.stats === "object") {
+        this.synth.stats.fps = 0;
+      }
     }
     loadScript(url = "", once = true) {
       const browserWindow = typeof window !== "undefined" ? window : null;

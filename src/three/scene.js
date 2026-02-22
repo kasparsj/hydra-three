@@ -289,6 +289,15 @@ const beginSceneEval = (runtime) => {
     state.hasGraphMutations = false;
 };
 
+const resetLiveEvalState = (state) => {
+    if (!state) {
+        return;
+    }
+    state.active = false;
+    state.touched.clear();
+    state.touchedScenes.clear();
+};
+
 const endSceneEval = (runtime) => {
     const runtimeRef = resolveRuntime(runtime);
     if (!runtimeRef) {
@@ -298,10 +307,10 @@ const endSceneEval = (runtime) => {
     if (!state || !state.active) {
         return;
     }
-    if (!state.hasGraphMutations) {
-        state.active = false;
-        state.touched.clear();
-        state.touchedScenes.clear();
+    const shouldReconcile =
+        state.hasGraphMutations || state.touchedScenes.size > 0;
+    if (!shouldReconcile) {
+        resetLiveEvalState(state);
         return;
     }
     const store = runtimeStores.get(runtimeRef);
@@ -319,13 +328,15 @@ const endSceneEval = (runtime) => {
         });
         rebuildStore(store);
     }
-    state.active = false;
-    state.touched.clear();
-    state.touchedScenes.clear();
+    resetLiveEvalState(state);
 };
 
 const add = (scene, ...children) => {
-    scene.add(...children);
+    if (scene && typeof scene._addObject3D === "function") {
+        scene._addObject3D(...children);
+    } else if (scene && typeof scene.add === "function") {
+        scene.add(...children);
+    }
     return children.length === 1 ? children[0] : children;
 }
 
@@ -825,10 +836,15 @@ const sceneMixin = {
         const store = getStore(this._runtime);
         const {name} = groupAttributes;
         let group = name ? store.groups[name] : null;
+        const hasExistingGroup = !!group;
         if (!name || !group) {
             group = new HydraGroup(this._runtime);
         }
+        const previousParent = group.parent;
         addChild(this, group);
+        if (!hasExistingGroup || group.parent !== previousParent) {
+            markLiveGraphMutation(this._runtime);
+        }
         setObject3DAttrs(group, groupAttributes);
         group._runtime = this._runtime;
         if (group.name) {
@@ -877,14 +893,30 @@ const sceneMixin = {
     },
 
     at(index = 0) {
-        return this.children.filter((o) => o.name !== lights.groupName && o.name !== world.groupName)[index];
+        const object = this.children.filter((o) => o.name !== lights.groupName && o.name !== world.groupName)[index];
+        markLiveTouch(this._runtime, object);
+        markLiveTouch(this._runtime, this, { scene: !!this.isScene });
+        const sceneRoot = findSceneRoot(this);
+        if (sceneRoot) {
+            markLiveTouch(this._runtime, sceneRoot, { scene: true });
+        }
+        return object;
     },
 
     find(filter = {isMesh: true}) {
         const props = Object.keys(filter);
-        return this.children.filter((o) => {
+        const objects = this.children.filter((o) => {
             return props.find((p) => o[p] !== filter[p]) === undefined;
         });
+        objects.forEach((object) => {
+            markLiveTouch(this._runtime, object);
+        });
+        markLiveTouch(this._runtime, this, { scene: !!this.isScene });
+        const sceneRoot = findSceneRoot(this);
+        if (sceneRoot) {
+            markLiveTouch(this._runtime, sceneRoot, { scene: true });
+        }
+        return objects;
     }
 }
 

@@ -68,6 +68,8 @@ const smokeHtml = `<!doctype html>
         onErrorCaptured: null,
         onErrorContext: null,
         onErrorMessage: null,
+        continuousPruneRemovedStaleMesh: null,
+        continuousPrunePreservedTouchedMesh: null,
         canvasCount: 0
       };
       try {
@@ -153,6 +155,27 @@ const smokeHtml = `<!doctype html>
         }
         hydra.tick(16)
         H.update = () => {}
+        window.__smokeRuntime = hydra
+        H.scene({ name: "__continuousPrune" })
+          .mesh(H.gm.box(), H.mt.meshBasic({ color: 0xff0000 }))
+          .out()
+        const pruneBefore = H.scene({ name: "__continuousPrune" }).find({ isMesh: true }).length
+        hydra.eval(
+          'const H = window.__smokeRuntime.synth; H.scene({ name: "__continuousPrune" }).out();',
+        )
+        const pruneAfter = H.scene({ name: "__continuousPrune" }).find({ isMesh: true }).length
+        window.__smoke.continuousPruneRemovedStaleMesh =
+          pruneBefore > 0 && pruneAfter === 0
+
+        H.scene({ name: "__continuousTouch" })
+          .mesh(H.gm.box(), H.mt.meshBasic({ color: 0x00ff00 }))
+          .out()
+        hydra.eval(
+          'const H = window.__smokeRuntime.synth; const sc = H.scene({ name: "__continuousTouch" }).out(); const obj = sc.at(0); if (obj) { obj.rotation.x += 0.01; }',
+        )
+        const touchAfter = H.scene({ name: "__continuousTouch" }).find({ isMesh: true }).length
+        window.__smoke.continuousPrunePreservedTouchedMesh = touchAfter === 1
+        delete window.__smokeRuntime
         window.__smoke.hasGlobalOsc = typeof window.osc === 'function'
         window.__smoke.hasLoadScript = typeof window.loadScript === 'function'
         window.__smoke.hasGetCode = typeof window.getCode === 'function'
@@ -348,6 +371,16 @@ try {
     diagnostics.onErrorMessage,
     "__smoke_update_error__",
     `Expected onError to receive update error message, got ${diagnostics.onErrorMessage}`,
+  );
+  assert.equal(
+    diagnostics.continuousPruneRemovedStaleMesh,
+    true,
+    "Expected continuous eval to remove stale mesh when creation code is removed",
+  );
+  assert.equal(
+    diagnostics.continuousPrunePreservedTouchedMesh,
+    true,
+    "Expected continuous eval to preserve mesh touched via scene.at(0)",
   );
   assert.deepEqual(
     errors,
