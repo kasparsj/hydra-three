@@ -14,6 +14,8 @@ import * as gm from "./gm.js";
 import { getRuntime } from "./runtime.js";
 
 const runtimeStores = new WeakMap();
+const LIVE_NAME_PREFIX = "__live";
+const LIVE_CYCLE_KEY = "__hydraLiveCycle";
 
 const createStore = () => ({
     scenes: Object.create(null),
@@ -99,10 +101,227 @@ const clearSceneRuntime = (runtime) => {
     }
     const store = runtimeStores.get(runtime);
     if (!store) {
+        if (runtime._liveEvalState) {
+            runtime._liveEvalState = null;
+        }
         return;
     }
     clearStore(store);
     runtimeStores.delete(runtime);
+    if (runtime._liveEvalState) {
+        runtime._liveEvalState = null;
+    }
+};
+
+const getLiveEvalState = (runtime) => {
+    if (!runtime) {
+        return null;
+    }
+    if (!runtime._liveEvalState) {
+        runtime._liveEvalState = {
+            active: false,
+            cycle: 0,
+            counters: Object.create(null),
+            touched: new Set(),
+            touchedScenes: new Set(),
+            hasGraphMutations: false,
+        };
+    }
+    return runtime._liveEvalState;
+};
+
+const isLiveEvalActive = (runtime) => {
+    const state = getLiveEvalState(runtime);
+    return !!(state && state.active);
+};
+
+const nextLiveName = (runtime, type) => {
+    const state = getLiveEvalState(runtime);
+    if (!state || !state.active) {
+        return null;
+    }
+    const nextId = state.counters[type] || 0;
+    state.counters[type] = nextId + 1;
+    return `${LIVE_NAME_PREFIX}_${type}_${nextId}`;
+};
+
+const withLiveName = (runtime, attributes = {}, type = "object") => {
+    if (!isLiveEvalActive(runtime) || attributes.name) {
+        return attributes;
+    }
+    return Object.assign({}, attributes, {
+        name: nextLiveName(runtime, type),
+    });
+};
+
+const markLiveTouch = (runtime, object, { scene = false } = {}) => {
+    const state = getLiveEvalState(runtime);
+    if (!state || !state.active || !object) {
+        return;
+    }
+    object.userData || (object.userData = {});
+    object.userData[LIVE_CYCLE_KEY] = state.cycle;
+    state.touched.add(object);
+    if (scene) {
+        state.touchedScenes.add(object);
+    }
+};
+
+const markLiveGraphMutation = (runtime) => {
+    const state = getLiveEvalState(runtime);
+    if (!state || !state.active) {
+        return;
+    }
+    state.hasGraphMutations = true;
+};
+
+const findSceneRoot = (object) => {
+    let current = object || null;
+    while (current && !current.isScene) {
+        current = current.parent || null;
+    }
+    return current && current.isScene ? current : null;
+};
+
+const pruneUntouchedChildren = (parent, touched) => {
+    if (!parent || !Array.isArray(parent.children) || !touched) {
+        return;
+    }
+    const children = parent.children.slice();
+    children.forEach((child) => {
+        if (!touched.has(child)) {
+            parent.remove(child);
+            if (typeof child.clear === "function") {
+                try {
+                    child.clear();
+                } catch (_error) {}
+            }
+            return;
+        }
+        pruneUntouchedChildren(child, touched);
+    });
+};
+
+const rebuildStore = (store) => {
+    const scenes = Object.values(store.scenes);
+    store.scenes = Object.create(null);
+    store.groups = Object.create(null);
+    store.meshes = [];
+    store.namedMeshes = Object.create(null);
+    store.instancedMeshes = [];
+    store.namedInstancedMeshes = Object.create(null);
+    store.lines = [];
+    store.namedLines = Object.create(null);
+    store.lineLoops = [];
+    store.namedLineLoops = Object.create(null);
+    store.lineSegments = [];
+    store.namedLineSegments = Object.create(null);
+    store.points = [];
+    store.namedPoints = Object.create(null);
+
+    const visit = (object) => {
+        if (!object) {
+            return;
+        }
+        if (object.isScene && object.name) {
+            store.scenes[object.name] = object;
+        } else if (object.isGroup && object.name) {
+            store.groups[object.name] = object;
+        }
+
+        if (object.isInstancedMesh) {
+            store.instancedMeshes.push(object);
+            if (object.name) {
+                store.namedInstancedMeshes[object.name] = object;
+            }
+        } else if (object.isMesh) {
+            store.meshes.push(object);
+            if (object.name) {
+                store.namedMeshes[object.name] = object;
+            }
+        }
+
+        if (object.isLineSegments) {
+            store.lineSegments.push(object);
+            if (object.name) {
+                store.namedLineSegments[object.name] = object;
+            }
+        } else if (object.isLineLoop) {
+            store.lineLoops.push(object);
+            if (object.name) {
+                store.namedLineLoops[object.name] = object;
+            }
+        } else if (object.isLine) {
+            store.lines.push(object);
+            if (object.name) {
+                store.namedLines[object.name] = object;
+            }
+        }
+
+        if (object.isPoints) {
+            store.points.push(object);
+            if (object.name) {
+                store.namedPoints[object.name] = object;
+            }
+        }
+
+        if (Array.isArray(object.children)) {
+            object.children.forEach((child) => visit(child));
+        }
+    };
+
+    scenes.forEach((scene) => {
+        visit(scene);
+    });
+};
+
+const beginSceneEval = (runtime) => {
+    const runtimeRef = resolveRuntime(runtime);
+    if (!runtimeRef) {
+        return;
+    }
+    const state = getLiveEvalState(runtimeRef);
+    state.active = true;
+    state.cycle += 1;
+    state.counters = Object.create(null);
+    state.touched = new Set();
+    state.touchedScenes = new Set();
+    state.hasGraphMutations = false;
+};
+
+const endSceneEval = (runtime) => {
+    const runtimeRef = resolveRuntime(runtime);
+    if (!runtimeRef) {
+        return;
+    }
+    const state = getLiveEvalState(runtimeRef);
+    if (!state || !state.active) {
+        return;
+    }
+    if (!state.hasGraphMutations) {
+        state.active = false;
+        state.touched.clear();
+        state.touchedScenes.clear();
+        return;
+    }
+    const store = runtimeStores.get(runtimeRef);
+    if (store) {
+        Object.keys(store.scenes).forEach((key) => {
+            const scene = store.scenes[key];
+            if (!state.touchedScenes.has(scene)) {
+                if (scene && typeof scene.clear === "function") {
+                    scene.clear();
+                }
+                delete store.scenes[key];
+                return;
+            }
+            pruneUntouchedChildren(scene, state.touched);
+        });
+        rebuildStore(store);
+    }
+    state.active = false;
+    state.touched.clear();
+    state.touchedScenes.clear();
 };
 
 const add = (scene, ...children) => {
@@ -158,34 +377,37 @@ const getOrCreateScene = (options, attributes = {}) => {
     const runtime = resolveRuntime(options && options.runtime ? options.runtime : null) || createDetachedRuntime();
     const sceneOptions = Object.assign({}, options, { runtime });
     const store = getStore(runtime);
-    const {name} = attributes;
+    const sceneAttributes = withLiveName(runtime, attributes, "scene");
+    const {name} = sceneAttributes;
     let scene = name ? store.scenes[name] : null;
     if (!name || !scene) { // always recreate default scene?
         scene = new HydraScene(sceneOptions);
     } else {
         scene._runtime = runtime;
     }
-    for (let attr in attributes) {
-        if (!attributes.hasOwnProperty(attr)) continue;
+    for (let attr in sceneAttributes) {
+        if (!sceneAttributes.hasOwnProperty(attr)) continue;
         switch (attr) {
             case 'background':
-                scene[attr] = new THREE.Color(attributes[attr]);
+                scene[attr] = new THREE.Color(sceneAttributes[attr]);
                 break;
             default:
-                scene[attr] = attributes[attr];
+                scene[attr] = sceneAttributes[attr];
                 break;
         }
     }
     if (scene.name) {
         store.scenes[scene.name] = scene;
     }
+    markLiveTouch(runtime, scene, { scene: true });
     return scene;
 }
 
 const getOrCreateMesh = (attributes = {}, runtime) => {
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
-    const {name} = attributes;
+    const meshAttrs = withLiveName(runtimeRef, attributes, "mesh");
+    const {name} = meshAttrs;
     let mesh = name ? store.namedMeshes[name] : null;
     if (!name || !mesh) {
         mesh = new THREE.Mesh();
@@ -196,17 +418,19 @@ const getOrCreateMesh = (attributes = {}, runtime) => {
         }
         store.meshes.push(mesh);
     }
-    setMeshAttrs(mesh, attributes, runtimeRef);
+    setMeshAttrs(mesh, meshAttrs, runtimeRef);
     if (mesh.name) {
         store.namedMeshes[mesh.name] = mesh;
     }
+    markLiveTouch(runtimeRef, mesh);
     return mesh;
 }
 
 const getOrCreateInstancedMesh = (attributes, runtime) => {
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
-    const {name, geometry, material, count} = attributes;
+    const instancedAttrs = withLiveName(runtimeRef, attributes, "instancedMesh");
+    const {name, geometry, material, count} = instancedAttrs;
     let mesh = name ? store.namedInstancedMeshes[name] : null;
     if (!name || !mesh) {
         mesh = new THREE.InstancedMesh(geometry, material, count);
@@ -217,70 +441,83 @@ const getOrCreateInstancedMesh = (attributes, runtime) => {
         }
         store.instancedMeshes.push(mesh);
     }
-    setMeshAttrs(mesh, attributes, runtimeRef);
+    setMeshAttrs(mesh, instancedAttrs, runtimeRef);
     if (mesh.name) {
         store.namedInstancedMeshes[mesh.name] = mesh;
     }
+    markLiveTouch(runtimeRef, mesh);
     return mesh;
 }
 
 const getOrCreateLine = (attributes, runtime) => {
-    const store = getStore(runtime);
-    const {name} = attributes;
+    const runtimeRef = resolveRuntime(runtime);
+    const store = getStore(runtimeRef);
+    const lineAttrs = withLiveName(runtimeRef, attributes, "line");
+    const {name} = lineAttrs;
     let line = name ? store.namedLines[name] : null;
     if (!name || !line) {
         line = new THREE.Line();
         store.lines.push(line);
     }
-    setObject3DAttrs(line, attributes);
+    setObject3DAttrs(line, lineAttrs);
     if (line.name) {
         store.namedLines[line.name] = line;
     }
+    markLiveTouch(runtimeRef, line);
     return line;
 }
 
 const getOrCreateLineLoop = (attributes, runtime) => {
-    const store = getStore(runtime);
-    const {name} = attributes;
+    const runtimeRef = resolveRuntime(runtime);
+    const store = getStore(runtimeRef);
+    const lineLoopAttrs = withLiveName(runtimeRef, attributes, "lineLoop");
+    const {name} = lineLoopAttrs;
     let lineLoop = name ? store.namedLineLoops[name] : null;
     if (!name || !lineLoop) {
         lineLoop = new THREE.LineLoop();
         store.lineLoops.push(lineLoop);
     }
-    setObject3DAttrs(lineLoop, attributes);
+    setObject3DAttrs(lineLoop, lineLoopAttrs);
     if (lineLoop.name) {
         store.namedLineLoops[lineLoop.name] = lineLoop;
     }
+    markLiveTouch(runtimeRef, lineLoop);
     return lineLoop;
 }
 
 const getOrCreateLineSegments = (attributes, runtime) => {
-    const store = getStore(runtime);
-    const {name} = attributes;
+    const runtimeRef = resolveRuntime(runtime);
+    const store = getStore(runtimeRef);
+    const lineAttrs = withLiveName(runtimeRef, attributes, "lineSegments");
+    const {name} = lineAttrs;
     let line = name ? store.namedLineSegments[name] : null;
     if (!name || !line) {
         line = new THREE.LineSegments();
         store.lineSegments.push(line);
     }
-    setObject3DAttrs(line, attributes);
+    setObject3DAttrs(line, lineAttrs);
     if (line.name) {
         store.namedLineSegments[line.name] = line;
     }
+    markLiveTouch(runtimeRef, line);
     return line;
 }
 
 const getOrCreatePoints = (attributes, runtime) => {
-    const store = getStore(runtime);
-    const {name} = attributes;
+    const runtimeRef = resolveRuntime(runtime);
+    const store = getStore(runtimeRef);
+    const pointAttrs = withLiveName(runtimeRef, attributes, "points");
+    const {name} = pointAttrs;
     let point = name ? store.namedPoints[name] : null;
     if (!name || !point) {
         point = new THREE.Points();
         store.points.push(point);
     }
-    setObject3DAttrs(point, attributes);
+    setObject3DAttrs(point, pointAttrs);
     if (point.name) {
         store.namedPoints[point.name] = point;
     }
+    markLiveTouch(runtimeRef, point);
     return point;
 }
 
@@ -301,7 +538,15 @@ const sceneMixin = {
         let object;
         if (geometry instanceof THREE.Object3D) {
             object = geometry;
-            return this._addObject3D(object);
+            addChild(this, object);
+            markLiveGraphMutation(this._runtime);
+            markLiveTouch(this._runtime, object);
+            markLiveTouch(this._runtime, this, { scene: !!this.isScene });
+            const sceneRoot = findSceneRoot(this);
+            if (sceneRoot) {
+                markLiveTouch(this._runtime, sceneRoot, { scene: true });
+            }
+            return object;
         }
         else {
             if (geometry instanceof GlslSource || (material && material.type === 'quad')) {
@@ -348,6 +593,13 @@ const sceneMixin = {
             }
         }
         addChild(this, object);
+        markLiveGraphMutation(this._runtime);
+        markLiveTouch(this._runtime, object);
+        markLiveTouch(this._runtime, this, { scene: !!this.isScene });
+        const sceneRoot = findSceneRoot(this);
+        if (sceneRoot) {
+            markLiveTouch(this._runtime, sceneRoot, { scene: true });
+        }
         return object;
     },
 
@@ -569,17 +821,24 @@ const sceneMixin = {
     },
 
     group(attributes = {}) {
+        const groupAttributes = withLiveName(this._runtime, attributes, "group");
         const store = getStore(this._runtime);
-        const {name} = attributes;
+        const {name} = groupAttributes;
         let group = name ? store.groups[name] : null;
         if (!name || !group) {
             group = new HydraGroup(this._runtime);
         }
         addChild(this, group);
-        setObject3DAttrs(group, attributes);
+        setObject3DAttrs(group, groupAttributes);
         group._runtime = this._runtime;
         if (group.name) {
             store.groups[group.name] = group;
+        }
+        markLiveTouch(this._runtime, group);
+        markLiveTouch(this._runtime, this, { scene: !!this.isScene });
+        const sceneRoot = findSceneRoot(this);
+        if (sceneRoot) {
+            markLiveTouch(this._runtime, sceneRoot, { scene: true });
         }
         return group;
     },
@@ -587,13 +846,29 @@ const sceneMixin = {
     css2d(element, attributes = {}) {
         const obj = new CSS2DObject(element);
         setObject3DAttrs(obj, attributes);
-        return this._addObject3D(obj);
+        addChild(this, obj);
+        markLiveGraphMutation(this._runtime);
+        markLiveTouch(this._runtime, obj);
+        markLiveTouch(this._runtime, this, { scene: !!this.isScene });
+        const sceneRoot = findSceneRoot(this);
+        if (sceneRoot) {
+            markLiveTouch(this._runtime, sceneRoot, { scene: true });
+        }
+        return obj;
     },
 
     css3d(element, attributes = {}) {
         const obj = new CSS3DObject(element);
         setObject3DAttrs(obj, attributes);
-        return this._addObject3D(obj);
+        addChild(this, obj);
+        markLiveGraphMutation(this._runtime);
+        markLiveTouch(this._runtime, obj);
+        markLiveTouch(this._runtime, this, { scene: !!this.isScene });
+        const sceneRoot = findSceneRoot(this);
+        if (sceneRoot) {
+            markLiveTouch(this._runtime, sceneRoot, { scene: true });
+        }
+        return obj;
     },
 
     // todo: does having just lights count as empty?
@@ -712,4 +987,11 @@ class HydraScene extends THREE.Scene {
 
 mixClass(HydraScene, cameraMixin, autoClearMixin, sourceMixin, sceneMixin);
 
-export { HydraScene, HydraGroup, getOrCreateScene, clearSceneRuntime }
+export {
+    HydraScene,
+    HydraGroup,
+    getOrCreateScene,
+    clearSceneRuntime,
+    beginSceneEval,
+    endSceneEval,
+}

@@ -130,6 +130,7 @@ class HydraRenderer {
     css3DElement,
     precision,
     onError,
+    liveMode = 'continuous',
     extendTransforms = {} // add your own functions on init
   } = {}) {
 
@@ -142,6 +143,7 @@ class HydraRenderer {
     this.renderAll = false
     this.detectAudio = detectAudio
     this.makeGlobal = makeGlobal
+    this.liveMode = liveMode === 'continuous' ? 'continuous' : 'restart'
     this._disposed = false
     this._loop = null
     this._globalHelpersInstalled = false
@@ -177,7 +179,9 @@ class HydraRenderer {
       keyup: (event) => {},
       afterUpdate: (dt) => {},// user defined function run after update
       onError: this._runtimeErrorHandler,
+      liveMode: this.liveMode,
       hush: this.hush.bind(this),
+      resetRuntime: this.resetRuntime.bind(this),
       tick: this.tick.bind(this),
       shadowMap: this.shadowMap.bind(this),
       scene: this.scene.bind(this),
@@ -282,7 +286,17 @@ class HydraRenderer {
   }
 
   eval(code) {
-    this.sandbox.eval(code)
+    const continuousEval = this.liveMode === 'continuous'
+    if (continuousEval) {
+      scene.beginSceneEval(this)
+    }
+    try {
+      this.sandbox.eval(code)
+    } finally {
+      if (continuousEval) {
+        scene.endSceneEval(this)
+      }
+    }
   }
 
   getScreenImage(callback) {
@@ -306,6 +320,23 @@ class HydraRenderer {
     this.sandbox.set('keydown', (event) => {})
     this.sandbox.set('keyup', (event) => {})
     this.sandbox.set('afterUpdate', (dt) => {})
+  }
+
+  resetRuntime() {
+    if (this._disposed) {
+      return
+    }
+    withRuntime(this, () => {
+      this.hush()
+      scene.clearSceneRuntime(this)
+    })
+    this.synth.time = 0
+    this.sandbox.set('time', 0)
+    this.timeSinceLastUpdate = 0
+    this._time = 0
+    if (this.synth.stats && typeof this.synth.stats === 'object') {
+      this.synth.stats.fps = 0
+    }
   }
 
   loadScript(url = "", once = true) {

@@ -2,6 +2,7 @@ import { playgroundExamples } from "./examples.js";
 
 const URL_KEYS = Object.freeze({
   example: "example",
+  mode: "mode",
   code: "code",
   params: "params",
 });
@@ -9,8 +10,10 @@ const FLOAT_EPSILON = 1e-9;
 
 const els = {
   exampleSelect: document.getElementById("example-select"),
+  runtimeMode: document.getElementById("runtime-mode"),
   runButton: document.getElementById("run-btn"),
   resetButton: document.getElementById("reset-btn"),
+  resetRuntimeButton: document.getElementById("reset-runtime-btn"),
   copyLinkButton: document.getElementById("copy-link-btn"),
   status: document.getElementById("status"),
   shareStatus: document.getElementById("share-status"),
@@ -22,6 +25,7 @@ const els = {
 
 const state = {
   runtime: null,
+  runtimeMode: "continuous",
   selectedExample: playgroundExamples[0],
   values: {},
   debounceId: null,
@@ -93,6 +97,17 @@ const disposeRuntime = () => {
   state.runtime = null;
 };
 
+const resetRuntime = () => {
+  if (!state.runtime) {
+    return;
+  }
+  if (typeof state.runtime.resetRuntime === "function") {
+    state.runtime.resetRuntime();
+    return;
+  }
+  disposeRuntime();
+};
+
 const toParamState = (example) => {
   return example.params.reduce((acc, param) => {
     acc[param.name] = param.value;
@@ -102,6 +117,11 @@ const toParamState = (example) => {
 
 const readUrlState = () => {
   const query = new URLSearchParams(window.location.search);
+  const requestedMode = query.get(URL_KEYS.mode);
+  const mode =
+    requestedMode === "restart" || requestedMode === "continuous"
+      ? requestedMode
+      : null;
   let paramOverrides = null;
 
   if (query.has(URL_KEYS.params)) {
@@ -117,6 +137,7 @@ const readUrlState = () => {
 
   return {
     exampleId: query.get(URL_KEYS.example),
+    mode,
     hasCodeOverride: query.has(URL_KEYS.code),
     codeOverride: query.get(URL_KEYS.code) || "",
     paramOverrides,
@@ -156,6 +177,7 @@ const buildShareUrl = () => {
   const paramOverrides = collectParamOverrides();
 
   query.set(URL_KEYS.example, state.selectedExample.id);
+  query.set(URL_KEYS.mode, state.runtimeMode);
   if (codeValue !== defaultCode) {
     query.set(URL_KEYS.code, codeValue);
   } else {
@@ -304,7 +326,9 @@ const runSketch = () => {
   clearError();
   setStatus("Running");
   syncCanvasResolution();
-  disposeRuntime();
+  if (state.runtimeMode === "restart") {
+    disposeRuntime();
+  }
 
   try {
     if (typeof window.Hydra !== "function") {
@@ -313,20 +337,24 @@ const runSketch = () => {
       );
     }
 
-    const hydra = new window.Hydra({
-      canvas: els.canvas,
-      detectAudio: false,
-      makeGlobal: true,
-      autoLoop: true,
-    });
-
-    state.runtime = hydra;
+    if (!state.runtime) {
+      state.runtime = new window.Hydra({
+        canvas: els.canvas,
+        detectAudio: false,
+        makeGlobal: true,
+        autoLoop: true,
+        liveMode: state.runtimeMode,
+      });
+    }
+    const hydra = state.runtime;
     window.__playgroundParams = { ...state.values };
 
     const script = `const params = window.__playgroundParams;\n${els.code.value}`;
     hydra.eval(script);
 
-    setStatus("Live");
+    setStatus(
+      state.runtimeMode === "continuous" ? "Live (continuous)" : "Live (restart)",
+    );
   } catch (error) {
     setStatus("Error", true);
     showError(error);
@@ -345,6 +373,19 @@ const initialize = () => {
     loadExample(event.target.value);
   });
 
+  if (els.runtimeMode) {
+    els.runtimeMode.addEventListener("change", (event) => {
+      const mode = event.target.value === "restart" ? "restart" : "continuous";
+      if (mode === state.runtimeMode) {
+        return;
+      }
+      state.runtimeMode = mode;
+      disposeRuntime();
+      queueShareSync();
+      runSketch();
+    });
+  }
+
   els.runButton.addEventListener("click", () => {
     runSketch();
   });
@@ -352,6 +393,20 @@ const initialize = () => {
   els.resetButton.addEventListener("click", () => {
     loadExample(state.selectedExample.id);
   });
+
+  if (els.resetRuntimeButton) {
+    els.resetRuntimeButton.addEventListener("click", () => {
+      clearError();
+      setStatus("Resetting runtime");
+      try {
+        resetRuntime();
+        runSketch();
+      } catch (error) {
+        setStatus("Error", true);
+        showError(error);
+      }
+    });
+  }
 
   els.code.addEventListener("input", () => {
     queueShareSync();
@@ -369,6 +424,10 @@ const initialize = () => {
   });
 
   const seed = readUrlState();
+  state.runtimeMode = seed.mode || "continuous";
+  if (els.runtimeMode) {
+    els.runtimeMode.value = state.runtimeMode;
+  }
   loadExample(seed.exampleId || playgroundExamples[0].id, {
     hasCodeOverride: seed.hasCodeOverride,
     codeOverride: seed.codeOverride,

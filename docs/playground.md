@@ -17,11 +17,15 @@ Published URL:
   - editable sketch code
   - a parameter schema (`name`, `min`, `max`, `step`, `value`)
 - Parameter changes trigger debounced reruns.
-- The runtime is recreated per run for predictable state and easier experimentation.
+- Runtime behavior is mode-driven:
+  - `Continuous` (default) keeps one runtime and evaluates into it.
+  - `Restart` disposes/recreates runtime on every run.
 - The page URL is synced to current state:
   - `?example=<id>` for preset selection
   - `?code=...` for code overrides
   - `?params={...}` for non-default parameter values
+- `Reset Sketch` restores the selected example code+params.
+- `Reset Runtime` clears the active runtime and re-runs current code.
 - `Copy Link` writes a shareable URL for the current state.
 
 ## Files
@@ -46,4 +50,9 @@ Published URL:
 
 ## Runtime note
 
-The playground currently uses `makeGlobal: true` inside a controlled page context to keep eval ergonomics simple. For host applications and multi-instance integration, prefer non-global mode.
+The playground currently uses `makeGlobal: true` inside a controlled page context to keep eval ergonomics simple.
+
+- `Mode: Continuous` keeps a persistent runtime and evaluates into it.
+- `Mode: Restart` disposes/recreates runtime on every run.
+
+For host applications and multi-instance integration, prefer non-global mode.

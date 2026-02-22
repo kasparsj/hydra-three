@@ -14,6 +14,7 @@ export interface HydraOptions {
   css3DElement?: HTMLElement;
   precision?: "lowp" | "mediump" | "highp";
   onError?: HydraRuntimeErrorHandler;
+  liveMode?: HydraLiveMode;
   extendTransforms?: Record<string, unknown> | Array<Record<string, unknown>>;
 }
 
@@ -30,6 +31,7 @@ export type HydraRuntimeErrorHandler = (
   error: unknown,
   context: HydraRuntimeErrorContext,
 ) => void;
+export type HydraLiveMode = "restart" | "continuous";
 
 export type HydraModuleMethod = (...args: unknown[]) => unknown;
 export type HydraNumericTuple = [number, number] | [number, number, number];
@@ -166,9 +168,11 @@ export interface HydraSynthApi {
   keydown: (event: KeyboardEvent) => void;
   keyup: (event: KeyboardEvent) => void;
   onError?: HydraRuntimeErrorHandler;
+  liveMode: HydraLiveMode;
   render: (output?: unknown) => void;
   setResolution: (width: number, height: number) => void;
   hush: () => void;
+  resetRuntime: () => void;
   tick: (dt: number, uniforms?: unknown) => void;
   shadowMap: (options?: Record<string, unknown>) => void;
   scene: (attributes?: HydraSceneAttributes) => HydraSceneApi;
@@ -198,6 +202,7 @@ export interface HydraSynthApi {
 declare class HydraRenderer {
   constructor(options?: HydraOptions);
   readonly synth: HydraSynthApi;
+  readonly liveMode: HydraLiveMode;
   readonly canvas: HTMLCanvasElement;
   readonly width: number;
   readonly height: number;
@@ -207,6 +212,7 @@ declare class HydraRenderer {
   eval(code: string): void;
   getScreenImage(callback: (blob: Blob) => void): void;
   hush(): void;
+  resetRuntime(): void;
   loadScript(url?: string, once?: boolean): Promise<void>;
   setResolution(width: number, height: number): void;
   tick(dt: number, uniforms?: unknown): void;

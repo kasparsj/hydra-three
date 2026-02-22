@@ -19,6 +19,7 @@ For behavior-level edge cases (units, precedence, and internal/public boundaries
 | `webgl`               | `1 \| 2`                         | `2`                | Select WebGL renderer backend.                       |
 | `precision`           | `"lowp" \| "mediump" \| "highp"` | platform-dependent | Shader precision hint.                               |
 | `onError`             | `(error, context) => void`       | unset              | Runtime hook for `update/afterUpdate/tick` failures. |
+| `liveMode`            | `"restart" \| "continuous"`      | `"continuous"`     | Eval behavior: rebuild on each run vs persistent scene reconciliation. |
 | `enableStreamCapture` | `boolean`                        | `true`             | Enables `vidRecorder` capture setup.                 |
 | `extendTransforms`    | object/array                     | `{}`               | Registers custom transforms at startup.              |
 | `css2DElement`        | `HTMLElement`                    | auto               | Target element for CSS2D renderer if used.           |

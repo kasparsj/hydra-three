@@ -164,8 +164,8 @@
           <h1>Interactive Playground</h1>
           <p>
             Edit code, tweak parameters, and re-render instantly. This runs
-            hydra-three in-browser with non-persistent runtime resets for
-            repeatable experimentation.
+            hydra-three in-browser with either continuous live mode or full
+            restart mode.
           </p>
         </section>
 
@@ -175,8 +175,14 @@
             <div class="toolbar">
               <label for="example-select">Example:</label>
               <select id="example-select"></select>
+              <label for="runtime-mode">Mode:</label>
+              <select id="runtime-mode">
+                <option value="continuous">Continuous</option>
+                <option value="restart">Restart</option>
+              </select>
               <button id="run-btn" type="button">Run</button>
-              <button id="reset-btn" type="button">Reset</button>
+              <button id="reset-btn" type="button">Reset Sketch</button>
+              <button id="reset-runtime-btn" type="button">Reset Runtime</button>
               <button id="copy-link-btn" type="button">Copy Link</button>
               <span id="status">Idle</span>
               <span id="share-status" aria-live="polite"></span>
