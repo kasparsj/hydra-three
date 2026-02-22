@@ -15,6 +15,7 @@
     "css3DElement",
     "precision",
     "onError",
+    "liveMode",
     "extendTransforms"
   ],
   "hydraRendererMembers": [
@@ -22,6 +23,7 @@
     "eval",
     "getScreenImage",
     "hush",
+    "resetRuntime",
     "loadScript",
     "setResolution",
     "tick",
@@ -48,9 +50,11 @@
     "keydown",
     "keyup",
     "onError",
+    "liveMode",
     "render",
     "setResolution",
     "hush",
+    "resetRuntime",
     "tick",
     "shadowMap",
     "scene",
@@ -263,9 +267,9 @@
     ]
   },
   "counts": {
-    "constructorOptions": 16,
-    "hydraRendererMembers": 10,
-    "hydraSynthMembers": 44,
+    "constructorOptions": 17,
+    "hydraRendererMembers": 11,
+    "hydraSynthMembers": 46,
     "sceneMembers": 20,
     "transformChainMembers": 8,
     "modules": 10,
