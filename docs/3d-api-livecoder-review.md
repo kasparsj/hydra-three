@@ -3,45 +3,51 @@
 ## A) Current API Map
 
 1. Bootstrap and runtime ownership
+
 - `HydraRenderer` is the main entry point with constructor options in `src/hydra-synth.js:117` and typed in `src/index.d.ts:1`.
 - Runtime registration and active-runtime switching happen in `src/hydra-synth.js:256` and `src/three/runtime.js:2`.
 
 2. Public API surface
+
 - The live surface is assembled onto `synth` in `src/hydra-synth.js:157`.
 - Core modules are short namespaces (`gm`, `mt`, `tx`, `cmp`, `rnd`, `nse`, `arr`, `gui`, `el`) assigned in `src/hydra-synth.js:194`.
 - API breadth is large: 44 `HydraSynthApi` members, 10 namespaces, 67 GLSL transforms in `docs/api.md:15`, `docs/api.md:18`, `docs/api.md:19`.
 
 3. Scene layer
+
 - `scene()` resolves to `HydraScene` via `src/hydra-synth.js:768` and `src/three/scene.js:631`.
 - Scene graph methods include mesh/points/lines/lights/world/group/out in `src/three/scene.js:521`, `src/three/scene.js:531`, `src/three/scene.js:663`, `src/three/scene.js:677`.
 
 4. Signal-chain layer and compile path
+
 - Chain objects are `GlslSource` in `src/glsl-source.js:9`.
 - Generator registration and chain method injection happen in `src/generator-factory.js:55`.
 - `.out()` compiles chain/passes in `src/lib/mixins.js:188`.
 
 5. Render lifecycle and event model
+
 - Tick/update/render flow is `src/hydra-synth.js:628`.
 - Output pass assembly and terminal routing are in `src/output.js:133`.
 - Input hooks are canvas/document listeners mapped to user handlers in `src/canvas.js:43`.
 
 ## B) Friction Audit
 
-| Issue | Evidence (`file:line`) | Why confusing | Severity | Suggested fix |
-|---|---|---|---|---|
-| Globals mutate by default | `src/hydra-synth.js:123`; `src/hydra-synth.js:331`; `src/hydra-synth.js:351`; `src/eval-sandbox.js:88` | Live-coders get speed, but sketches become host-coupled and harder to reason about in multi-instance contexts | High | vNext default `globals: false`; add explicit `liveGlobals(true)` for stage/live sessions |
-| Hidden active-runtime context | `src/three/runtime.js:25`; `src/three/runtime.js:67`; `src/three/mt.js:151`; `src/three/tx.js:264` | Same helper call can target different runtime depending implicit active state | High | Bind helper namespaces per instance only (`H.tex`, `H.geom`, etc.) and remove fallback to global active runtime in vNext |
-| Internal API leaks into user workflow | `docs/reference/semantic-clarifications.md:56`; `docs/reference/semantic-clarifications.md:58`; `examples/box-instanced-grid.js:34` | Users copy `_mesh` from examples despite docs saying internal | High | Replace example usage with public `.mesh(..., { instanced })`; warn on `_` method calls |
-| Rotation unit mismatch | `src/glsl/glsl-functions.js:376`; `docs/reference/semantic-clarifications.md:7`; `examples/box.js:16` | Shader `rotate()` expects degrees while object rotation uses radians; context-switch tax during improvisation | High | Add `rotateDeg()` and `rotateRad()`; keep `rotate()` as compatibility alias with warning |
-| Orbit controls require `Alt` with no API-level signal | `src/three/HydraOrbitControls.js:833`; `src/three/HydraOrbitControls.js:1034`; `README.md:136` | “Controls don’t work” is a common live-coding interruption if modifier key behavior is not obvious | High | Add `controls.modifier` option (`none`, `alt`, `shift`, `meta`) |
-| Surface is broad and abbreviation-heavy | `docs/api.md:15`; `docs/api.md:18`; `docs/api.md:136`; `src/hydra-synth.js:194` | Memorization load is high for newcomers and occasional users | Medium | Add long-name aliases (`geom`, `mat`, `tex`, `compose`, `random`, `noise`) and a smaller “fast path” Stage API |
-| Implicit scene/object reuse by name | `src/three/scene.js:161`; `src/three/scene.js:163`; `src/three/scene.js:189` | Re-running snippets may mutate prior objects unexpectedly if names match | Medium | Make reuse explicit (`reuse: true`) and default to fresh scene in live mode |
-| `.out()` pass routing is hard to predict | `src/output.js:181`; `src/output.js:192`; `docs/reference/semantic-clarifications.md:46` | FX + renderTarget combinations require understanding internals | Medium | Add explicit `render({ to, fx, target })` API with deterministic routing |
-| Synonyms/aliases are inconsistent | `src/three/scene.js:319`; `src/three/scene.js:320`; `src/three/scene.js:323`; `src/output.js:200` | Multiple spellings increase cognitive branching while live-editing | Medium | Define canonical names (`lineLoop`, `lineStrip`, `css2d`, `css3d`) and keep aliases as deprecations only |
+| Issue                                                 | Evidence (`file:line`)                                                                                                              | Why confusing                                                                                                 | Severity | Suggested fix                                                                                                            |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Globals mutate by default                             | `src/hydra-synth.js:123`; `src/hydra-synth.js:331`; `src/hydra-synth.js:351`; `src/eval-sandbox.js:88`                              | Live-coders get speed, but sketches become host-coupled and harder to reason about in multi-instance contexts | High     | vNext default `globals: false`; add explicit `liveGlobals(true)` for stage/live sessions                                 |
+| Hidden active-runtime context                         | `src/three/runtime.js:25`; `src/three/runtime.js:67`; `src/three/mt.js:151`; `src/three/tx.js:264`                                  | Same helper call can target different runtime depending implicit active state                                 | High     | Bind helper namespaces per instance only (`H.tex`, `H.geom`, etc.) and remove fallback to global active runtime in vNext |
+| Internal API leaks into user workflow                 | `docs/reference/semantic-clarifications.md:56`; `docs/reference/semantic-clarifications.md:58`; `examples/box-instanced-grid.js:34` | Users copy `_mesh` from examples despite docs saying internal                                                 | High     | Replace example usage with public `.mesh(..., { instanced })`; warn on `_` method calls                                  |
+| Rotation unit mismatch                                | `src/glsl/glsl-functions.js:376`; `docs/reference/semantic-clarifications.md:7`; `examples/box.js:16`                               | Shader `rotate()` expects degrees while object rotation uses radians; context-switch tax during improvisation | High     | Add `rotateDeg()` and `rotateRad()`; keep `rotate()` as compatibility alias with warning                                 |
+| Orbit controls require `Alt` with no API-level signal | `src/three/HydraOrbitControls.js:833`; `src/three/HydraOrbitControls.js:1034`; `README.md:136`                                      | “Controls don’t work” is a common live-coding interruption if modifier key behavior is not obvious            | High     | Add `controls.modifier` option (`none`, `alt`, `shift`, `meta`)                                                          |
+| Surface is broad and abbreviation-heavy               | `docs/api.md:15`; `docs/api.md:18`; `docs/api.md:136`; `src/hydra-synth.js:194`                                                     | Memorization load is high for newcomers and occasional users                                                  | Medium   | Add long-name aliases (`geom`, `mat`, `tex`, `compose`, `random`, `noise`) and a smaller “fast path” Stage API           |
+| Implicit scene/object reuse by name                   | `src/three/scene.js:161`; `src/three/scene.js:163`; `src/three/scene.js:189`                                                        | Re-running snippets may mutate prior objects unexpectedly if names match                                      | Medium   | Make reuse explicit (`reuse: true`) and default to fresh scene in live mode                                              |
+| `.out()` pass routing is hard to predict              | `src/output.js:181`; `src/output.js:192`; `docs/reference/semantic-clarifications.md:46`                                            | FX + renderTarget combinations require understanding internals                                                | Medium   | Add explicit `render({ to, fx, target })` API with deterministic routing                                                 |
+| Synonyms/aliases are inconsistent                     | `src/three/scene.js:319`; `src/three/scene.js:320`; `src/three/scene.js:323`; `src/output.js:200`                                   | Multiple spellings increase cognitive branching while live-editing                                            | Medium   | Define canonical names (`lineLoop`, `lineStrip`, `css2d`, `css3d`) and keep aliases as deprecations only                 |
 
 ## C) Proposed API vNext
 
 Design principles:
+
 1. One-liner to first 3D visual.
 2. Full-word names by default; short aliases optional.
 3. Explicit runtime, no hidden active context.
@@ -73,12 +79,15 @@ interface StageConfig {
   name?: string;
   background?: number | string;
   reuse?: boolean;
-  camera?: "ortho" | "perspective" | {
-    type?: "ortho" | "perspective";
-    eye?: [number, number, number];
-    target?: [number, number, number];
-    controls?: { enabled?: boolean; modifier?: ControlModifier };
-  };
+  camera?:
+    | "ortho"
+    | "perspective"
+    | {
+        type?: "ortho" | "perspective";
+        eye?: [number, number, number];
+        target?: [number, number, number];
+        controls?: { enabled?: boolean; modifier?: ControlModifier };
+      };
   lights?: false | "basic" | "studio" | Record<string, unknown>;
   world?: false | "ground" | "atmosphere" | Record<string, unknown>;
   clear?: number | { amount: number; color?: number | string };
@@ -88,36 +97,63 @@ interface Stage {
   add(geom: unknown, mat?: unknown, opts?: Record<string, unknown>): this;
   box(mat?: unknown, opts?: Record<string, unknown>): this;
   sphere(mat?: unknown, opts?: Record<string, unknown>): this;
-  points(grid?: number | [number, number], mat?: unknown, opts?: Record<string, unknown>): this;
-  lines(spec?: number | [number, number], mat?: unknown, opts?: Record<string, unknown>): this;
-  lineStrip(spec?: number | [number, number], mat?: unknown, opts?: Record<string, unknown>): this;
-  lineLoop(spec?: number | [number, number], mat?: unknown, opts?: Record<string, unknown>): this;
-  instanced(geom: unknown, mat: unknown, count: number, opts?: Record<string, unknown>): unknown;
+  points(
+    grid?: number | [number, number],
+    mat?: unknown,
+    opts?: Record<string, unknown>,
+  ): this;
+  lines(
+    spec?: number | [number, number],
+    mat?: unknown,
+    opts?: Record<string, unknown>,
+  ): this;
+  lineStrip(
+    spec?: number | [number, number],
+    mat?: unknown,
+    opts?: Record<string, unknown>,
+  ): this;
+  lineLoop(
+    spec?: number | [number, number],
+    mat?: unknown,
+    opts?: Record<string, unknown>,
+  ): this;
+  instanced(
+    geom: unknown,
+    mat: unknown,
+    count: number,
+    opts?: Record<string, unknown>,
+  ): unknown;
 
   group(name?: string, attrs?: Record<string, unknown>): unknown;
   obj(index?: number): unknown;
   clear(amount?: number, color?: number | string): this; // alias of autoClear
   fx(options: Record<string, unknown>): this;
-  render(out?: unknown, options?: { target?: unknown; css?: "2d" | "3d" | false }): this; // alias of out
+  render(
+    out?: unknown,
+    options?: { target?: unknown; css?: "2d" | "3d" | false },
+  ): this; // alias of out
   texture(out?: unknown, options?: Record<string, unknown>): unknown; // alias of tex
 }
 
 interface SignalChain {
   rotateDeg(angle?: number, speed?: number): SignalChain;
   rotateRad(angle?: number, speed?: number): SignalChain;
-  material(type?: "basic" | "lambert" | "phong", opts?: Record<string, unknown>): unknown;
+  material(
+    type?: "basic" | "lambert" | "phong",
+    opts?: Record<string, unknown>,
+  ): unknown;
 }
 ```
 
 ## D) Before/After Usage Examples
 
 1. Task: textured spinning box  
-Evidence: `examples/box.js:2`, `examples/box.js:9`
+   Evidence: `examples/box.js:2`, `examples/box.js:9`
 
 Old:
 
 ```js
-perspective([2,2,3], [0,0,0], {controls: true});
+perspective([2, 2, 3], [0, 0, 0], { controls: true });
 const geom = gm.box();
 const mat = osc().rotate(noise(1).mult(45)).phong();
 const sc = scene().lights().mesh(geom, mat).out();
@@ -125,13 +161,19 @@ update = () => {
   const box = sc.at(0);
   box.rotation.x += 0.01;
   box.rotation.y += 0.01;
-}
+};
 ```
 
 New:
 
 ```js
-const st = H.stage({ camera: { type: "perspective", controls: { enabled: true, modifier: "none" } }, lights: "basic" })
+const st = H.stage({
+  camera: {
+    type: "perspective",
+    controls: { enabled: true, modifier: "none" },
+  },
+  lights: "basic",
+})
   .box(osc().rotateDeg(noise(1).mult(45)).material("phong"))
   .render();
 
@@ -145,7 +187,7 @@ H.onFrame(() => {
 Estimate: ~40-45% fewer lines/keystrokes.
 
 2. Task: points trail  
-Evidence: `examples/points/dots.js:8`, `examples/points/dots.js:10`
+   Evidence: `examples/points/dots.js:8`, `examples/points/dots.js:10`
 
 Old:
 
@@ -153,7 +195,7 @@ Old:
 scene()
   .points([500, 500], mt.dots(pos, size, color))
   .autoClear(0.001)
-  .out()
+  .out();
 ```
 
 New:
@@ -168,25 +210,22 @@ H.stage({ camera: "ortho" })
 Estimate: ~30-35% fewer keystrokes.
 
 3. Task: scene-to-texture bridge  
-Evidence: `examples/tex-map.js:12`, `examples/tex-map.js:25`
+   Evidence: `examples/tex-map.js:12`, `examples/tex-map.js:25`
 
 Old:
 
 ```js
-const dotsTex = scene({background: color(1,1,1)})
+const dotsTex = scene({ background: color(1, 1, 1) })
   .points([500, 500], dotsMat)
   .tex(o1);
 
-const sc = scene()
-  .lights({all: true, intensity: 2.5})
-  .world({})
-  .out();
+const sc = scene().lights({ all: true, intensity: 2.5 }).world({}).out();
 ```
 
 New:
 
 ```js
-const dotsTex = H.stage({ background: color(1,1,1) })
+const dotsTex = H.stage({ background: color(1, 1, 1) })
   .points([500, 500], dotsMat)
   .texture(o1);
 
@@ -196,26 +235,28 @@ H.stage({ lights: { all: true, intensity: 2.5 }, world: "ground" }).render();
 Estimate: ~30% fewer lines, clearer intent.
 
 4. Task: instanced geometry (without private APIs)  
-Evidence: `examples/box-instanced-grid.js:34`, `docs/reference/semantic-clarifications.md:58`
+   Evidence: `examples/box-instanced-grid.js:34`, `docs/reference/semantic-clarifications.md:58`
 
 Old:
 
 ```js
-const sc = scene({background: color(1,1,0)}).lights().out();
-const box = sc._mesh(geom, mat, {instanced: count});
+const sc = scene({ background: color(1, 1, 0) })
+  .lights()
+  .out();
+const box = sc._mesh(geom, mat, { instanced: count });
 ```
 
 New:
 
 ```js
-const st = H.stage({ background: color(1,1,0), lights: "basic" }).render();
+const st = H.stage({ background: color(1, 1, 0), lights: "basic" }).render();
 const box = st.instanced(geom, mat, count);
 ```
 
 Estimate: ~25% fewer keystrokes and no internal method dependency.
 
 5. Task: world+fog setup for creative scene  
-Evidence: `site/playground/examples.js:666`, `site/playground/examples.js:668`
+   Evidence: `site/playground/examples.js:666`, `site/playground/examples.js:668`
 
 Old:
 
@@ -241,25 +282,31 @@ Estimate: ~20-25% fewer keystrokes, better discoverability via presets.
 ## E) Migration Strategy
 
 Phase 1 (non-breaking, fastest ROI)
+
 1. Add aliases only: `stage` -> `scene`, `render` -> `out`, `clear` -> `autoClear`.
 2. Add friendly namespaces alongside legacy: `geom/mat/tex/compose/random/noise`.
 3. Stop teaching internals in examples/docs.
+
 - Deprecation/shim: keep old names fully functional.
 - Risk: low.
 - Fallback: disable aliases behind feature flag if regressions appear.
 
 Phase 2 (additive vNext surface)
+
 1. Introduce `stage(config)` presets and `onFrame`.
 2. Add `rotateDeg` + `rotateRad`; keep `rotate` as compatibility alias.
 3. Add control modifier option for orbit controls.
+
 - Deprecation/shim: console warnings for ambiguous `rotate` and `_` methods.
 - Risk: medium (docs and examples must be synchronized).
 - Fallback: `legacy: true` runtime option to keep old behavior defaults.
 
 Phase 3 (breaking cleanup, major version)
+
 1. Flip default from global to non-global.
 2. Make canonical method names primary (`lineLoop`, `lineStrip`), keep old aliases behind compat layer.
 3. Make scene/object reuse opt-in (`reuse: true`) for named resources.
+
 - Deprecation/shim: one major cycle with warnings + codemod.
 - Risk: high for existing live sets relying on globals.
 - Fallback: publish `@legacy` compatibility bundle for transition period.
@@ -267,28 +314,28 @@ Phase 3 (breaking cleanup, major version)
 ## F) Quick Wins (next 1-2 sprints)
 
 1. Remove internal `_mesh` from public examples  
-Files: `examples/box-instanced-grid.js:34`, `docs/reference/semantic-clarifications.md:55`  
-Why: immediate API trust improvement.
+   Files: `examples/box-instanced-grid.js:34`, `docs/reference/semantic-clarifications.md:55`  
+   Why: immediate API trust improvement.
 
 2. Add friendly namespace aliases on `synth`  
-Files: `src/hydra-synth.js:194`, `src/index.d.ts:185`, `docs/api.md:136`  
-Why: faster discoverability without breakage.
+   Files: `src/hydra-synth.js:194`, `src/index.d.ts:185`, `docs/api.md:136`  
+   Why: faster discoverability without breakage.
 
 3. Add `render()` and `clear()` aliases  
-Files: `src/lib/mixins.js:188`, `src/lib/mixins.js:169`, `src/index.d.ts:83`  
-Why: lower cognitive overhead in live sessions.
+   Files: `src/lib/mixins.js:188`, `src/lib/mixins.js:169`, `src/index.d.ts:83`  
+   Why: lower cognitive overhead in live sessions.
 
 4. Make orbit modifier configurable  
-Files: `src/three/HydraOrbitControls.js:833`, `src/lib/mixins.js:45`, `README.md:136`  
-Why: removes “controls feel broken” live-coding interruption.
+   Files: `src/three/HydraOrbitControls.js:833`, `src/lib/mixins.js:45`, `README.md:136`  
+   Why: removes “controls feel broken” live-coding interruption.
 
 5. Add explicit rotate unit helpers  
-Files: `src/glsl/glsl-functions.js:360`, `docs/reference/semantic-clarifications.md:7`  
-Why: resolves high-frequency unit confusion.
+   Files: `src/glsl/glsl-functions.js:360`, `docs/reference/semantic-clarifications.md:7`  
+   Why: resolves high-frequency unit confusion.
 
 6. Remove hidden global dependency from `arr.image`  
-Files: `src/three/arr.js:191`, `src/index.d.ts:120`  
-Why: cleaner runtime ownership and fewer surprising failures.
+   Files: `src/three/arr.js:191`, `src/index.d.ts:120`  
+   Why: cleaner runtime ownership and fewer surprising failures.
 
 ## Notes on priority
 
@@ -300,23 +347,56 @@ Why: cleaner runtime ownership and fewer surprising failures.
 This specific redesign goal is now implemented as the default runtime behavior.
 
 1. New constructor/runtime option
+
 - `liveMode: "restart" | "continuous"` added to runtime options and synth surface in `src/hydra-synth.js:133`, `src/hydra-synth.js:146`, `src/hydra-synth.js:182`.
 - Default constructor behavior now uses `continuous` live mode in `src/hydra-synth.js:133`.
 - Type definitions added in `src/index.d.ts:17`, `src/index.d.ts:34`, `src/index.d.ts:171`, `src/index.d.ts:204`.
 
 2. Continuous eval lifecycle
+
 - `HydraRenderer.eval` now wraps eval with scene reconciliation hooks when mode is continuous in `src/hydra-synth.js:287`.
 - Lifecycle hooks are implemented in `src/three/scene.js:272` and `src/three/scene.js:286`.
 
 3. Scene/object reconciliation for live reruns
+
 - Live-eval state, deterministic auto-naming, touch tracking, and pruning are implemented in `src/three/scene.js:110`, `src/three/scene.js:132`, `src/three/scene.js:151`, `src/three/scene.js:180`, `src/three/scene.js:199`.
 - Graph-mutation-aware cleanup path is handled in `src/three/scene.js:295`.
 
 4. Playground UX support
+
 - Mode selector (`Continuous`/`Restart`) added in `site/playground/index.html:178`.
 - Runtime mode state, URL persistence, and mode-specific run behavior are wired in `site/playground/playground.js:5`, `site/playground/playground.js:27`, `site/playground/playground.js:313`, `site/playground/playground.js:334`, `site/playground/playground.js:401`.
 - Documentation updated in `docs/playground.md:51` and `docs/reference/parameter-reference.md:22`.
 
 5. Explicit runtime reset API
+
 - `resetRuntime()` is now exposed on both runtime and synth surfaces in `src/hydra-synth.js:184`, `src/hydra-synth.js:325`, `src/index.d.ts:175`, `src/index.d.ts:215`.
 - Playground adds separate `Reset Runtime` action in `site/playground/index.html:185` and `site/playground/playground.js:99`, `site/playground/playground.js:396`.
+
+## G) Continuous Mode: Remaining Gaps (Post-Implementation)
+
+| Issue                                                  | Evidence (`file:line`)                                                                                 | Why confusing                                                                                                                                           | Severity | Suggested fix                                                                                                                             |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Eval-order object identity drift                       | `src/three/scene.js:138`; `src/three/scene.js:143`; `src/three/scene.js:286`; `src/three/scene.js:148` | Reordering lines in a live sketch can retarget objects unexpectedly because unnamed identities are index-based per eval cycle                           | High     | Add explicit stable `key` support for scene/group/object APIs; keep current name fallback as compatibility behavior                       |
+| Deletion edits can leave stale objects                 | `src/three/scene.js:301`; `src/three/scene.js:542`; `src/three/scene.js:596`; `src/three/scene.js:823` | If an edit removes object creation and no graph mutation is registered, prune is skipped and stale objects remain visible                               | High     | Mark `group()` as graph mutation and run reconciliation whenever continuous eval touched a scene, not only when add-mutations are flagged |
+| Pruned nodes are not fully disposed                    | `src/three/scene.js:192`; `src/three/scene.js:194`; `src/output.js:113`                                | Removed meshes/materials/geometries can survive in GPU memory over long sessions because prune only removes from parent and optionally calls `.clear()` | High     | Add recursive disposal for geometry/material/texture when removing untouched nodes                                                        |
+| Auto-generated live names can collide with user naming | `src/three/scene.js:17`; `src/three/scene.js:145`; `src/three/scene.js:382`; `src/three/scene.js:411`  | Users can accidentally pick `__live_*` names and trigger unexpected reuse behavior in continuous mode                                                   | Medium   | Reserve live identity in `userData` (symbol/private key) and stop relying on public object names for unnamed tracking                     |
+| API docs drift from runtime changes                    | `src/hydra-synth.js:133`; `src/index.d.ts:175`; `docs/api.md:13`; `docs/api.md:40`; `docs/api.md:23`   | Discoverability suffers when generated API docs omit new public defaults/methods (`liveMode` default, `resetRuntime`)                                   | Medium   | Regenerate `docs/api.md` and enforce docs sync in merge checks for any `src/index.d.ts` changes                                           |
+
+## H) Updated Quick Wins (next 1-2 sprints)
+
+1. Add stable object identity keys for continuous mode  
+   Files: `src/three/scene.js:148`, `src/index.d.ts:57`, `docs/reference/parameter-reference.md:29`  
+   Why: avoids identity flicker when live-coders reorder code quickly.
+
+2. Make reconciliation robust for subtractive edits  
+   Files: `src/three/scene.js:301`, `src/three/scene.js:823`  
+   Why: removes stale scene leftovers when code deletes object creation paths.
+
+3. Dispose orphaned scene resources during prune  
+   Files: `src/three/scene.js:186`, `src/three/scene.js:192`  
+   Why: prevents GPU/memory creep in long live sessions.
+
+4. Regenerate API docs and keep them in lockstep  
+   Files: `docs/api.md:13`, `docs/api.md:40`, `package.json:35`, `package.json:63`  
+   Why: improves discoverability and trust in public API docs.
