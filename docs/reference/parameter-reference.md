@@ -30,14 +30,14 @@ For behavior-level edge cases (units, precedence, and internal/public boundaries
 
 | Method                        | Purpose                          | Typical usage                         |
 | ----------------------------- | -------------------------------- | ------------------------------------- |
-| `scene()`                     | Create or fetch a scene handle   | `scene({ name: "main" })`             |
-| `.mesh(geom, mat, options)`   | Add mesh geometry                | `.mesh(gm.box(), osc().phong())`      |
+| `scene()`                     | Create or fetch a scene handle   | `scene({ name: "main", key: "main" })` |
+| `.mesh(geom, mat, options)`   | Add mesh geometry                | `.mesh(gm.box(), osc().phong(), { key: "hero" })` |
 | `.points(geom, mat, options)` | Add points primitive             | `.points([100, 100], mt.dots())`      |
 | `.lines(...)`                 | Add line segments                | `.lines([100], mt.lines())`           |
 | `.lineloop(...)`              | Add closed line loop             | `.lineloop([200], mt.lineloop())`     |
 | `.lights(options)`            | Configure runtime lights group   | `.lights({ all: true })`              |
 | `.world(options)`             | Configure sky/ground/fog helpers | `.world({ ground: true, fog: true })` |
-| `.group(attrs)`               | Create/attach subgroup           | `scene().group({ name: "cluster" })`  |
+| `.group(attrs)`               | Create/attach subgroup           | `scene({ key: "main" }).group({ name: "cluster", key: "cluster" })` |
 | `.out(output, options)`       | Bind scene to output pipeline    | `.out(o0)`                            |
 
 Identity note for live coding:

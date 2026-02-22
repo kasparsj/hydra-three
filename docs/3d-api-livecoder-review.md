@@ -386,9 +386,11 @@ Update (2026-02-22): stale-object deletion on subtractive eval is addressed by s
 
 ## H) Updated Quick Wins (next 1-2 sprints)
 
-1. Migrate continuous examples/docs to explicit `key` usage  
-   Files: `site/playground/examples.js:55`, `examples/box.js:9`, `docs/reference/parameter-reference.md:29`  
-   Why: captures the new stable-identity path in the sketches users copy first.
+Update (2026-02-22): explicit `key` usage was added to first-touch examples/docs in `site/playground/examples.js:55`, `examples/box.js:9`, and `docs/reference/parameter-reference.md:33`.
+
+1. Continue migrating remaining examples to explicit `key` usage  
+   Files: `site/playground/examples.js:115`, `site/playground/examples.js:388`, `examples/tex-map.js:25`  
+   Why: closes the remaining eval-order drift cases in sketches users copy and remix.
 
 2. Dispose replaced `geometry`/`material` on reused meshes  
    Files: `src/three/scene.js:543`, `src/three/scene.js:553`, `src/three/scene.js:559`  
@@ -410,7 +412,7 @@ Update (2026-02-22): stale-object deletion on subtractive eval is addressed by s
 | 2    | Orbit controls hard-gated by `Alt` modifier                 | `src/three/HydraOrbitControls.js:833`; `src/three/HydraOrbitControls.js:1034`           | `examples/box.js:1`; `site/playground/examples.js:49`; `site/playground/examples.js:812` | 4 x 3 = 12    |
 | 3    | Rotation unit mismatch (`rotate` degrees vs object radians) | `src/glsl/glsl-functions.js:376`; `examples/box.js:6`; `examples/box.js:16`             | `site/playground/examples.js:52`; `examples/box.js:6`                                    | 3 x 4 = 12    |
 | 4    | Hidden runtime fallback context in helper modules           | `src/three/runtime.js:25`; `src/three/mt.js:151`; `src/three/tx.js:264`                 | `site/playground/examples.js:57`; `site/playground/examples.js:116`                      | 4 x 2 = 8     |
-| 5    | Eval-order drift for sketches that omit `key`               | `src/three/scene.js:133`; `src/three/scene.js:616`; `src/index.d.ts:53`                 | `site/playground/examples.js:55`; `examples/box.js:9`                                    | 3 x 2 = 6     |
+| 5    | Eval-order drift for sketches that omit `key`               | `src/three/scene.js:133`; `src/three/scene.js:616`; `src/index.d.ts:53`                 | `site/playground/examples.js:115`; `examples/tex-map.js:25`                              | 3 x 2 = 6     |
 | 6    | Replaced mesh resources are not auto-disposed               | `src/three/scene.js:543`; `src/three/scene.js:553`; `src/three/scene.js:559`            | `site/playground/examples.js:55`; `site/playground/examples.js:666`                      | 3 x 2 = 6     |
 | 7    | Canvas input handlers can bind to stale runtime on restart  | `src/canvas.js:42`; `src/canvas.js:49`; `site/playground/playground.js:317`             | `site/playground/playground.js:317`; `site/playground/playground.js:371`                 | 3 x 2 = 6     |
 

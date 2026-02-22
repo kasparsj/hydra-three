@@ -6,9 +6,9 @@ const geom = gm.box(); // cube geometry
 const mat = osc().rotate(noise(1).mult(45)).phong(); // use a hydra texture mapped onto a phong material
 
 // compose scene
-const sc = scene()
+const sc = scene({ key: "box-scene" })
     .lights() // default lighting setup
-    .mesh(geom, mat) // add mesh to scene
+    .mesh(geom, mat, { key: "box-mesh" }) // add mesh to scene
     .out();
 
 update = () => {

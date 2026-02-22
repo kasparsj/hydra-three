@@ -52,9 +52,9 @@ const mat = osc(params.frequency, params.sync, params.offset)
   .rotate(noise(params.noiseScale).mult(45))
   .phong();
 
-const sc = scene()
+const sc = scene({ key: "textured-box-scene" })
   .lights({ all: true })
-  .mesh(gm.box(), mat)
+  .mesh(gm.box(), mat, { key: "textured-box-mesh" })
   .out();
 
 update = () => {
