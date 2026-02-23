@@ -71,6 +71,7 @@ const smokeHtml = `<!doctype html>
         continuousPruneRemovedStaleMesh: null,
         continuousPrunePreservedTouchedMesh: null,
         continuousKeyedIdentityStable: null,
+        continuousReservedLiveNameNoCollision: null,
         continuousDisposeReleasedRemovedResources: null,
         continuousDisposeRetainedSharedMaterial: null,
         continuousDisposeReleasedReplacedResources: null,
@@ -225,6 +226,40 @@ const smokeHtml = `<!doctype html>
           keyedAfter.length === 2 &&
           keyedBeforeByKey["mesh-a"] === keyedAfterByKey["mesh-a"] &&
           keyedBeforeByKey["mesh-b"] === keyedAfterByKey["mesh-b"]
+
+        hydra.eval(
+          'const H = window.__smokeRuntime.synth; const sc = H.scene({ name: "__continuousReservedName" }).out(); sc.mesh(H.gm.box(), H.mt.meshBasic({ color: 0xaa3355 }), { name: "__live_mesh_0" }); sc.mesh(H.gm.box(), H.mt.meshBasic({ color: 0x33aacc }));',
+        )
+        const reservedAfterFirst = H.scene({ name: "__continuousReservedName" }).find({
+          isMesh: true,
+        })
+        const reservedNamedFirst = reservedAfterFirst.filter(
+          (mesh) => mesh.name === "__live_mesh_0",
+        )
+        const reservedUnnamedFirst = reservedAfterFirst.filter(
+          (mesh) => mesh.name !== "__live_mesh_0",
+        )
+        hydra.eval(
+          'const H = window.__smokeRuntime.synth; const sc = H.scene({ name: "__continuousReservedName" }).out(); sc.mesh(H.gm.box(), H.mt.meshBasic({ color: 0xaa44ff }), { name: "__live_mesh_0" }); sc.mesh(H.gm.box(), H.mt.meshBasic({ color: 0x44ffaa }));',
+        )
+        const reservedAfterSecond = H.scene({ name: "__continuousReservedName" }).find({
+          isMesh: true,
+        })
+        const reservedNamedSecond = reservedAfterSecond.filter(
+          (mesh) => mesh.name === "__live_mesh_0",
+        )
+        const reservedUnnamedSecond = reservedAfterSecond.filter(
+          (mesh) => mesh.name !== "__live_mesh_0",
+        )
+        window.__smoke.continuousReservedLiveNameNoCollision =
+          reservedAfterFirst.length === 2 &&
+          reservedAfterSecond.length === 2 &&
+          reservedNamedFirst.length === 1 &&
+          reservedNamedSecond.length === 1 &&
+          reservedUnnamedFirst.length === 1 &&
+          reservedUnnamedSecond.length === 1 &&
+          reservedNamedFirst[0].uuid === reservedNamedSecond[0].uuid &&
+          reservedUnnamedFirst[0].uuid === reservedUnnamedSecond[0].uuid
 
         const disposableGeometry = H.gm.box()
         const disposableMaterial = H.mt.meshBasic({ color: 0xaaff66 })
@@ -567,6 +602,11 @@ try {
     "Expected keyed meshes to preserve identity across reorder in continuous eval",
   );
   assert.equal(
+    diagnostics.continuousReservedLiveNameNoCollision,
+    true,
+    "Expected unnamed live identity to avoid collisions with user names matching reserved prefixes",
+  );
+  assert.equal(
     diagnostics.continuousDisposeReleasedRemovedResources,
     true,
     "Expected continuous eval prune to dispose removed mesh geometry and material",
@@ -589,7 +629,7 @@ try {
   assert.equal(
     diagnostics.continuousUnkeyedHintEmitted,
     true,
-    "Expected continuous mode to warn when auto-generated names are used without key",
+    "Expected continuous mode to warn when auto-generated identity slots are used without key",
   );
   assert.equal(
     diagnostics.canvasInputReboundToActiveRuntime,

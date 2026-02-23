@@ -39855,33 +39855,43 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     return bound;
   };
   const runtimeStores = /* @__PURE__ */ new WeakMap();
-  const LIVE_NAME_PREFIX = "__live";
   const LIVE_CYCLE_KEY = "__hydraLiveCycle";
   const LIVE_IDENTITY_KEY = "__hydraLiveKey";
-  const LIVE_KEY_HINT = '[hydra-three] Continuous live mode auto-generated names for unkeyed objects. Add { key: "..." } for stable identity across reruns.';
+  const LIVE_AUTO_ID_KEY = "__hydraLiveAutoId";
+  const LIVE_AUTO_ID_ATTR = "__liveAutoId";
+  const LIVE_AUTO_PREFIX = "__hydraLiveAuto";
+  const LIVE_KEY_HINT = '[hydra-three] Continuous live mode auto-generated identity slots for unkeyed objects. Add { key: "..." } for stable identity across reruns.';
   const createStore = () => ({
     scenes: /* @__PURE__ */ Object.create(null),
     keyedScenes: /* @__PURE__ */ Object.create(null),
+    autoScenes: /* @__PURE__ */ Object.create(null),
     groups: /* @__PURE__ */ Object.create(null),
     keyedGroups: /* @__PURE__ */ Object.create(null),
+    autoGroups: /* @__PURE__ */ Object.create(null),
     meshes: [],
     namedMeshes: /* @__PURE__ */ Object.create(null),
     keyedMeshes: /* @__PURE__ */ Object.create(null),
+    autoMeshes: /* @__PURE__ */ Object.create(null),
     instancedMeshes: [],
     namedInstancedMeshes: /* @__PURE__ */ Object.create(null),
     keyedInstancedMeshes: /* @__PURE__ */ Object.create(null),
+    autoInstancedMeshes: /* @__PURE__ */ Object.create(null),
     lines: [],
     namedLines: /* @__PURE__ */ Object.create(null),
     keyedLines: /* @__PURE__ */ Object.create(null),
+    autoLines: /* @__PURE__ */ Object.create(null),
     lineLoops: [],
     namedLineLoops: /* @__PURE__ */ Object.create(null),
     keyedLineLoops: /* @__PURE__ */ Object.create(null),
+    autoLineLoops: /* @__PURE__ */ Object.create(null),
     lineSegments: [],
     namedLineSegments: /* @__PURE__ */ Object.create(null),
     keyedLineSegments: /* @__PURE__ */ Object.create(null),
+    autoLineSegments: /* @__PURE__ */ Object.create(null),
     points: [],
     namedPoints: /* @__PURE__ */ Object.create(null),
-    keyedPoints: /* @__PURE__ */ Object.create(null)
+    keyedPoints: /* @__PURE__ */ Object.create(null),
+    autoPoints: /* @__PURE__ */ Object.create(null)
   });
   const createDetachedRuntime = () => /* @__PURE__ */ Object.create(null);
   const clearNamedStore = (namedStore) => {
@@ -39924,6 +39934,14 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     clearNamedStore(store.keyedPoints);
     clearNamedStore(store.keyedScenes);
     clearNamedStore(store.keyedGroups);
+    clearNamedStore(store.autoScenes);
+    clearNamedStore(store.autoGroups);
+    clearNamedStore(store.autoMeshes);
+    clearNamedStore(store.autoInstancedMeshes);
+    clearNamedStore(store.autoLines);
+    clearNamedStore(store.autoLineLoops);
+    clearNamedStore(store.autoLineSegments);
+    clearNamedStore(store.autoPoints);
   };
   const resolveRuntime = (runtime) => {
     if (runtime) {
@@ -39986,14 +40004,14 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     const state = getLiveEvalState(runtime);
     return !!(state && state.active);
   };
-  const nextLiveName = (runtime, type) => {
+  const nextLiveAutoId = (runtime, type) => {
     const state = getLiveEvalState(runtime);
     if (!state || !state.active) {
       return null;
     }
     const nextId = state.counters[type] || 0;
     state.counters[type] = nextId + 1;
-    return `${LIVE_NAME_PREFIX}_${type}_${nextId}`;
+    return `${LIVE_AUTO_PREFIX}_${type}_${nextId}`;
   };
   const withLiveName = (runtime, attributes = {}, type = "object") => {
     if (!isLiveEvalActive(runtime) || attributes.name) {
@@ -40004,7 +40022,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       state.sawUnkeyedAutoNames = true;
     }
     return Object.assign({}, attributes, {
-      name: nextLiveName(runtime, type)
+      [LIVE_AUTO_ID_ATTR]: nextLiveAutoId(runtime, type)
     });
   };
   const normalizeLiveKey = (value) => {
@@ -40045,6 +40063,47 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     const stored = setLiveKey(object, normalized);
     if (stored) {
       keyedStore[stored] = object;
+    }
+    return stored;
+  };
+  const normalizeLiveAutoId = (value) => {
+    if (typeof value !== "string") {
+      return null;
+    }
+    const autoId = value.trim();
+    return autoId.length > 0 ? autoId : null;
+  };
+  const getLiveAutoId = (object) => {
+    if (!object || !object.userData) {
+      return null;
+    }
+    return normalizeLiveAutoId(object.userData[LIVE_AUTO_ID_KEY]);
+  };
+  const setLiveAutoId = (object, autoId) => {
+    if (!object) {
+      return null;
+    }
+    const normalized = normalizeLiveAutoId(autoId);
+    object.userData || (object.userData = {});
+    if (!normalized) {
+      delete object.userData[LIVE_AUTO_ID_KEY];
+      return null;
+    }
+    object.userData[LIVE_AUTO_ID_KEY] = normalized;
+    return normalized;
+  };
+  const bindLiveAutoIdentity = (object, autoId, autoStore) => {
+    if (!object || !autoStore) {
+      return null;
+    }
+    const previousAutoId = getLiveAutoId(object);
+    const normalized = normalizeLiveAutoId(autoId);
+    if (previousAutoId && previousAutoId !== normalized) {
+      delete autoStore[previousAutoId];
+    }
+    const stored = setLiveAutoId(object, normalized);
+    if (stored) {
+      autoStore[stored] = object;
     }
     return stored;
   };
@@ -40239,42 +40298,57 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     const scenes = Object.values(store.scenes);
     store.scenes = /* @__PURE__ */ Object.create(null);
     store.keyedScenes = /* @__PURE__ */ Object.create(null);
+    store.autoScenes = /* @__PURE__ */ Object.create(null);
     store.groups = /* @__PURE__ */ Object.create(null);
     store.keyedGroups = /* @__PURE__ */ Object.create(null);
+    store.autoGroups = /* @__PURE__ */ Object.create(null);
     store.meshes = [];
     store.namedMeshes = /* @__PURE__ */ Object.create(null);
     store.keyedMeshes = /* @__PURE__ */ Object.create(null);
+    store.autoMeshes = /* @__PURE__ */ Object.create(null);
     store.instancedMeshes = [];
     store.namedInstancedMeshes = /* @__PURE__ */ Object.create(null);
     store.keyedInstancedMeshes = /* @__PURE__ */ Object.create(null);
+    store.autoInstancedMeshes = /* @__PURE__ */ Object.create(null);
     store.lines = [];
     store.namedLines = /* @__PURE__ */ Object.create(null);
     store.keyedLines = /* @__PURE__ */ Object.create(null);
+    store.autoLines = /* @__PURE__ */ Object.create(null);
     store.lineLoops = [];
     store.namedLineLoops = /* @__PURE__ */ Object.create(null);
     store.keyedLineLoops = /* @__PURE__ */ Object.create(null);
+    store.autoLineLoops = /* @__PURE__ */ Object.create(null);
     store.lineSegments = [];
     store.namedLineSegments = /* @__PURE__ */ Object.create(null);
     store.keyedLineSegments = /* @__PURE__ */ Object.create(null);
+    store.autoLineSegments = /* @__PURE__ */ Object.create(null);
     store.points = [];
     store.namedPoints = /* @__PURE__ */ Object.create(null);
     store.keyedPoints = /* @__PURE__ */ Object.create(null);
+    store.autoPoints = /* @__PURE__ */ Object.create(null);
     const visit = (object) => {
       if (!object) {
         return;
       }
       const key = getLiveKey(object);
+      const autoId = getLiveAutoId(object);
       if (object.isScene && object.name) {
         store.scenes[object.name] = object;
       }
       if (object.isScene && key) {
         store.keyedScenes[key] = object;
       }
+      if (object.isScene && autoId) {
+        store.autoScenes[autoId] = object;
+      }
       if (object.isGroup && object.name) {
         store.groups[object.name] = object;
       }
       if (object.isGroup && key) {
         store.keyedGroups[key] = object;
+      }
+      if (object.isGroup && autoId) {
+        store.autoGroups[autoId] = object;
       }
       if (object.isInstancedMesh) {
         store.instancedMeshes.push(object);
@@ -40284,6 +40358,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         if (key) {
           store.keyedInstancedMeshes[key] = object;
         }
+        if (autoId) {
+          store.autoInstancedMeshes[autoId] = object;
+        }
       } else if (object.isMesh) {
         store.meshes.push(object);
         if (object.name) {
@@ -40291,6 +40368,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         }
         if (key) {
           store.keyedMeshes[key] = object;
+        }
+        if (autoId) {
+          store.autoMeshes[autoId] = object;
         }
       }
       if (object.isLineSegments) {
@@ -40301,6 +40381,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         if (key) {
           store.keyedLineSegments[key] = object;
         }
+        if (autoId) {
+          store.autoLineSegments[autoId] = object;
+        }
       } else if (object.isLineLoop) {
         store.lineLoops.push(object);
         if (object.name) {
@@ -40308,6 +40391,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         }
         if (key) {
           store.keyedLineLoops[key] = object;
+        }
+        if (autoId) {
+          store.autoLineLoops[autoId] = object;
         }
       } else if (object.isLine) {
         store.lines.push(object);
@@ -40317,6 +40403,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         if (key) {
           store.keyedLines[key] = object;
         }
+        if (autoId) {
+          store.autoLines[autoId] = object;
+        }
       }
       if (object.isPoints) {
         store.points.push(object);
@@ -40325,6 +40414,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         }
         if (key) {
           store.keyedPoints[key] = object;
+        }
+        if (autoId) {
+          store.autoPoints[autoId] = object;
         }
       }
       if (Array.isArray(object.children)) {
@@ -40464,11 +40556,14 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     const sceneOptions = Object.assign({}, options2, { runtime });
     const store = getStore(runtime);
     const sceneAttributes = withLiveName(runtime, attributes, "scene");
-    const { name, key } = sceneAttributes;
+    const { name, key, [LIVE_AUTO_ID_ATTR]: autoId } = sceneAttributes;
     const normalizedKey = normalizeLiveKey(key);
     let scene = normalizedKey ? store.keyedScenes[normalizedKey] : null;
     if (!scene && name) {
       scene = store.scenes[name];
+    }
+    if (!scene && autoId) {
+      scene = store.autoScenes[autoId];
     }
     if (!scene) {
       scene = new HydraScene(sceneOptions);
@@ -40490,6 +40585,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       store.scenes[scene.name] = scene;
     }
     bindLiveIdentity(scene, normalizedKey, store.keyedScenes);
+    bindLiveAutoIdentity(scene, autoId, store.autoScenes);
     markLiveTouch(runtime, scene, { scene: true });
     return scene;
   };
@@ -40497,11 +40593,14 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
     const meshAttrs = withLiveName(runtimeRef, attributes, "mesh");
-    const { name, key } = meshAttrs;
+    const { name, key, [LIVE_AUTO_ID_ATTR]: autoId } = meshAttrs;
     const normalizedKey = normalizeLiveKey(key);
     let mesh2 = normalizedKey ? store.keyedMeshes[normalizedKey] : null;
     if (!mesh2 && name) {
       mesh2 = store.namedMeshes[name];
+    }
+    if (!mesh2 && autoId) {
+      mesh2 = store.autoMeshes[autoId];
     }
     if (!mesh2) {
       mesh2 = new Mesh();
@@ -40517,6 +40616,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       store.namedMeshes[mesh2.name] = mesh2;
     }
     bindLiveIdentity(mesh2, normalizedKey, store.keyedMeshes);
+    bindLiveAutoIdentity(mesh2, autoId, store.autoMeshes);
     markLiveTouch(runtimeRef, mesh2);
     return mesh2;
   };
@@ -40524,11 +40624,14 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
     const instancedAttrs = withLiveName(runtimeRef, attributes, "instancedMesh");
-    const { name, key, geometry, material, count } = instancedAttrs;
+    const { name, key, geometry, material, count, [LIVE_AUTO_ID_ATTR]: autoId } = instancedAttrs;
     const normalizedKey = normalizeLiveKey(key);
     let mesh2 = normalizedKey ? store.keyedInstancedMeshes[normalizedKey] : null;
     if (!mesh2 && name) {
       mesh2 = store.namedInstancedMeshes[name];
+    }
+    if (!mesh2 && autoId) {
+      mesh2 = store.autoInstancedMeshes[autoId];
     }
     if (!mesh2) {
       mesh2 = new InstancedMesh(geometry, material, count);
@@ -40544,6 +40647,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       store.namedInstancedMeshes[mesh2.name] = mesh2;
     }
     bindLiveIdentity(mesh2, normalizedKey, store.keyedInstancedMeshes);
+    bindLiveAutoIdentity(mesh2, autoId, store.autoInstancedMeshes);
     markLiveTouch(runtimeRef, mesh2);
     return mesh2;
   };
@@ -40551,11 +40655,14 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
     const lineAttrs = withLiveName(runtimeRef, attributes, "line");
-    const { name, key } = lineAttrs;
+    const { name, key, [LIVE_AUTO_ID_ATTR]: autoId } = lineAttrs;
     const normalizedKey = normalizeLiveKey(key);
     let line2 = normalizedKey ? store.keyedLines[normalizedKey] : null;
     if (!line2 && name) {
       line2 = store.namedLines[name];
+    }
+    if (!line2 && autoId) {
+      line2 = store.autoLines[autoId];
     }
     if (!line2) {
       line2 = new Line();
@@ -40566,6 +40673,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       store.namedLines[line2.name] = line2;
     }
     bindLiveIdentity(line2, normalizedKey, store.keyedLines);
+    bindLiveAutoIdentity(line2, autoId, store.autoLines);
     markLiveTouch(runtimeRef, line2);
     return line2;
   };
@@ -40573,11 +40681,14 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
     const lineLoopAttrs = withLiveName(runtimeRef, attributes, "lineLoop");
-    const { name, key } = lineLoopAttrs;
+    const { name, key, [LIVE_AUTO_ID_ATTR]: autoId } = lineLoopAttrs;
     const normalizedKey = normalizeLiveKey(key);
     let lineLoop = normalizedKey ? store.keyedLineLoops[normalizedKey] : null;
     if (!lineLoop && name) {
       lineLoop = store.namedLineLoops[name];
+    }
+    if (!lineLoop && autoId) {
+      lineLoop = store.autoLineLoops[autoId];
     }
     if (!lineLoop) {
       lineLoop = new LineLoop();
@@ -40588,6 +40699,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       store.namedLineLoops[lineLoop.name] = lineLoop;
     }
     bindLiveIdentity(lineLoop, normalizedKey, store.keyedLineLoops);
+    bindLiveAutoIdentity(lineLoop, autoId, store.autoLineLoops);
     markLiveTouch(runtimeRef, lineLoop);
     return lineLoop;
   };
@@ -40595,11 +40707,14 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
     const lineAttrs = withLiveName(runtimeRef, attributes, "lineSegments");
-    const { name, key } = lineAttrs;
+    const { name, key, [LIVE_AUTO_ID_ATTR]: autoId } = lineAttrs;
     const normalizedKey = normalizeLiveKey(key);
     let line2 = normalizedKey ? store.keyedLineSegments[normalizedKey] : null;
     if (!line2 && name) {
       line2 = store.namedLineSegments[name];
+    }
+    if (!line2 && autoId) {
+      line2 = store.autoLineSegments[autoId];
     }
     if (!line2) {
       line2 = new LineSegments();
@@ -40610,6 +40725,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       store.namedLineSegments[line2.name] = line2;
     }
     bindLiveIdentity(line2, normalizedKey, store.keyedLineSegments);
+    bindLiveAutoIdentity(line2, autoId, store.autoLineSegments);
     markLiveTouch(runtimeRef, line2);
     return line2;
   };
@@ -40617,11 +40733,14 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     const runtimeRef = resolveRuntime(runtime);
     const store = getStore(runtimeRef);
     const pointAttrs = withLiveName(runtimeRef, attributes, "points");
-    const { name, key } = pointAttrs;
+    const { name, key, [LIVE_AUTO_ID_ATTR]: autoId } = pointAttrs;
     const normalizedKey = normalizeLiveKey(key);
     let point = normalizedKey ? store.keyedPoints[normalizedKey] : null;
     if (!point && name) {
       point = store.namedPoints[name];
+    }
+    if (!point && autoId) {
+      point = store.autoPoints[autoId];
     }
     if (!point) {
       point = new Points();
@@ -40632,6 +40751,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       store.namedPoints[point.name] = point;
     }
     bindLiveIdentity(point, normalizedKey, store.keyedPoints);
+    bindLiveAutoIdentity(point, autoId, store.autoPoints);
     markLiveTouch(runtimeRef, point);
     return point;
   };
@@ -40885,11 +41005,14 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     group(attributes = {}) {
       const groupAttributes = withLiveName(this._runtime, attributes, "group");
       const store = getStore(this._runtime);
-      const { name, key } = groupAttributes;
+      const { name, key, [LIVE_AUTO_ID_ATTR]: autoId } = groupAttributes;
       const normalizedKey = normalizeLiveKey(key);
       let group = normalizedKey ? store.keyedGroups[normalizedKey] : null;
       if (!group && name) {
         group = store.groups[name];
+      }
+      if (!group && autoId) {
+        group = store.autoGroups[autoId];
       }
       const hasExistingGroup = !!group;
       if (!group) {
@@ -40906,6 +41029,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         store.groups[group.name] = group;
       }
       bindLiveIdentity(group, normalizedKey, store.keyedGroups);
+      bindLiveAutoIdentity(group, autoId, store.autoGroups);
       markLiveTouch(this._runtime, group);
       markLiveTouch(this._runtime, this, { scene: !!this.isScene });
       const sceneRoot = findSceneRoot(this);
