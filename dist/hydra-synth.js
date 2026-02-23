@@ -45764,25 +45764,24 @@ vec4 _mod289(vec4 x)
       canvas.style.imageRendering = "pixelated";
       document.body.appendChild(canvas);
     }
+    canvas._hydraInputRuntime = synth;
     if (!canvas._hydraInputListenersBound) {
-      canvas.addEventListener("click", (event) => {
-        typeof synth.synth.click === "function" && synth.synth.click(event);
-      });
-      canvas.addEventListener("mousedown", (event) => {
-        typeof synth.synth.mousedown === "function" && synth.synth.mousedown(event);
-      });
-      canvas.addEventListener("mouseup", (event) => {
-        typeof synth.synth.mouseup === "function" && synth.synth.mouseup(event);
-      });
-      canvas.addEventListener("mousemove", (event) => {
-        typeof synth.synth.mousemove === "function" && synth.synth.mousemove(event);
-      });
-      document.addEventListener("keydown", (event) => {
-        typeof synth.synth.keydown === "function" && synth.synth.keydown(event);
-      });
-      document.addEventListener("keyup", (event) => {
-        typeof synth.synth.keyup === "function" && synth.synth.keyup(event);
-      });
+      const forwardInput = (name) => (event) => {
+        const runtime = canvas._hydraInputRuntime;
+        if (!runtime || runtime._disposed || !runtime.synth) {
+          return;
+        }
+        const handler = runtime.synth[name];
+        if (typeof handler === "function") {
+          handler(event);
+        }
+      };
+      canvas.addEventListener("click", forwardInput("click"));
+      canvas.addEventListener("mousedown", forwardInput("mousedown"));
+      canvas.addEventListener("mouseup", forwardInput("mouseup"));
+      canvas.addEventListener("mousemove", forwardInput("mousemove"));
+      document.addEventListener("keydown", forwardInput("keydown"));
+      document.addEventListener("keyup", forwardInput("keyup"));
       canvas._hydraInputListenersBound = true;
     }
     canvas.setAutoResize = function(enable = true) {
@@ -46491,6 +46490,9 @@ vec4 _mod289(vec4 x)
       this._restoreGlobalHelpers();
       this._restoreMathHelpers();
       clearSceneRuntime(this);
+      if (this.canvas && this.canvas._hydraInputRuntime === this) {
+        this.canvas._hydraInputRuntime = null;
+      }
       clearRuntime(this);
     }
     shadowMap(options2) {

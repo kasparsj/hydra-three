@@ -375,14 +375,13 @@ This specific redesign goal is now implemented as the default runtime behavior.
 
 ## G) Continuous Mode: Remaining Gaps (Post-Implementation)
 
-Update (2026-02-22): stale-object deletion on subtractive eval is addressed by scene-touch reconciliation in `src/three/scene.js:483`, `src/three/scene.js:500`, and `src/three/scene.js:510`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:163` and `scripts/smoke/browser-non-global-smoke.mjs:449`. Stable identity keys are supported through `key` in scene/object attrs via `src/three/scene.js:581`, `src/three/scene.js:616`, `src/three/scene.js:1063`, and typed in `src/index.d.ts:53`, `src/index.d.ts:60`. Prune-time resource disposal is now implemented via `src/three/scene.js:248`, `src/three/scene.js:286`, `src/three/scene.js:512`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:225`, `scripts/smoke/browser-non-global-smoke.mjs:231`, `scripts/smoke/browser-non-global-smoke.mjs:464`, `scripts/smoke/browser-non-global-smoke.mjs:469`.
+Update (2026-02-22): stale-object deletion on subtractive eval is addressed by scene-touch reconciliation in `src/three/scene.js:483`, `src/three/scene.js:500`, and `src/three/scene.js:510`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:172` and `scripts/smoke/browser-non-global-smoke.mjs:485`. Stable identity keys are supported through `key` in scene/object attrs via `src/three/scene.js:581`, `src/three/scene.js:616`, `src/three/scene.js:1063`, and typed in `src/index.d.ts:53`, `src/index.d.ts:60`. Prune-time resource disposal is now implemented via `src/three/scene.js:248`, `src/three/scene.js:286`, `src/three/scene.js:512`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:225`, `scripts/smoke/browser-non-global-smoke.mjs:233`, `scripts/smoke/browser-non-global-smoke.mjs:500`, `scripts/smoke/browser-non-global-smoke.mjs:505`. Restart-mode input rebinding is addressed via runtime-pointer routing in `src/canvas.js:42`, `src/canvas.js:44`, with cleanup in `src/hydra-synth.js:785` and smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:262`, `scripts/smoke/browser-non-global-smoke.mjs:295`, `scripts/smoke/browser-non-global-smoke.mjs:510`, `scripts/smoke/browser-non-global-smoke.mjs:515`.
 
 | Issue                                                      | Evidence (`file:line`)                                                                                           | Why confusing                                                                                                                                         | Severity | Suggested fix                                                                                                              |
 | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
 | Eval-order object identity drift (when `key` is omitted)   | `src/three/scene.js:133`; `src/three/scene.js:155`; `src/three/scene.js:616`; `src/index.d.ts:53`              | Reordering lines can still retarget unnamed objects because fallback identity remains eval-order-based for sketches that do not opt into `key`        | Medium   | Migrate examples/docs to `key` in continuous mode and add runtime hint when auto live names are reused repeatedly         |
 | Replaced mesh resources are not auto-disposed              | `src/three/scene.js:543`; `src/three/scene.js:553`; `src/three/scene.js:559`; `src/three/scene.js:616`          | In continuous mode, changing `geometry`/`material` on a reused mesh can keep old GPU resources alive because assignment replaces references in place | Medium   | Track previous mesh `geometry`/`material` during attr updates and dispose them when no longer referenced                  |
 | Auto-generated live names can collide with user naming     | `src/three/scene.js:17`; `src/three/scene.js:155`; `src/three/scene.js:581`; `src/three/scene.js:616`          | Users can accidentally pick `__live_*` names and trigger unexpected reuse behavior in continuous mode                                                 | Medium   | Reserve live identity in `userData` (symbol/private key) and stop relying on public object names for unnamed tracking      |
-| Canvas input handlers can bind to stale runtime on restart | `src/canvas.js:42`; `src/canvas.js:49`; `site/playground/playground.js:317`; `site/playground/playground.js:341` | Recreating a runtime on the same canvas can leave input events routed to old synth closures because listeners are only bound once per canvas        | Medium   | Bind handlers through a canvas runtime pointer (or rebind on runtime replace) so events always target the active runtime   |
 
 ## H) Updated Quick Wins (next 1-2 sprints)
 
@@ -396,9 +395,9 @@ Update (2026-02-22): explicit `key` usage was added to first-touch examples/docs
    Files: `src/three/scene.js:543`, `src/three/scene.js:553`, `src/three/scene.js:559`  
    Why: prevents resource leaks when live-coders iteratively swap mesh inputs on stable keyed objects.
 
-3. Fix canvas input handler runtime rebinding  
-   Files: `src/canvas.js:42`, `src/canvas.js:49`, `site/playground/playground.js:317`  
-   Why: avoids input events getting stuck on disposed runtimes after restart-mode resets.
+3. Reserve internal live-name prefix and stop depending on public names for unnamed identity  
+   Files: `src/three/scene.js:17`, `src/three/scene.js:155`, `src/three/scene.js:581`  
+   Why: avoids accidental collisions when users deliberately set names that overlap live-generated markers.
 
 4. Regenerate API docs and keep them in lockstep  
    Files: `docs/api.md:3`, `package.json:35`, `package.json:63`  
@@ -414,17 +413,19 @@ Update (2026-02-22): explicit `key` usage was added to first-touch examples/docs
 | 4    | Hidden runtime fallback context in helper modules           | `src/three/runtime.js:25`; `src/three/mt.js:151`; `src/three/tx.js:264`                 | `site/playground/examples.js:57`; `site/playground/examples.js:116`                      | 4 x 2 = 8     |
 | 5    | Eval-order drift for sketches that omit `key`               | `src/three/scene.js:133`; `src/three/scene.js:616`; `src/index.d.ts:53`                 | `site/playground/examples.js:115`; `examples/tex-map.js:25`                              | 3 x 2 = 6     |
 | 6    | Replaced mesh resources are not auto-disposed               | `src/three/scene.js:543`; `src/three/scene.js:553`; `src/three/scene.js:559`            | `site/playground/examples.js:55`; `site/playground/examples.js:666`                      | 3 x 2 = 6     |
-| 7    | Canvas input handlers can bind to stale runtime on restart  | `src/canvas.js:42`; `src/canvas.js:49`; `site/playground/playground.js:317`             | `site/playground/playground.js:317`; `site/playground/playground.js:371`                 | 3 x 2 = 6     |
+| 7    | Auto-generated live names can collide with user naming      | `src/three/scene.js:17`; `src/three/scene.js:155`; `src/three/scene.js:581`             | `docs/concepts/scene-graph.md:8`; `docs/reference/parameter-reference.md:33`             | 2 x 2 = 4     |
 
 ## J) Speed/Creativity Success Metrics
 
 1. Speed metric: time-to-first-visible-3D should stay one sketch block with no mandatory boilerplate.
-   Evidence baseline: first playground example reaches render via `scene().lights().mesh(...).out()` in `site/playground/examples.js:55`.
+   Evidence baseline: first playground example reaches render via `scene({ key: ... }).lights().mesh(..., { key: ... }).out()` in `site/playground/examples.js:55`.
 2. Creativity metric: iterative reruns in continuous mode should not duplicate stale graph content after subtractive edits.
-   Evidence baseline: reconciliation gate includes touched-scene evals in `src/three/scene.js:493`, with browser smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:163` and `scripts/smoke/browser-non-global-smoke.mjs:449`.
+   Evidence baseline: reconciliation gate includes touched-scene evals in `src/three/scene.js:493`, with browser smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:172` and `scripts/smoke/browser-non-global-smoke.mjs:485`.
 3. Stability metric: keyed objects should preserve identity across eval reorder in continuous mode.
-   Evidence baseline: keyed identity binding in `src/three/scene.js:203` and smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:206`, `scripts/smoke/browser-non-global-smoke.mjs:459`.
+   Evidence baseline: keyed identity binding in `src/three/scene.js:203` and smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:208`, `scripts/smoke/browser-non-global-smoke.mjs:495`.
 4. Safety metric: long sessions should not accumulate unreleased scene resources after prune cycles.
-   Evidence baseline: prune now disposes removed geometry/material while preserving retained shared resources in `src/three/scene.js:286`, `src/three/scene.js:512`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:231`, `scripts/smoke/browser-non-global-smoke.mjs:248`, `scripts/smoke/browser-non-global-smoke.mjs:464`, `scripts/smoke/browser-non-global-smoke.mjs:469`.
-5. Stability metric: generated API docs should always reflect public typings before merge.
+   Evidence baseline: prune now disposes removed geometry/material while preserving retained shared resources in `src/three/scene.js:286`, `src/three/scene.js:512`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:233`, `scripts/smoke/browser-non-global-smoke.mjs:250`, `scripts/smoke/browser-non-global-smoke.mjs:500`, `scripts/smoke/browser-non-global-smoke.mjs:505`.
+5. Restart stability metric: input handlers should follow the active runtime after disposal/recreation on the same canvas.
+   Evidence baseline: canvas input dispatch now routes via runtime pointer in `src/canvas.js:42`, with cleanup in `src/hydra-synth.js:785` and smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:295`, `scripts/smoke/browser-non-global-smoke.mjs:510`, `scripts/smoke/browser-non-global-smoke.mjs:515`.
+6. Stability metric: generated API docs should always reflect public typings before merge.
    Evidence baseline: docs are generated (`docs/api.md:3`) and CI includes docs-sync verification (`package.json:63`).

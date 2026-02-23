@@ -73,6 +73,8 @@ const smokeHtml = `<!doctype html>
         continuousKeyedIdentityStable: null,
         continuousDisposeReleasedRemovedResources: null,
         continuousDisposeRetainedSharedMaterial: null,
+        canvasInputReboundToActiveRuntime: null,
+        keyboardInputReboundToActiveRuntime: null,
         canvasCount: 0
       };
       try {
@@ -256,11 +258,45 @@ const smokeHtml = `<!doctype html>
         window.__smoke.hasProcessFunction = typeof window.processFunction === 'function'
         window.__smoke.hasMathMap = typeof Math.map === 'function'
         window.__smoke.canvasCount = document.querySelectorAll('canvas').length
+
+        const reusedCanvas = hydra.canvas
+        let firstRuntimeClickCount = 0
+        let firstRuntimeKeydownCount = 0
+        hydra.synth.click = () => {
+          firstRuntimeClickCount += 1
+        }
+        hydra.synth.keydown = () => {
+          firstRuntimeKeydownCount += 1
+        }
+        reusedCanvas.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }))
         hydra.dispose()
         window.__smoke.hasLoadScriptAfterDispose = typeof window.loadScript === 'function'
         window.__smoke.hasGetCodeAfterDispose = typeof window.getCode === 'function'
         window.__smoke.hasGridGeometryAfterDispose = typeof window.GridGeometry === 'function'
         window.__smoke.hasMathMapAfterDispose = typeof Math.map === 'function'
+
+        const reboundRuntime = new Hydra({
+          canvas: reusedCanvas,
+          detectAudio: false,
+          makeGlobal: false,
+          autoLoop: false,
+        })
+        let reboundRuntimeClickCount = 0
+        let reboundRuntimeKeydownCount = 0
+        reboundRuntime.synth.click = () => {
+          reboundRuntimeClickCount += 1
+        }
+        reboundRuntime.synth.keydown = () => {
+          reboundRuntimeKeydownCount += 1
+        }
+        reusedCanvas.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'b', bubbles: true }))
+        window.__smoke.canvasInputReboundToActiveRuntime =
+          firstRuntimeClickCount === 1 && reboundRuntimeClickCount === 1
+        window.__smoke.keyboardInputReboundToActiveRuntime =
+          firstRuntimeKeydownCount === 1 && reboundRuntimeKeydownCount === 1
+        reboundRuntime.dispose()
         window.__smoke.ready = true
       } catch (error) {
         window.__smoke.error = error && error.stack ? error.stack : String(error)
@@ -469,6 +505,16 @@ try {
     diagnostics.continuousDisposeRetainedSharedMaterial,
     true,
     "Expected shared material to stay undisposed while still referenced after prune",
+  );
+  assert.equal(
+    diagnostics.canvasInputReboundToActiveRuntime,
+    true,
+    "Expected canvas input events to route to the active runtime after restart",
+  );
+  assert.equal(
+    diagnostics.keyboardInputReboundToActiveRuntime,
+    true,
+    "Expected keyboard input events to route to the active runtime after restart",
   );
   assert.deepEqual(
     errors,

@@ -782,6 +782,9 @@ class HydraRenderer {
     this._restoreGlobalHelpers()
     this._restoreMathHelpers()
     scene.clearSceneRuntime(this)
+    if (this.canvas && this.canvas._hydraInputRuntime === this) {
+      this.canvas._hydraInputRuntime = null
+    }
     clearRuntime(this)
   }
 
