@@ -67,6 +67,10 @@ const smokeHtml = `<!doctype html>
         friendlyAliasRandomMatches: null,
         friendlyAliasNoiseUtilMatches: null,
         noiseTransformPreserved: null,
+        renderAliasSceneWorks: null,
+        clearAliasSceneWorks: null,
+        renderAliasChainWorks: null,
+        clearAliasChainWorks: null,
         rotateDegAvailable: null,
         rotateRadAvailable: null,
         rotateUnitHelpersCompile: null,
@@ -105,7 +109,28 @@ const smokeHtml = `<!doctype html>
         window.__smoke.friendlyAliasRandomMatches = H.random === H.rnd;
         window.__smoke.friendlyAliasNoiseUtilMatches = H.noiseUtil === H.nse;
         window.__smoke.noiseTransformPreserved = typeof H.noise === 'function';
+
+        const aliasScene = H.scene({ name: '__aliasRenderClear' });
+        window.__smoke.renderAliasSceneWorks = typeof aliasScene.render === 'function';
+        window.__smoke.clearAliasSceneWorks = typeof aliasScene.clear === 'function';
+        if (window.__smoke.clearAliasSceneWorks) {
+          aliasScene.clear(0.9);
+        }
+        if (window.__smoke.renderAliasSceneWorks) {
+          aliasScene
+            .mesh(H.gm.box(), H.mt.meshBasic({ color: 0x335577 }), { key: 'alias-mesh' })
+            .render();
+        }
+
         const rotateProbe = H.osc(4, 0.1, 0.8);
+        window.__smoke.renderAliasChainWorks = typeof rotateProbe.render === 'function';
+        window.__smoke.clearAliasChainWorks = typeof rotateProbe.clear === 'function';
+        if (window.__smoke.clearAliasChainWorks) {
+          rotateProbe.clear(0.95);
+        }
+        if (window.__smoke.renderAliasChainWorks) {
+          rotateProbe.render(hydra.o[3]);
+        }
         window.__smoke.rotateDegAvailable = typeof rotateProbe.rotateDeg === 'function';
         window.__smoke.rotateRadAvailable = typeof rotateProbe.rotateRad === 'function';
         if (window.__smoke.rotateDegAvailable && window.__smoke.rotateRadAvailable) {
@@ -664,6 +689,26 @@ try {
     diagnostics.noiseTransformPreserved,
     true,
     "Expected H.noise transform generator to remain available alongside module aliases",
+  );
+  assert.equal(
+    diagnostics.renderAliasSceneWorks,
+    true,
+    "Expected scene handles to expose render() alias for out()",
+  );
+  assert.equal(
+    diagnostics.clearAliasSceneWorks,
+    true,
+    "Expected scene handles to expose clear() alias for autoClear()",
+  );
+  assert.equal(
+    diagnostics.renderAliasChainWorks,
+    true,
+    "Expected transform chains to expose render() alias for out()",
+  );
+  assert.equal(
+    diagnostics.clearAliasChainWorks,
+    true,
+    "Expected transform chains to expose clear() alias for autoClear()",
   );
   assert.equal(
     diagnostics.rotateDegAvailable,

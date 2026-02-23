@@ -36033,6 +36033,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         ...options2
       };
       return this;
+    },
+    clear(amount = 1, color2 = 0, options2 = {}) {
+      return this.autoClear(amount, color2, options2);
     }
   };
   const sourceMixin = {
@@ -36052,6 +36055,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         console.log("shader could not compile", error);
       }
       return this;
+    },
+    render(_output, options2 = {}) {
+      return this.out(_output, options2);
     },
     tex(_output, options2 = {}) {
       if (!this.output) {

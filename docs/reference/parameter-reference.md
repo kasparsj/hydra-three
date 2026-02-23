@@ -39,6 +39,9 @@ For behavior-level edge cases (units, precedence, and internal/public boundaries
 | `.world(options)`             | Configure sky/ground/fog helpers | `.world({ ground: true, fog: true })` |
 | `.group(attrs)`               | Create/attach subgroup           | `scene({ key: "main" }).group({ name: "cluster", key: "cluster" })` |
 | `.out(output, options)`       | Bind scene to output pipeline    | `.out(o0)`                            |
+| `.render(output, options)`    | Alias of `.out(...)`             | `.render(o0)`                         |
+| `.autoClear(amount, color)`   | Set accumulation clear behavior  | `.autoClear(0.2)`                     |
+| `.clear(amount, color)`       | Alias of `.autoClear(...)`       | `.clear(0.2)`                         |
 
 Identity note for live coding:
 

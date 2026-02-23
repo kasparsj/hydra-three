@@ -104,6 +104,9 @@ export interface HydraTransformDefinition {
 
 export interface HydraTransformChain {
   out(output?: unknown, options?: HydraTransformRenderOptions): HydraTransformChain;
+  render(output?: unknown, options?: HydraTransformRenderOptions): HydraTransformChain;
+  autoClear(amount?: number, color?: number, options?: Record<string, unknown>): HydraTransformChain;
+  clear(amount?: number, color?: number, options?: Record<string, unknown>): HydraTransformChain;
   basic(options?: Record<string, unknown>): HydraTransformChain;
   phong(options?: Record<string, unknown>): HydraTransformChain;
   lambert(options?: Record<string, unknown>): HydraTransformChain;
@@ -134,6 +137,9 @@ export interface HydraSceneApi {
   layer(id: number, options?: Record<string, unknown>): unknown;
   lookAt(target: unknown, options?: Record<string, unknown>): HydraSceneApi;
   out(output?: unknown, options?: HydraTransformRenderOptions): HydraSceneApi;
+  render(output?: unknown, options?: HydraTransformRenderOptions): HydraSceneApi;
+  autoClear(amount?: number, color?: number, options?: Record<string, unknown>): HydraSceneApi;
+  clear(amount?: number, color?: number, options?: Record<string, unknown>): HydraSceneApi;
   at(index?: number): unknown;
   find(filter?: Record<string, unknown>): unknown[];
   empty(): boolean;

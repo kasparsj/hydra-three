@@ -103,12 +103,18 @@
     "layer",
     "lookAt",
     "out",
+    "render",
+    "autoClear",
+    "clear",
     "at",
     "find",
     "empty"
   ],
   "transformChainMembers": [
     "out",
+    "render",
+    "autoClear",
+    "clear",
     "basic",
     "phong",
     "lambert",
@@ -276,8 +282,8 @@
     "constructorOptions": 17,
     "hydraRendererMembers": 11,
     "hydraSynthMembers": 52,
-    "sceneMembers": 20,
-    "transformChainMembers": 8,
+    "sceneMembers": 23,
+    "transformChainMembers": 11,
     "modules": 10,
     "transforms": 69
   }

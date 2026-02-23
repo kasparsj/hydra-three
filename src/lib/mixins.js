@@ -203,6 +203,10 @@ const autoClearMixin = {
         };
         return this;
     },
+
+    clear(amount = 1.0, color = 0, options = {}) {
+        return this.autoClear(amount, color, options);
+    },
 };
 
 const sourceMixin = {
@@ -224,6 +228,10 @@ const sourceMixin = {
             console.log('shader could not compile', error)
         }
         return this
+    },
+
+    render(_output, options = {}) {
+        return this.out(_output, options);
     },
 
     tex(_output, options = {}) {

@@ -22,7 +22,7 @@
 
 - Chain objects are `GlslSource` in `src/glsl-source.js:9`.
 - Generator registration and chain method injection happen in `src/generator-factory.js:55`.
-- `.out()` compiles chain/passes in `src/lib/mixins.js:188`.
+- `.out()` compiles chain/passes in `src/lib/mixins.js:221`.
 
 5. Render lifecycle and event model
 
@@ -321,8 +321,8 @@ Phase 3 (breaking cleanup, major version)
    Files: `src/hydra-synth.js:220`, `src/index.d.ts:216`, `scripts/smoke/browser-non-global-smoke.mjs:101`, `docs/reference/parameter-reference.md:58`  
    Why: faster discoverability without breakage.
 
-3. Add `render()` and `clear()` aliases  
-   Files: `src/lib/mixins.js:188`, `src/lib/mixins.js:169`, `src/index.d.ts:83`  
+3. Implemented: add `render()` and `clear()` aliases  
+   Files: `src/lib/mixins.js:233`, `src/lib/mixins.js:207`, `src/index.d.ts:107`, `scripts/smoke/browser-non-global-smoke.mjs:113`  
    Why: lower cognitive overhead in live sessions.
 
 4. Implemented: make orbit modifier configurable  
@@ -388,6 +388,8 @@ Stale-object deletion, resource disposal, unkeyed hinting, and restart input reb
 | Eval-order object identity drift (when `key` is omitted)   | `src/three/scene.js:143`; `src/three/scene.js:187`; `src/three/scene.js:711`; `src/index.d.ts:53`              | Reordering lines can still retarget unnamed objects because fallback identity remains eval-order-based for sketches that do not opt into `key`        | Medium   | Continue migrating examples/docs to `key` and run the audit helper `scripts/migrate/find-unkeyed-live-calls.mjs`           |
 
 ## H) Updated Quick Wins (next 1-2 sprints)
+
+Update (2026-02-23): `render()` and `clear()` aliases are now available across scene handles and transform chains, mapped to existing `.out()` and `.autoClear()` behavior. Implementation and coverage are in `src/lib/mixins.js:233`, `src/lib/mixins.js:207`, `src/index.d.ts:107`, `src/index.d.ts:140`, `scripts/smoke/browser-non-global-smoke.mjs:113`, and `docs/reference/parameter-reference.md:42`.
 
 Update (2026-02-23): long-form module aliases are now available (`tex`, `geom`, `mat`, `compose`, `random`, `noiseUtil`) while short names remain unchanged (`tx`, `gm`, `mt`, `cmp`, `rnd`, `nse`). Implementation and coverage are in `src/hydra-synth.js:220`, `src/index.d.ts:216`, `scripts/smoke/browser-non-global-smoke.mjs:101`, and `docs/reference/parameter-reference.md:58`.
 
