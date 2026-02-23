@@ -375,30 +375,26 @@ This specific redesign goal is now implemented as the default runtime behavior.
 
 ## G) Continuous Mode: Remaining Gaps (Post-Implementation)
 
-Update (2026-02-22): stale-object deletion on subtractive eval is addressed by scene-touch reconciliation in `src/three/scene.js:557`, `src/three/scene.js:567`, `src/three/scene.js:587`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:174`, `scripts/smoke/browser-non-global-smoke.mjs:541`. Stable identity keys are supported through `key` in scene/object attrs via `src/three/scene.js:651`, `src/three/scene.js:686`, `src/three/scene.js:1133`, and typed in `src/index.d.ts:53`, `src/index.d.ts:60`. Prune-time and replacement-time resource disposal are implemented via `src/three/scene.js:360`, `src/three/scene.js:587`, `src/three/scene.js:627`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:235`, `scripts/smoke/browser-non-global-smoke.mjs:278`, `scripts/smoke/browser-non-global-smoke.mjs:556`, `scripts/smoke/browser-non-global-smoke.mjs:566`. Restart-mode input rebinding is addressed via runtime-pointer routing in `src/canvas.js:42`, `src/canvas.js:44`, with cleanup in `src/hydra-synth.js:785` and smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:351`, `scripts/smoke/browser-non-global-smoke.mjs:353`, `scripts/smoke/browser-non-global-smoke.mjs:576`, `scripts/smoke/browser-non-global-smoke.mjs:581`.
+Update (2026-02-22): stale-object deletion on subtractive eval is addressed by scene-touch reconciliation in `src/three/scene.js:580`, `src/three/scene.js:590`, `src/three/scene.js:610`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:188`, `scripts/smoke/browser-non-global-smoke.mjs:555`. Stable identity keys are supported through `key` in scene/object attrs via `src/three/scene.js:676`, `src/three/scene.js:711`, `src/three/scene.js:1158`, and typed in `src/index.d.ts:53`, `src/index.d.ts:60`. Prune-time and replacement-time resource disposal are implemented via `src/three/scene.js:368`, `src/three/scene.js:610`, `src/three/scene.js:652`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:249`, `scripts/smoke/browser-non-global-smoke.mjs:292`, `scripts/smoke/browser-non-global-smoke.mjs:570`, `scripts/smoke/browser-non-global-smoke.mjs:580`. Continuous-mode guidance now includes a one-time unkeyed hint via `src/three/scene.js:20`, `src/three/scene.js:169`, `src/three/scene.js:567`, `src/three/scene.js:575`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:177`, `scripts/smoke/browser-non-global-smoke.mjs:590`. Restart-mode input rebinding is addressed via runtime-pointer routing in `src/canvas.js:42`, `src/canvas.js:44`, with cleanup in `src/hydra-synth.js:785` and smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:365`, `scripts/smoke/browser-non-global-smoke.mjs:367`, `scripts/smoke/browser-non-global-smoke.mjs:595`, `scripts/smoke/browser-non-global-smoke.mjs:600`.
 
 | Issue                                                      | Evidence (`file:line`)                                                                                           | Why confusing                                                                                                                                         | Severity | Suggested fix                                                                                                              |
 | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Eval-order object identity drift (when `key` is omitted)   | `src/three/scene.js:133`; `src/three/scene.js:155`; `src/three/scene.js:686`; `src/index.d.ts:53`              | Reordering lines can still retarget unnamed objects because fallback identity remains eval-order-based for sketches that do not opt into `key`        | Medium   | Migrate examples/docs to `key` in continuous mode and add runtime hint when auto live names are reused repeatedly         |
-| Auto-generated live names can collide with user naming     | `src/three/scene.js:17`; `src/three/scene.js:155`; `src/three/scene.js:651`; `src/three/scene.js:686`          | Users can accidentally pick `__live_*` names and trigger unexpected reuse behavior in continuous mode                                                 | Medium   | Reserve live identity in `userData` (symbol/private key) and stop relying on public object names for unnamed tracking      |
+| Eval-order object identity drift (when `key` is omitted)   | `src/three/scene.js:133`; `src/three/scene.js:155`; `src/three/scene.js:711`; `src/index.d.ts:53`              | Reordering lines can still retarget unnamed objects because fallback identity remains eval-order-based for sketches that do not opt into `key`        | Medium   | Continue migrating examples/docs to `key` and provide a codemod for unkeyed object creation in continuous mode             |
+| Auto-generated live names can collide with user naming     | `src/three/scene.js:17`; `src/three/scene.js:155`; `src/three/scene.js:676`; `src/three/scene.js:711`          | Users can accidentally pick `__live_*` names and trigger unexpected reuse behavior in continuous mode                                                 | Medium   | Reserve live identity in `userData` (symbol/private key) and stop relying on public object names for unnamed tracking      |
 
 ## H) Updated Quick Wins (next 1-2 sprints)
 
-Update (2026-02-22): explicit `key` usage was added to first-touch examples/docs in `site/playground/examples.js:55`, `examples/box.js:9`, and `docs/reference/parameter-reference.md:33`. Replaced-resource disposal and restart input rebinding are now implemented in `src/three/scene.js:627` and `src/canvas.js:42`.
+Update (2026-02-22): explicit `key` usage was added to first-touch examples/docs in `site/playground/examples.js:55`, `examples/box.js:9`, and `docs/reference/parameter-reference.md:33`. Replaced-resource disposal, restart input rebinding, and the continuous unkeyed hint are implemented in `src/three/scene.js:652`, `src/canvas.js:42`, and `src/three/scene.js:567`.
 
 1. Continue migrating remaining examples to explicit `key` usage  
    Files: `site/playground/examples.js:115`, `site/playground/examples.js:388`, `examples/tex-map.js:25`  
    Why: closes the remaining eval-order drift cases in sketches users copy and remix.
 
-2. Add runtime hint when unnamed live identities are auto-generated repeatedly  
-   Files: `src/three/scene.js:165`, `src/three/scene.js:686`, `docs/reference/parameter-reference.md:45`  
-   Why: nudges users toward `key` before eval-order drift becomes confusing in longer live sessions.
-
-3. Reserve internal live-name prefix and stop depending on public names for unnamed identity  
-   Files: `src/three/scene.js:17`, `src/three/scene.js:155`, `src/three/scene.js:651`  
+2. Reserve internal live-name prefix and stop depending on public names for unnamed identity  
+   Files: `src/three/scene.js:17`, `src/three/scene.js:155`, `src/three/scene.js:676`  
    Why: avoids accidental collisions when users deliberately set names that overlap live-generated markers.
 
-4. Regenerate API docs and keep them in lockstep  
+3. Regenerate API docs and keep them in lockstep  
    Files: `docs/api.md:3`, `package.json:35`, `package.json:63`  
    Why: improves discoverability and trust in public API docs.
 
@@ -410,20 +406,22 @@ Update (2026-02-22): explicit `key` usage was added to first-touch examples/docs
 | 2    | Orbit controls hard-gated by `Alt` modifier                 | `src/three/HydraOrbitControls.js:833`; `src/three/HydraOrbitControls.js:1034`           | `examples/box.js:1`; `site/playground/examples.js:49`; `site/playground/examples.js:812` | 4 x 3 = 12    |
 | 3    | Rotation unit mismatch (`rotate` degrees vs object radians) | `src/glsl/glsl-functions.js:376`; `examples/box.js:6`; `examples/box.js:16`             | `site/playground/examples.js:52`; `examples/box.js:6`                                    | 3 x 4 = 12    |
 | 4    | Hidden runtime fallback context in helper modules           | `src/three/runtime.js:25`; `src/three/mt.js:151`; `src/three/tx.js:264`                 | `site/playground/examples.js:57`; `site/playground/examples.js:116`                      | 4 x 2 = 8     |
-| 5    | Eval-order drift for sketches that omit `key`               | `src/three/scene.js:133`; `src/three/scene.js:686`; `src/index.d.ts:53`                 | `site/playground/examples.js:115`; `examples/tex-map.js:25`                              | 3 x 2 = 6     |
-| 6    | Auto-generated live names can collide with user naming      | `src/three/scene.js:17`; `src/three/scene.js:155`; `src/three/scene.js:651`             | `docs/concepts/scene-graph.md:8`; `docs/reference/parameter-reference.md:33`             | 2 x 2 = 4     |
+| 5    | Eval-order drift for sketches that omit `key`               | `src/three/scene.js:133`; `src/three/scene.js:711`; `src/index.d.ts:53`                 | `site/playground/examples.js:115`; `examples/tex-map.js:25`                              | 3 x 2 = 6     |
+| 6    | Auto-generated live names can collide with user naming      | `src/three/scene.js:17`; `src/three/scene.js:155`; `src/three/scene.js:676`             | `docs/concepts/scene-graph.md:8`; `docs/reference/parameter-reference.md:33`             | 2 x 2 = 4     |
 
 ## J) Speed/Creativity Success Metrics
 
 1. Speed metric: time-to-first-visible-3D should stay one sketch block with no mandatory boilerplate.
    Evidence baseline: first playground example reaches render via `scene({ key: ... }).lights().mesh(..., { key: ... }).out()` in `site/playground/examples.js:55`.
 2. Creativity metric: iterative reruns in continuous mode should not duplicate stale graph content after subtractive edits.
-   Evidence baseline: reconciliation gate includes touched-scene evals in `src/three/scene.js:567`, with browser smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:174` and `scripts/smoke/browser-non-global-smoke.mjs:541`.
+   Evidence baseline: reconciliation gate includes touched-scene evals in `src/three/scene.js:590`, with browser smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:188` and `scripts/smoke/browser-non-global-smoke.mjs:555`.
 3. Stability metric: keyed objects should preserve identity across eval reorder in continuous mode.
-   Evidence baseline: keyed identity binding in `src/three/scene.js:203` and smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:210`, `scripts/smoke/browser-non-global-smoke.mjs:551`.
+   Evidence baseline: keyed identity binding in `src/three/scene.js:205` and smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:224`, `scripts/smoke/browser-non-global-smoke.mjs:565`.
 4. Safety metric: long sessions should not accumulate unreleased scene resources after prune cycles.
-   Evidence baseline: prune and replacement paths now dispose unretained geometry/material while preserving shared resources in `src/three/scene.js:360`, `src/three/scene.js:627`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:235`, `scripts/smoke/browser-non-global-smoke.mjs:278`, `scripts/smoke/browser-non-global-smoke.mjs:556`, `scripts/smoke/browser-non-global-smoke.mjs:566`.
+   Evidence baseline: prune and replacement paths now dispose unretained geometry/material while preserving shared resources in `src/three/scene.js:368`, `src/three/scene.js:652`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:249`, `scripts/smoke/browser-non-global-smoke.mjs:292`, `scripts/smoke/browser-non-global-smoke.mjs:570`, `scripts/smoke/browser-non-global-smoke.mjs:580`.
 5. Restart stability metric: input handlers should follow the active runtime after disposal/recreation on the same canvas.
-   Evidence baseline: canvas input dispatch now routes via runtime pointer in `src/canvas.js:42`, with cleanup in `src/hydra-synth.js:785` and smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:351`, `scripts/smoke/browser-non-global-smoke.mjs:353`, `scripts/smoke/browser-non-global-smoke.mjs:576`, `scripts/smoke/browser-non-global-smoke.mjs:581`.
-6. Stability metric: generated API docs should always reflect public typings before merge.
+   Evidence baseline: canvas input dispatch now routes via runtime pointer in `src/canvas.js:42`, with cleanup in `src/hydra-synth.js:785` and smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:365`, `scripts/smoke/browser-non-global-smoke.mjs:367`, `scripts/smoke/browser-non-global-smoke.mjs:595`, `scripts/smoke/browser-non-global-smoke.mjs:600`.
+6. Guidance metric: unkeyed continuous eval should emit a one-time hint toward `key`.
+   Evidence baseline: hint gate and warning path are in `src/three/scene.js:567`, `src/three/scene.js:575`, with smoke coverage in `scripts/smoke/browser-non-global-smoke.mjs:177`, `scripts/smoke/browser-non-global-smoke.mjs:590`.
+7. Stability metric: generated API docs should always reflect public typings before merge.
    Evidence baseline: docs are generated (`docs/api.md:3`) and CI includes docs-sync verification (`package.json:63`).

@@ -39858,6 +39858,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
   const LIVE_NAME_PREFIX = "__live";
   const LIVE_CYCLE_KEY = "__hydraLiveCycle";
   const LIVE_IDENTITY_KEY = "__hydraLiveKey";
+  const LIVE_KEY_HINT = '[hydra-three] Continuous live mode auto-generated names for unkeyed objects. Add { key: "..." } for stable identity across reruns.';
   const createStore = () => ({
     scenes: /* @__PURE__ */ Object.create(null),
     keyedScenes: /* @__PURE__ */ Object.create(null),
@@ -39974,7 +39975,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         counters: /* @__PURE__ */ Object.create(null),
         touched: /* @__PURE__ */ new Set(),
         touchedScenes: /* @__PURE__ */ new Set(),
-        hasGraphMutations: false
+        hasGraphMutations: false,
+        sawUnkeyedAutoNames: false,
+        warnedUnkeyedAutoNames: false
       };
     }
     return runtime._liveEvalState;
@@ -39995,6 +39998,10 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
   const withLiveName = (runtime, attributes = {}, type = "object") => {
     if (!isLiveEvalActive(runtime) || attributes.name) {
       return attributes;
+    }
+    const state = getLiveEvalState(runtime);
+    if (state && !normalizeLiveKey(attributes.key)) {
+      state.sawUnkeyedAutoNames = true;
     }
     return Object.assign({}, attributes, {
       name: nextLiveName(runtime, type)
@@ -40340,6 +40347,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     state.touched = /* @__PURE__ */ new Set();
     state.touchedScenes = /* @__PURE__ */ new Set();
     state.hasGraphMutations = false;
+    state.sawUnkeyedAutoNames = false;
   };
   const resetLiveEvalState = (state) => {
     if (!state) {
@@ -40348,6 +40356,20 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     state.active = false;
     state.touched.clear();
     state.touchedScenes.clear();
+    state.sawUnkeyedAutoNames = false;
+  };
+  const maybeWarnUnkeyedAutoNames = (runtime, state) => {
+    if (!runtime || !state || state.warnedUnkeyedAutoNames) {
+      return;
+    }
+    if (runtime.liveMode !== "continuous" || !state.sawUnkeyedAutoNames) {
+      return;
+    }
+    try {
+      console.warn(LIVE_KEY_HINT);
+    } catch (_error) {
+    }
+    state.warnedUnkeyedAutoNames = true;
   };
   const endSceneEval = (runtime) => {
     const runtimeRef = resolveRuntime(runtime);
@@ -40360,6 +40382,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     }
     const shouldReconcile = state.hasGraphMutations || state.touchedScenes.size > 0;
     if (!shouldReconcile) {
+      maybeWarnUnkeyedAutoNames(runtimeRef, state);
       resetLiveEvalState(state);
       return;
     }
@@ -40384,6 +40407,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       }
       rebuildStore(store);
     }
+    maybeWarnUnkeyedAutoNames(runtimeRef, state);
     resetLiveEvalState(state);
   };
   const add = (scene, ...children) => {

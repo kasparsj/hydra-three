@@ -17,6 +17,8 @@ const runtimeStores = new WeakMap();
 const LIVE_NAME_PREFIX = "__live";
 const LIVE_CYCLE_KEY = "__hydraLiveCycle";
 const LIVE_IDENTITY_KEY = "__hydraLiveKey";
+const LIVE_KEY_HINT =
+    "[hydra-three] Continuous live mode auto-generated names for unkeyed objects. Add { key: \"...\" } for stable identity across reruns.";
 
 const createStore = () => ({
     scenes: Object.create(null),
@@ -142,6 +144,8 @@ const getLiveEvalState = (runtime) => {
             touched: new Set(),
             touchedScenes: new Set(),
             hasGraphMutations: false,
+            sawUnkeyedAutoNames: false,
+            warnedUnkeyedAutoNames: false,
         };
     }
     return runtime._liveEvalState;
@@ -165,6 +169,10 @@ const nextLiveName = (runtime, type) => {
 const withLiveName = (runtime, attributes = {}, type = "object") => {
     if (!isLiveEvalActive(runtime) || attributes.name) {
         return attributes;
+    }
+    const state = getLiveEvalState(runtime);
+    if (state && !normalizeLiveKey(attributes.key)) {
+        state.sawUnkeyedAutoNames = true;
     }
     return Object.assign({}, attributes, {
         name: nextLiveName(runtime, type),
@@ -543,6 +551,7 @@ const beginSceneEval = (runtime) => {
     state.touched = new Set();
     state.touchedScenes = new Set();
     state.hasGraphMutations = false;
+    state.sawUnkeyedAutoNames = false;
 };
 
 const resetLiveEvalState = (state) => {
@@ -552,6 +561,20 @@ const resetLiveEvalState = (state) => {
     state.active = false;
     state.touched.clear();
     state.touchedScenes.clear();
+    state.sawUnkeyedAutoNames = false;
+};
+
+const maybeWarnUnkeyedAutoNames = (runtime, state) => {
+    if (!runtime || !state || state.warnedUnkeyedAutoNames) {
+        return;
+    }
+    if (runtime.liveMode !== "continuous" || !state.sawUnkeyedAutoNames) {
+        return;
+    }
+    try {
+        console.warn(LIVE_KEY_HINT);
+    } catch (_error) {}
+    state.warnedUnkeyedAutoNames = true;
 };
 
 const endSceneEval = (runtime) => {
@@ -566,6 +589,7 @@ const endSceneEval = (runtime) => {
     const shouldReconcile =
         state.hasGraphMutations || state.touchedScenes.size > 0;
     if (!shouldReconcile) {
+        maybeWarnUnkeyedAutoNames(runtimeRef, state);
         resetLiveEvalState(state);
         return;
     }
@@ -590,6 +614,7 @@ const endSceneEval = (runtime) => {
         }
         rebuildStore(store);
     }
+    maybeWarnUnkeyedAutoNames(runtimeRef, state);
     resetLiveEvalState(state);
 };
 

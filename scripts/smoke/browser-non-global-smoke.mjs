@@ -75,6 +75,7 @@ const smokeHtml = `<!doctype html>
         continuousDisposeRetainedSharedMaterial: null,
         continuousDisposeReleasedReplacedResources: null,
         continuousDisposeRetainedSharedReplacementMaterial: null,
+        continuousUnkeyedHintEmitted: null,
         canvasInputReboundToActiveRuntime: null,
         keyboardInputReboundToActiveRuntime: null,
         canvasCount: 0
@@ -163,6 +164,19 @@ const smokeHtml = `<!doctype html>
         hydra.tick(16)
         H.update = () => {}
         window.__smokeRuntime = hydra
+        const unkeyedHintMessages = []
+        const originalConsoleWarn = console.warn
+        console.warn = (...args) => {
+          unkeyedHintMessages.push(args.map((value) => String(value)).join(" "))
+          originalConsoleWarn.apply(console, args)
+        }
+        hydra.eval(
+          'const H = window.__smokeRuntime.synth; H.scene({ name: "__continuousHint" }).mesh(H.gm.box(), H.mt.meshBasic({ color: 0x7788aa })).out();',
+        )
+        console.warn = originalConsoleWarn
+        window.__smoke.continuousUnkeyedHintEmitted = unkeyedHintMessages.some(
+          (message) => message.includes('Add { key: "..." }'),
+        )
         H.scene({ name: "__continuousPrune" })
           .mesh(H.gm.box(), H.mt.meshBasic({ color: 0xff0000 }))
           .out()
@@ -571,6 +585,11 @@ try {
     diagnostics.continuousDisposeRetainedSharedReplacementMaterial,
     true,
     "Expected shared material to remain undisposed when retained across mesh replacement",
+  );
+  assert.equal(
+    diagnostics.continuousUnkeyedHintEmitted,
+    true,
+    "Expected continuous mode to warn when auto-generated names are used without key",
   );
   assert.equal(
     diagnostics.canvasInputReboundToActiveRuntime,
