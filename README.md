@@ -166,12 +166,12 @@ More examples: [`examples/README.md`](./examples/README.md)
 
 ### Geometry
 
-- Geometry functions are exposed under `gm`.
+- Geometry functions are exposed under `gm` (alias: `geom`).
 - Example: `gm.box()`.
 
 ### Material
 
-- Material functions are exposed under `mt`.
+- Material functions are exposed under `mt` (alias: `mat`).
 - Example: `mt.meshPhong()`.
 
 ## Production guidance

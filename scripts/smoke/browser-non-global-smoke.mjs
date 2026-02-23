@@ -60,6 +60,13 @@ const smokeHtml = `<!doctype html>
         hasGetCodeAfterDispose: null,
         hasGridGeometryAfterDispose: null,
         hasMathMapAfterDispose: null,
+        friendlyAliasTexMatches: null,
+        friendlyAliasGeomMatches: null,
+        friendlyAliasMatMatches: null,
+        friendlyAliasComposeMatches: null,
+        friendlyAliasRandomMatches: null,
+        friendlyAliasNoiseUtilMatches: null,
+        noiseTransformPreserved: null,
         rotateDegAvailable: null,
         rotateRadAvailable: null,
         rotateUnitHelpersCompile: null,
@@ -91,6 +98,13 @@ const smokeHtml = `<!doctype html>
       try {
         const hydra = new Hydra({ detectAudio: false, makeGlobal: false });
         const H = hydra.synth;
+        window.__smoke.friendlyAliasTexMatches = H.tex === H.tx;
+        window.__smoke.friendlyAliasGeomMatches = H.geom === H.gm;
+        window.__smoke.friendlyAliasMatMatches = H.mat === H.mt;
+        window.__smoke.friendlyAliasComposeMatches = H.compose === H.cmp;
+        window.__smoke.friendlyAliasRandomMatches = H.random === H.rnd;
+        window.__smoke.friendlyAliasNoiseUtilMatches = H.noiseUtil === H.nse;
+        window.__smoke.noiseTransformPreserved = typeof H.noise === 'function';
         const rotateProbe = H.osc(4, 0.1, 0.8);
         window.__smoke.rotateDegAvailable = typeof rotateProbe.rotateDeg === 'function';
         window.__smoke.rotateRadAvailable = typeof rotateProbe.rotateRad === 'function';
@@ -615,6 +629,41 @@ try {
     diagnostics.hasMathMapAfterDispose,
     false,
     "Expected no Math helper leakage after non-global dispose",
+  );
+  assert.equal(
+    diagnostics.friendlyAliasTexMatches,
+    true,
+    "Expected H.tex alias to reference H.tx module",
+  );
+  assert.equal(
+    diagnostics.friendlyAliasGeomMatches,
+    true,
+    "Expected H.geom alias to reference H.gm module",
+  );
+  assert.equal(
+    diagnostics.friendlyAliasMatMatches,
+    true,
+    "Expected H.mat alias to reference H.mt module",
+  );
+  assert.equal(
+    diagnostics.friendlyAliasComposeMatches,
+    true,
+    "Expected H.compose alias to reference H.cmp module",
+  );
+  assert.equal(
+    diagnostics.friendlyAliasRandomMatches,
+    true,
+    "Expected H.random alias to reference H.rnd module",
+  );
+  assert.equal(
+    diagnostics.friendlyAliasNoiseUtilMatches,
+    true,
+    "Expected H.noiseUtil alias to reference H.nse module",
+  );
+  assert.equal(
+    diagnostics.noiseTransformPreserved,
+    true,
+    "Expected H.noise transform generator to remain available alongside module aliases",
   );
   assert.equal(
     diagnostics.rotateDegAvailable,

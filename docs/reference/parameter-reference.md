@@ -45,6 +45,19 @@ Identity note for live coding:
 - `scene({ key: "main" })`, `.group({ key: "cluster" })`, and primitive `options.key` provide stable object reuse keys in `liveMode: "continuous"` when line order changes between evals.
 - Migration helper: [`docs/reference/live-key-migration.md`](./live-key-migration.md) and `npm run migrate:report-live-keys`.
 
+## Module namespace aliases
+
+Long-form aliases are available alongside short module names:
+
+| Canonical short | Friendly alias | Notes |
+| --------------- | -------------- | ----- |
+| `tx`            | `tex`          | Texture loaders/FBO/data helpers. |
+| `gm`            | `geom`         | Geometry constructors/utilities. |
+| `mt`            | `mat`          | Material constructors/utilities. |
+| `cmp`           | `compose`      | Composition/pipeline utilities. |
+| `rnd`           | `random`       | Random helpers. |
+| `nse`           | `noiseUtil`    | Noise utility module alias; `noise()` remains the shader generator function. |
+
 ## Camera helper options
 
 | Method                              | Inputs                                | Notes                                   |

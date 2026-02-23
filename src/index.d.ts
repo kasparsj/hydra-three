@@ -213,6 +213,12 @@ export interface HydraSynthApi {
   cmp: HydraModuleApi;
   rnd: HydraModuleApi;
   nse: HydraModuleApi;
+  tex: HydraTextureApi;
+  geom: HydraGeometryApi;
+  mat: HydraModuleApi;
+  compose: HydraModuleApi;
+  random: HydraModuleApi;
+  noiseUtil: HydraModuleApi;
   gui: HydraGuiApi;
   arr: HydraModuleApi;
   el: HydraModuleApi;

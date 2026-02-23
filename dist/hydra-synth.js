@@ -46291,6 +46291,12 @@ vec4 _mod289(vec4 x)
       this.synth.gui = this.modules.gui;
       this.synth.arr = this.modules.arr;
       this.synth.el = this.modules.el;
+      this.synth.tex = this.modules.tx;
+      this.synth.geom = this.modules.gm;
+      this.synth.mat = this.modules.mt;
+      this.synth.compose = this.modules.cmp;
+      this.synth.random = this.modules.rnd;
+      this.synth.noiseUtil = this.modules.nse;
       if (makeGlobal) {
         this._installGlobalHelpers();
         this._installMathHelpers();

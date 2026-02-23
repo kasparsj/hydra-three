@@ -216,6 +216,15 @@ class HydraRenderer {
     this.synth.arr = this.modules.arr
     this.synth.el = this.modules.el
 
+    // Friendly long-form aliases for discoverability.
+    this.synth.tex = this.modules.tx
+    this.synth.geom = this.modules.gm
+    this.synth.mat = this.modules.mt
+    this.synth.compose = this.modules.cmp
+    this.synth.random = this.modules.rnd
+    // `noise` remains the shader generator function; expose module utilities under noiseUtil.
+    this.synth.noiseUtil = this.modules.nse
+
     if (makeGlobal) {
       this._installGlobalHelpers()
       this._installMathHelpers()

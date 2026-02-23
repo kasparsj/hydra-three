@@ -10,8 +10,8 @@
 2. Public API surface
 
 - The live surface is assembled onto `synth` in `src/hydra-synth.js:157`.
-- Core modules are short namespaces (`gm`, `mt`, `tx`, `cmp`, `rnd`, `nse`, `arr`, `gui`, `el`) assigned in `src/hydra-synth.js:194`.
-- API breadth is large: 46 `HydraSynthApi` members, 10 namespaces, 67 GLSL transforms in `docs/api.md:15`, `docs/api.md:18`, `docs/api.md:19`.
+- Core modules keep short namespaces (`gm`, `mt`, `tx`, `cmp`, `rnd`, `nse`, `arr`, `gui`, `el`) and now include long-form aliases (`geom`, `mat`, `tex`, `compose`, `random`, `noiseUtil`) in `src/hydra-synth.js:209` and `src/hydra-synth.js:220`.
+- API breadth is large: 52 `HydraSynthApi` members, 10 namespaces, 69 GLSL transforms in `docs/api.md:15`, `docs/api.md:18`, `docs/api.md:19`.
 
 3. Scene layer
 
@@ -39,7 +39,7 @@
 | Internal API leaks into user workflow                 | `docs/reference/semantic-clarifications.md:56`; `docs/reference/semantic-clarifications.md:58`; `examples/box-instanced-grid.js:34` | Users copy `_mesh` from examples despite docs saying internal                                                 | High     | Replace example usage with public `.mesh(..., { instanced })`; warn on `_` method calls                                  |
 | Rotation unit mismatch                                | `src/glsl/glsl-functions.js:360`; `docs/reference/semantic-clarifications.md:7`; `examples/box.js:16`                               | Shader `rotate()` expects degrees while object rotation uses radians; context-switch tax during improvisation | High     | Added `rotateDeg()` and `rotateRad()`; `rotate()` kept as compatibility alias                                 |
 | Orbit controls default to `Alt` and are easy to misread as broken | `src/three/HydraOrbitControls.js:837`; `src/three/HydraOrbitControls.js:1038`; `README.md:138`                                      | “Controls don’t work” is a common live-coding interruption if modifier key behavior is not obvious            | High     | Added `controls.modifier` option (`none`, `alt`, `shift`, `meta`) plus docs/smoke coverage                                                          |
-| Surface is broad and abbreviation-heavy               | `docs/api.md:15`; `docs/api.md:18`; `docs/api.md:136`; `src/hydra-synth.js:194`                                                     | Memorization load is high for newcomers and occasional users                                                  | Medium   | Add long-name aliases (`geom`, `mat`, `tex`, `compose`, `random`, `noise`) and a smaller “fast path” Stage API           |
+| Surface is broad and abbreviation-heavy               | `docs/api.md:15`; `docs/api.md:18`; `docs/api.md:136`; `src/hydra-synth.js:209`                                                     | Memorization load is high for newcomers and occasional users                                                  | Medium   | Added long-name aliases (`geom`, `mat`, `tex`, `compose`, `random`, `noiseUtil`) and kept short names for compatibility           |
 | Implicit scene/object reuse by name                   | `src/three/scene.js:382`; `src/three/scene.js:411`; `src/three/scene.js:827`                                                        | Re-running snippets may mutate prior objects unexpectedly if names match                                      | Medium   | Make reuse explicit (`reuse: true`) and default to fresh scene in live mode                                              |
 | `.out()` pass routing is hard to predict              | `src/output.js:181`; `src/output.js:192`; `docs/reference/semantic-clarifications.md:46`                                            | FX + renderTarget combinations require understanding internals                                                | Medium   | Add explicit `render({ to, fx, target })` API with deterministic routing                                                 |
 | Synonyms/aliases are inconsistent                     | `src/three/scene.js:564`; `src/three/scene.js:568`; `src/three/scene.js:660`; `src/output.js:201`                                   | Multiple spellings increase cognitive branching while live-editing                                            | Medium   | Define canonical names (`lineLoop`, `lineStrip`, `css2d`, `css3d`) and keep aliases as deprecations only                 |
@@ -72,7 +72,7 @@ interface HydraVNext {
   tex: TextureApi;
   compose: ComposeApi;
   random: RandomApi;
-  noise: NoiseApi;
+  noiseUtil: NoiseApi;
 }
 
 interface StageConfig {
@@ -284,7 +284,7 @@ Estimate: ~20-25% fewer keystrokes, better discoverability via presets.
 Phase 1 (non-breaking, fastest ROI)
 
 1. Add aliases only: `stage` -> `scene`, `render` -> `out`, `clear` -> `autoClear`.
-2. Add friendly namespaces alongside legacy: `geom/mat/tex/compose/random/noise`.
+2. Add friendly namespaces alongside legacy: `geom/mat/tex/compose/random/noiseUtil`.
 3. Stop teaching internals in examples/docs.
 
 - Deprecation/shim: keep old names fully functional.
@@ -317,8 +317,8 @@ Phase 3 (breaking cleanup, major version)
    Files: `examples/box-instanced-grid.js:34`, `docs/reference/semantic-clarifications.md:55`  
    Why: immediate API trust improvement.
 
-2. Add friendly namespace aliases on `synth`  
-   Files: `src/hydra-synth.js:194`, `src/index.d.ts:185`, `docs/api.md:136`  
+2. Implemented: add friendly namespace aliases on `synth`  
+   Files: `src/hydra-synth.js:220`, `src/index.d.ts:216`, `scripts/smoke/browser-non-global-smoke.mjs:101`, `docs/reference/parameter-reference.md:58`  
    Why: faster discoverability without breakage.
 
 3. Add `render()` and `clear()` aliases  
@@ -388,6 +388,8 @@ Stale-object deletion, resource disposal, unkeyed hinting, and restart input reb
 | Eval-order object identity drift (when `key` is omitted)   | `src/three/scene.js:143`; `src/three/scene.js:187`; `src/three/scene.js:711`; `src/index.d.ts:53`              | Reordering lines can still retarget unnamed objects because fallback identity remains eval-order-based for sketches that do not opt into `key`        | Medium   | Continue migrating examples/docs to `key` and run the audit helper `scripts/migrate/find-unkeyed-live-calls.mjs`           |
 
 ## H) Updated Quick Wins (next 1-2 sprints)
+
+Update (2026-02-23): long-form module aliases are now available (`tex`, `geom`, `mat`, `compose`, `random`, `noiseUtil`) while short names remain unchanged (`tx`, `gm`, `mt`, `cmp`, `rnd`, `nse`). Implementation and coverage are in `src/hydra-synth.js:220`, `src/index.d.ts:216`, `scripts/smoke/browser-non-global-smoke.mjs:101`, and `docs/reference/parameter-reference.md:58`.
 
 Update (2026-02-23): explicit rotation helpers are now available as `rotateDeg()` and `rotateRad()`, with `rotate()` preserved for compatibility. Implementation and coverage are in `src/glsl/glsl-functions.js:384`, `src/glsl/glsl-functions.js:408`, `docs/reference/semantic-clarifications.md:7`, `examples/box.js:6`, `site/playground/examples.js:52`, and `scripts/smoke/browser-non-global-smoke.mjs:95`.
 
