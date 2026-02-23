@@ -389,10 +389,10 @@ Stale-object deletion, resource disposal, unkeyed hinting, and restart input reb
 
 ## H) Updated Quick Wins (next 1-2 sprints)
 
-Update (2026-02-22): explicit `key` usage was added to first-touch examples/docs in `site/playground/examples.js:55`, `examples/box.js:9`, and `docs/reference/parameter-reference.md:33`. Internal auto identity (collision-safe), replaced-resource disposal, restart input rebinding, and one-time unkeyed hinting are implemented in `src/three/scene.js:19`, `src/three/scene.js:748`, `src/canvas.js:42`, and `src/three/scene.js:663`.
+Update (2026-02-22): explicit `key` usage now covers the first-touch and mid-tier examples in `site/playground/examples.js:55`, `site/playground/examples.js:115`, `site/playground/examples.js:169`, `site/playground/examples.js:391`, `examples/box.js:9`, `examples/tex-map.js:12`, `examples/tex-map.js:25`, and `docs/reference/parameter-reference.md:33`. Internal auto identity (collision-safe), replaced-resource disposal, restart input rebinding, and one-time unkeyed hinting are implemented in `src/three/scene.js:19`, `src/three/scene.js:748`, `src/canvas.js:42`, and `src/three/scene.js:663`.
 
 1. Continue migrating remaining examples to explicit `key` usage  
-   Files: `site/playground/examples.js:115`, `site/playground/examples.js:388`, `examples/tex-map.js:25`  
+   Files: `site/playground/examples.js:224`, `site/playground/examples.js:231`, `site/playground/examples.js:289`  
    Why: closes the remaining eval-order drift cases in sketches users copy and remix.
 
 2. Add codemod/recipe for unkeyed continuous sketches  
@@ -411,7 +411,7 @@ Update (2026-02-22): explicit `key` usage was added to first-touch examples/docs
 | 2    | Orbit controls hard-gated by `Alt` modifier                 | `src/three/HydraOrbitControls.js:833`; `src/three/HydraOrbitControls.js:1034`           | `examples/box.js:1`; `site/playground/examples.js:49`; `site/playground/examples.js:812` | 4 x 3 = 12    |
 | 3    | Rotation unit mismatch (`rotate` degrees vs object radians) | `src/glsl/glsl-functions.js:376`; `examples/box.js:6`; `examples/box.js:16`             | `site/playground/examples.js:52`; `examples/box.js:6`                                    | 3 x 4 = 12    |
 | 4    | Hidden runtime fallback context in helper modules           | `src/three/runtime.js:25`; `src/three/mt.js:151`; `src/three/tx.js:264`                 | `site/playground/examples.js:57`; `site/playground/examples.js:116`                      | 4 x 2 = 8     |
-| 5    | Eval-order drift for sketches that omit `key`               | `src/three/scene.js:143`; `src/three/scene.js:711`; `src/index.d.ts:53`                 | `site/playground/examples.js:115`; `examples/tex-map.js:25`                              | 3 x 2 = 6     |
+| 5    | Eval-order drift for sketches that omit `key`               | `src/three/scene.js:143`; `src/three/scene.js:711`; `src/index.d.ts:53`                 | `site/playground/examples.js:224`; `site/playground/examples.js:289`                     | 3 x 2 = 6     |
 
 ## J) Speed/Creativity Success Metrics
 

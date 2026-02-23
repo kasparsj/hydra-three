@@ -112,8 +112,10 @@ const position = solid(
 const pointSize = noise(0.6).map(-1, 1, params.sizeMin, params.sizeMax);
 const pointColor = cnoise(1000).saturate(params.colorSat);
 
-scene()
-  .points([params.grid, params.grid], mt.dots(position, pointSize, pointColor))
+scene({ key: "points-trail-scene" })
+  .points([params.grid, params.grid], mt.dots(position, pointSize, pointColor), {
+    key: "points-trail-points",
+  })
   .autoClear(params.trail)
   .out();
 `,
@@ -164,7 +166,7 @@ const heightMap = fbm(params.noiseScale, [0.2, 0.5, 0.1]).tex(o2, {
   height: 1024,
 });
 
-scene()
+scene({ key: "terrain-displacement-scene" })
   .lights({ all: true, sun: true, amb: true })
   .world({ ground: false, fog: true })
   .mesh(
@@ -174,6 +176,7 @@ scene()
       displacementScale: params.displacement,
       wireframe: !!params.wireframe,
     }),
+    { key: "terrain-displacement-mesh" },
   )
   .out();
 `,
@@ -385,12 +388,14 @@ osc(params.freq, params.sync, params.offset)
     code: `
 perspective([2.5, 2, 3], [0, 0, 0], { controls: true });
 
-const sc = scene().lights({ all: true }).out();
-const group = sc.group({ name: "orbit-group" });
+const sc = scene({ key: "orbit-cluster-scene" }).lights({ all: true }).out();
+const group = sc.group({ name: "orbit-group", key: "orbit-group" });
 const count = Math.max(1, Math.floor(params.count));
 
 for (let i = 0; i < count; i++) {
-  group.mesh(gm.sphere(params.radius, 32, 16), mt.meshPhong({ color: rnd.color() }));
+  group.mesh(gm.sphere(params.radius, 32, 16), mt.meshPhong({ color: rnd.color() }), {
+    key: "orbit-sphere-" + i,
+  });
 }
 
 cmp.circle(group, params.orbitRadius);
