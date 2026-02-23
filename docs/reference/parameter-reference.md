@@ -43,6 +43,7 @@ For behavior-level edge cases (units, precedence, and internal/public boundaries
 Identity note for live coding:
 
 - `scene({ key: "main" })`, `.group({ key: "cluster" })`, and primitive `options.key` provide stable object reuse keys in `liveMode: "continuous"` when line order changes between evals.
+- Migration helper: [`docs/reference/live-key-migration.md`](./live-key-migration.md) and `npm run migrate:report-live-keys`.
 
 ## Camera helper options
 

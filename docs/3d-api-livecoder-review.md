@@ -385,19 +385,19 @@ Stale-object deletion, resource disposal, unkeyed hinting, and restart input reb
 
 | Issue                                                      | Evidence (`file:line`)                                                                                           | Why confusing                                                                                                                                         | Severity | Suggested fix                                                                                                              |
 | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Eval-order object identity drift (when `key` is omitted)   | `src/three/scene.js:143`; `src/three/scene.js:187`; `src/three/scene.js:711`; `src/index.d.ts:53`              | Reordering lines can still retarget unnamed objects because fallback identity remains eval-order-based for sketches that do not opt into `key`        | Medium   | Continue migrating examples/docs to `key` and provide a codemod for unkeyed object creation in continuous mode             |
+| Eval-order object identity drift (when `key` is omitted)   | `src/three/scene.js:143`; `src/three/scene.js:187`; `src/three/scene.js:711`; `src/index.d.ts:53`              | Reordering lines can still retarget unnamed objects because fallback identity remains eval-order-based for sketches that do not opt into `key`        | Medium   | Continue migrating examples/docs to `key` and run the audit helper `scripts/migrate/find-unkeyed-live-calls.mjs`           |
 
 ## H) Updated Quick Wins (next 1-2 sprints)
 
-Update (2026-02-22): explicit `key` usage now covers the first-touch and mid-tier examples in `site/playground/examples.js:55`, `site/playground/examples.js:115`, `site/playground/examples.js:169`, `site/playground/examples.js:391`, `examples/box.js:9`, `examples/tex-map.js:12`, `examples/tex-map.js:25`, and `docs/reference/parameter-reference.md:33`. Internal auto identity (collision-safe), replaced-resource disposal, restart input rebinding, and one-time unkeyed hinting are implemented in `src/three/scene.js:19`, `src/three/scene.js:748`, `src/canvas.js:42`, and `src/three/scene.js:663`.
+Update (2026-02-22): explicit `key` usage now covers the first-touch and mid-tier examples in `site/playground/examples.js:55`, `site/playground/examples.js:115`, `site/playground/examples.js:169`, `site/playground/examples.js:391`, `examples/box.js:9`, `examples/tex-map.js:12`, `examples/tex-map.js:25`, and `docs/reference/parameter-reference.md:33`. Internal auto identity (collision-safe), replaced-resource disposal, restart input rebinding, one-time unkeyed hinting, and a codemod-style audit helper are implemented in `src/three/scene.js:19`, `src/three/scene.js:748`, `src/canvas.js:42`, `src/three/scene.js:663`, `scripts/migrate/find-unkeyed-live-calls.mjs:1`, and `docs/reference/live-key-migration.md:1`.
 
 1. Continue migrating remaining examples to explicit `key` usage  
    Files: `site/playground/examples.js:224`, `site/playground/examples.js:231`, `site/playground/examples.js:289`  
    Why: closes the remaining eval-order drift cases in sketches users copy and remix.
 
-2. Add codemod/recipe for unkeyed continuous sketches  
-   Files: `docs/reference/parameter-reference.md:45`, `docs/3d-api-livecoder-review.md:380`  
-   Why: removes manual migration friction when upgrading legacy live sketches.
+2. Add optional CI gate for unkeyed continuous calls  
+   Files: `scripts/migrate/find-unkeyed-live-calls.mjs:1`, `package.json:36`  
+   Why: keeps new examples from regressing by failing fast when unkeyed calls are introduced.
 
 3. Regenerate API docs and keep them in lockstep  
    Files: `docs/api.md:3`, `package.json:35`, `package.json:63`  

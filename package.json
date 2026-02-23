@@ -36,6 +36,7 @@
     "docs:verify-sync": "node ./scripts/docs/generate-api-docs.mjs --check",
     "docs:verify-coverage": "node ./scripts/docs/verify-doc-coverage.mjs",
     "docs:check-links": "node ./scripts/docs/check-links.mjs",
+    "migrate:report-live-keys": "node ./scripts/migrate/find-unkeyed-live-calls.mjs",
     "lint": "eslint --max-warnings=0 \"src/**/*.js\" \"scripts/**/*.mjs\"",
     "format:check": "prettier --check \"scripts/**/*.mjs\" \"docs/**/*.md\" \"README.md\" \"CONTRIBUTING.md\" \"SECURITY.md\"",
     "typecheck": "tsc --noEmit -p ./tsconfig.typecheck.json",
