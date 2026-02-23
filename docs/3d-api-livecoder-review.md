@@ -283,7 +283,7 @@ Estimate: ~20-25% fewer keystrokes, better discoverability via presets.
 
 Phase 1 (non-breaking, fastest ROI)
 
-1. Add aliases only: `stage` -> `scene`, `render` -> `out`, `clear` -> `autoClear`.
+1. Implemented aliases: `stage` -> `scene`, `render` -> `out`, `clear` -> `autoClear`.
 2. Add friendly namespaces alongside legacy: `geom/mat/tex/compose/random/noiseUtil`.
 3. Stop teaching internals in examples/docs.
 
@@ -388,6 +388,8 @@ Stale-object deletion, resource disposal, unkeyed hinting, and restart input reb
 | Eval-order object identity drift (when `key` is omitted)   | `src/three/scene.js:143`; `src/three/scene.js:187`; `src/three/scene.js:711`; `src/index.d.ts:53`              | Reordering lines can still retarget unnamed objects because fallback identity remains eval-order-based for sketches that do not opt into `key`        | Medium   | Continue migrating examples/docs to `key` and run the audit helper `scripts/migrate/find-unkeyed-live-calls.mjs`           |
 
 ## H) Updated Quick Wins (next 1-2 sprints)
+
+Update (2026-02-23): `stage()` alias is now available as a readability-first entry point to `scene()`. Implementation and coverage are in `src/hydra-synth.js:159`, `src/hydra-synth.js:189`, `src/index.d.ts:206`, `scripts/smoke/browser-non-global-smoke.mjs:114`, and `docs/reference/parameter-reference.md:34`.
 
 Update (2026-02-23): `render()` and `clear()` aliases are now available across scene handles and transform chains, mapped to existing `.out()` and `.autoClear()` behavior. Implementation and coverage are in `src/lib/mixins.js:233`, `src/lib/mixins.js:207`, `src/index.d.ts:107`, `src/index.d.ts:140`, `scripts/smoke/browser-non-global-smoke.mjs:113`, and `docs/reference/parameter-reference.md:42`.
 

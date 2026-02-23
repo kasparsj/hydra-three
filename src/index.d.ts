@@ -203,6 +203,7 @@ export interface HydraSynthApi {
   tick: (dt: number, uniforms?: unknown) => void;
   shadowMap: (options?: Record<string, unknown>) => void;
   scene: (attributes?: HydraSceneAttributes) => HydraSceneApi;
+  stage: (attributes?: HydraSceneAttributes) => HydraSceneApi;
   ortho: (eye?: HydraNumericTuple, target?: HydraNumericTuple, options?: HydraCameraOptions) => unknown;
   perspective: (eye?: HydraNumericTuple, target?: HydraNumericTuple, options?: HydraCameraOptions) => unknown;
   screenCoords: (width?: number, height?: number) => unknown;

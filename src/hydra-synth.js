@@ -156,6 +156,7 @@ class HydraRenderer {
 
     //global.window.test = 'hi'
     // object that contains all properties that will be made available on the global context and during local evaluation
+    const sceneApi = this.scene.bind(this)
     this.synth = {
       time: 0,
       bpm: 30,
@@ -184,7 +185,8 @@ class HydraRenderer {
       resetRuntime: this.resetRuntime.bind(this),
       tick: this.tick.bind(this),
       shadowMap: this.shadowMap.bind(this),
-      scene: this.scene.bind(this),
+      scene: sceneApi,
+      stage: sceneApi,
       ortho: (...args) => this.output.ortho.apply(this.output, args),
       perspective: (...args) => this.output.perspective.apply(this.output, args),
       screenCoords: (w, h) => this.output.screenCoords(w, h),

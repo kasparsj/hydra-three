@@ -58,6 +58,7 @@
     "tick",
     "shadowMap",
     "scene",
+    "stage",
     "ortho",
     "perspective",
     "screenCoords",
@@ -281,7 +282,7 @@
   "counts": {
     "constructorOptions": 17,
     "hydraRendererMembers": 11,
-    "hydraSynthMembers": 52,
+    "hydraSynthMembers": 53,
     "sceneMembers": 23,
     "transformChainMembers": 11,
     "modules": 10,

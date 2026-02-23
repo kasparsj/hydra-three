@@ -31,6 +31,7 @@ For behavior-level edge cases (units, precedence, and internal/public boundaries
 | Method                        | Purpose                          | Typical usage                         |
 | ----------------------------- | -------------------------------- | ------------------------------------- |
 | `scene()`                     | Create or fetch a scene handle   | `scene({ name: "main", key: "main" })` |
+| `stage()`                     | Alias of `scene()`               | `stage({ name: "main", key: "main" })` |
 | `.mesh(geom, mat, options)`   | Add mesh geometry                | `.mesh(gm.box(), osc().phong(), { key: "hero" })` |
 | `.points(geom, mat, options)` | Add points primitive             | `.points([100, 100], mt.dots())`      |
 | `.lines(...)`                 | Add line segments                | `.lines([100], mt.lines())`           |

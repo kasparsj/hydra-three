@@ -162,7 +162,7 @@ More examples: [`examples/README.md`](./examples/README.md)
 
 ### Scene
 
-- `scene()` creates a scene handle and exposes scene composition helpers.
+- `scene()` creates a scene handle and exposes scene composition helpers (`stage()` alias available).
 
 ### Geometry
 

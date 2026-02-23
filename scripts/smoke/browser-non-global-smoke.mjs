@@ -67,6 +67,8 @@ const smokeHtml = `<!doctype html>
         friendlyAliasRandomMatches: null,
         friendlyAliasNoiseUtilMatches: null,
         noiseTransformPreserved: null,
+        stageAliasAvailable: null,
+        stageAliasCreatesScene: null,
         renderAliasSceneWorks: null,
         clearAliasSceneWorks: null,
         renderAliasChainWorks: null,
@@ -109,6 +111,16 @@ const smokeHtml = `<!doctype html>
         window.__smoke.friendlyAliasRandomMatches = H.random === H.rnd;
         window.__smoke.friendlyAliasNoiseUtilMatches = H.noiseUtil === H.nse;
         window.__smoke.noiseTransformPreserved = typeof H.noise === 'function';
+        window.__smoke.stageAliasAvailable = typeof H.stage === 'function';
+        if (window.__smoke.stageAliasAvailable) {
+          H.stage({ name: '__aliasStage' })
+            .mesh(H.gm.box(), H.mt.meshBasic({ color: 0x557799 }), { key: 'stage-mesh' })
+            .render();
+          window.__smoke.stageAliasCreatesScene =
+            H.scene({ name: '__aliasStage' }).find({ isMesh: true }).length > 0;
+        } else {
+          window.__smoke.stageAliasCreatesScene = false;
+        }
 
         const aliasScene = H.scene({ name: '__aliasRenderClear' });
         window.__smoke.renderAliasSceneWorks = typeof aliasScene.render === 'function';
@@ -689,6 +701,16 @@ try {
     diagnostics.noiseTransformPreserved,
     true,
     "Expected H.noise transform generator to remain available alongside module aliases",
+  );
+  assert.equal(
+    diagnostics.stageAliasAvailable,
+    true,
+    "Expected H.stage alias to be available alongside H.scene",
+  );
+  assert.equal(
+    diagnostics.stageAliasCreatesScene,
+    true,
+    "Expected H.stage(...) alias to create and render a scene handle",
   );
   assert.equal(
     diagnostics.renderAliasSceneWorks,

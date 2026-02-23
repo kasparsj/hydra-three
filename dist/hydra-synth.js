@@ -46230,6 +46230,7 @@ vec4 _mod289(vec4 x)
       this.canvas = initCanvas(canvas, this);
       this.width = this.canvas.width;
       this.height = this.canvas.height;
+      const sceneApi = this.scene.bind(this);
       this.synth = {
         time: 0,
         bpm: 30,
@@ -46268,7 +46269,8 @@ vec4 _mod289(vec4 x)
         resetRuntime: this.resetRuntime.bind(this),
         tick: this.tick.bind(this),
         shadowMap: this.shadowMap.bind(this),
-        scene: this.scene.bind(this),
+        scene: sceneApi,
+        stage: sceneApi,
         ortho: (...args) => this.output.ortho.apply(this.output, args),
         perspective: (...args) => this.output.perspective.apply(this.output, args),
         screenCoords: (w, h) => this.output.screenCoords(w, h),
