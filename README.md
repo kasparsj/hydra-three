@@ -4,8 +4,9 @@ three.js-powered fork of [hydra-synth](https://github.com/hydra-synth/hydra-synt
 
 ### Project status
 
-- Experimental, actively maintained.
-- API goal: remain compatible with core Hydra patterns and add 3D-specific capabilities.
+- This Hydra fork is not being actively developed anymore.
+- It is superseded by [triode](https://github.com/kasparsj/triode), a three.js (3D)-first live-coding environment built on Hydra and inspired by Hydra.
+- This repository remains available for historical reference and existing integrations.
 
 ## Distribution Model
 
