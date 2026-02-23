@@ -87,6 +87,10 @@ class HydraOrbitControls extends EventDispatcher {
         // Touch fingers
         this.touches = { ONE: TOUCH.ROTATE, TWO: TOUCH.DOLLY_PAN };
 
+        // Optional keyboard modifier required for mouse/pointer interactions.
+        // Touch input is always allowed.
+        this.modifier = 'alt';
+
         // for reset
         this.target0 = this.target.clone();
         this.position0 = this.object.position.clone();
@@ -830,7 +834,7 @@ class HydraOrbitControls extends EventDispatcher {
 
         function onPointerDown( event ) {
 
-            if (!event.altKey) return;
+            if ( pointerModifierAllowed( event ) === false ) return;
 
             if ( scope.enabled === false ) return;
 
@@ -1031,7 +1035,7 @@ class HydraOrbitControls extends EventDispatcher {
 
         function onMouseWheel( event ) {
 
-            if (!event.altKey) return;
+            if ( pointerModifierAllowed( event ) === false ) return;
 
             if ( scope.enabled === false || scope.enableZoom === false || state !== STATE.NONE ) return;
 
@@ -1050,6 +1054,32 @@ class HydraOrbitControls extends EventDispatcher {
             if ( scope.enabled === false || scope.enablePan === false ) return;
 
             handleKeyDown( event );
+
+        }
+
+        function pointerModifierAllowed( event ) {
+
+            // Touch events do not carry keyboard modifiers.
+            if ( event && event.pointerType === 'touch' ) return true;
+
+            const modifier = ( scope.modifier || 'alt' ).toLowerCase();
+
+            switch ( modifier ) {
+
+                case 'none':
+                    return true;
+
+                case 'shift':
+                    return !!event.shiftKey;
+
+                case 'meta':
+                    return !!event.metaKey;
+
+                case 'alt':
+                default:
+                    return !!event.altKey;
+
+            }
 
         }
 

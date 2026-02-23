@@ -35243,6 +35243,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       this.keys = { LEFT: "ArrowLeft", UP: "ArrowUp", RIGHT: "ArrowRight", BOTTOM: "ArrowDown" };
       this.mouseButtons = { LEFT: MOUSE.ROTATE, MIDDLE: MOUSE.DOLLY, RIGHT: MOUSE.PAN };
       this.touches = { ONE: TOUCH.ROTATE, TWO: TOUCH.DOLLY_PAN };
+      this.modifier = "alt";
       this.target0 = this.target.clone();
       this.position0 = this.object.position.clone();
       this.zoom0 = this.object.zoom;
@@ -35622,7 +35623,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         if (scope.enableRotate) handleTouchMoveRotate(event);
       }
       function onPointerDown(event) {
-        if (!event.altKey) return;
+        if (pointerModifierAllowed(event) === false) return;
         if (scope.enabled === false) return;
         if (pointers.length === 0) {
           scope.domElement.setPointerCapture(event.pointerId);
@@ -35724,7 +35725,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         }
       }
       function onMouseWheel(event) {
-        if (!event.altKey) return;
+        if (pointerModifierAllowed(event) === false) return;
         if (scope.enabled === false || scope.enableZoom === false || state !== STATE.NONE) return;
         event.preventDefault();
         scope.dispatchEvent(_startEvent);
@@ -35734,6 +35735,21 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       function onKeyDown(event) {
         if (scope.enabled === false || scope.enablePan === false) return;
         handleKeyDown(event);
+      }
+      function pointerModifierAllowed(event) {
+        if (event && event.pointerType === "touch") return true;
+        const modifier = (scope.modifier || "alt").toLowerCase();
+        switch (modifier) {
+          case "none":
+            return true;
+          case "shift":
+            return !!event.shiftKey;
+          case "meta":
+            return !!event.metaKey;
+          case "alt":
+          default:
+            return !!event.altKey;
+        }
       }
       function onTouchStart(event) {
         trackPointer(event);
@@ -35844,6 +35860,27 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
   const ORTHOGRAPHIC = "orthographic";
   const SCREEN = "screen";
   const CARTESIAN = "cartesian";
+  const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+  const resolveControlsOptions = (cameraOptions, target) => {
+    const controls = cameraOptions.controls;
+    if (!controls) {
+      if (controls === false) return { enabled: false, options: null };
+      return null;
+    }
+    const controlsOptions = isObject(controls) ? controls : {};
+    if (controlsOptions.enabled === false) {
+      return { enabled: false, options: null };
+    }
+    const merged = Object.assign({
+      domElement: document.body,
+      enableZoom: true,
+      target: target && target.isVector3 ? target : new Vector3$1(...target)
+    }, cameraOptions || {}, controlsOptions);
+    delete merged.controls;
+    delete merged.enabled;
+    delete merged.type;
+    return { enabled: true, options: merged };
+  };
   const cameraMixin = {
     camera(eye, target, options2 = {}) {
       if (!Array.isArray(eye)) eye = eye ? [eye] : null;
@@ -35879,22 +35916,22 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       this._camera.position.set(...eye);
       this._camera.lookAt(...target);
       this.setCameraAttrs(options2);
-      if (options2.controls) {
-        options2 = Object.assign({
-          domElement: document.body,
-          enableZoom: true,
-          target: target.isVector3 ? target : new Vector3$1(...target)
-        }, options2 || {});
+      const controlsConfig = resolveControlsOptions(options2, target);
+      if (controlsConfig && controlsConfig.enabled) {
+        const controlsOptions = controlsConfig.options;
         if (this._camera.userData.controls) {
           this._camera.userData.controls.dispose();
         }
-        this._camera.userData.controls = new HydraOrbitControls(this._camera, options2.domElement);
-        for (let attr in options2) {
+        this._camera.userData.controls = new HydraOrbitControls(this._camera, controlsOptions.domElement);
+        for (let attr in controlsOptions) {
           if (this._camera.userData.controls.hasOwnProperty(attr)) {
-            this._camera.userData.controls[attr] = options2[attr];
+            this._camera.userData.controls[attr] = controlsOptions[attr];
             delete options2[attr];
           }
         }
+      } else if (controlsConfig && controlsConfig.enabled === false && this._camera.userData.controls) {
+        this._camera.userData.controls.dispose();
+        delete this._camera.userData.controls;
       }
       this._camera.updateProjectionMatrix();
       return this;
@@ -44456,7 +44493,7 @@ vec4 _mod289(vec4 x)
       if (!this._events)
         this._events = {};
       if (type === "error") {
-        if (!this._events.error || isObject(this._events.error) && !this._events.error.length) {
+        if (!this._events.error || isObject2(this._events.error) && !this._events.error.length) {
           er = arguments[1];
           if (er instanceof Error) {
             throw er;
@@ -44487,7 +44524,7 @@ vec4 _mod289(vec4 x)
             args = Array.prototype.slice.call(arguments, 1);
             handler.apply(this, args);
         }
-      } else if (isObject(handler)) {
+      } else if (isObject2(handler)) {
         args = Array.prototype.slice.call(arguments, 1);
         listeners = handler.slice();
         len = listeners.length;
@@ -44510,11 +44547,11 @@ vec4 _mod289(vec4 x)
         );
       if (!this._events[type])
         this._events[type] = listener;
-      else if (isObject(this._events[type]))
+      else if (isObject2(this._events[type]))
         this._events[type].push(listener);
       else
         this._events[type] = [this._events[type], listener];
-      if (isObject(this._events[type]) && !this._events[type].warned) {
+      if (isObject2(this._events[type]) && !this._events[type].warned) {
         if (!isUndefined(this._maxListeners)) {
           m = this._maxListeners;
         } else {
@@ -44562,7 +44599,7 @@ vec4 _mod289(vec4 x)
         delete this._events[type];
         if (this._events.removeListener)
           this.emit("removeListener", type, listener);
-      } else if (isObject(list)) {
+      } else if (isObject2(list)) {
         for (i = length; i-- > 0; ) {
           if (list[i] === listener || list[i].listener && list[i].listener === listener) {
             position = i;
@@ -44641,7 +44678,7 @@ vec4 _mod289(vec4 x)
     function isNumber(arg) {
       return typeof arg === "number";
     }
-    function isObject(arg) {
+    function isObject2(arg) {
       return typeof arg === "object" && arg !== null;
     }
     function isUndefined(arg) {

@@ -60,6 +60,10 @@ const smokeHtml = `<!doctype html>
         hasGetCodeAfterDispose: null,
         hasGridGeometryAfterDispose: null,
         hasMathMapAfterDispose: null,
+        orbitModifierDefaultRequiresAlt: null,
+        orbitModifierDefaultAltWorks: null,
+        orbitModifierNoneAllowsWheel: null,
+        orbitModifierNoneSetOnControl: null,
         fadeNeedsSwap: null,
         scenePassRenderTargetCleared: null,
         terminalPassRenderTargetApplied: null,
@@ -84,6 +88,59 @@ const smokeHtml = `<!doctype html>
       try {
         const hydra = new Hydra({ detectAudio: false, makeGlobal: false });
         const H = hydra.synth;
+        H.perspective([2, 2, 3], [0, 0, 0], { controls: true, domElement: hydra.canvas });
+        const defaultCamera = hydra.o[0] && hydra.o[0]._camera ? hydra.o[0]._camera : null;
+        const controlsDefault = defaultCamera && defaultCamera.userData ? defaultCamera.userData.controls : null;
+        const wheelDistanceEpsilon = 1e-9;
+        const defaultDistanceBefore = controlsDefault
+          ? defaultCamera.position.distanceTo(controlsDefault.target)
+          : null;
+        hydra.canvas.dispatchEvent(
+          new WheelEvent('wheel', { deltaY: -120, bubbles: true, cancelable: true }),
+        );
+        const defaultDistanceAfterNoAlt = controlsDefault
+          ? defaultCamera.position.distanceTo(controlsDefault.target)
+          : null;
+        hydra.canvas.dispatchEvent(
+          new WheelEvent('wheel', {
+            deltaY: -120,
+            bubbles: true,
+            cancelable: true,
+            altKey: true,
+          }),
+        );
+        const defaultDistanceAfterAlt = controlsDefault
+          ? defaultCamera.position.distanceTo(controlsDefault.target)
+          : null;
+        window.__smoke.orbitModifierDefaultRequiresAlt = controlsDefault
+          ? Math.abs(defaultDistanceBefore - defaultDistanceAfterNoAlt) < wheelDistanceEpsilon
+          : false;
+        window.__smoke.orbitModifierDefaultAltWorks = controlsDefault
+          ? Math.abs(defaultDistanceAfterAlt - defaultDistanceAfterNoAlt) > wheelDistanceEpsilon
+          : false;
+
+        H.perspective([2, 2, 3], [0, 0, 0], {
+          controls: { enabled: true, modifier: 'none', domElement: hydra.canvas },
+        });
+        const noModifierCamera = hydra.o[0] && hydra.o[0]._camera ? hydra.o[0]._camera : null;
+        const controlsNoModifier =
+          noModifierCamera && noModifierCamera.userData
+            ? noModifierCamera.userData.controls
+            : null;
+        const noneDistanceBefore = controlsNoModifier
+          ? noModifierCamera.position.distanceTo(controlsNoModifier.target)
+          : null;
+        hydra.canvas.dispatchEvent(
+          new WheelEvent('wheel', { deltaY: -120, bubbles: true, cancelable: true }),
+        );
+        const noneDistanceAfter = controlsNoModifier
+          ? noModifierCamera.position.distanceTo(controlsNoModifier.target)
+          : null;
+        window.__smoke.orbitModifierNoneAllowsWheel = controlsNoModifier
+          ? Math.abs(noneDistanceAfter - noneDistanceBefore) > wheelDistanceEpsilon
+          : false;
+        window.__smoke.orbitModifierNoneSetOnControl =
+          !!(controlsNoModifier && controlsNoModifier.modifier === 'none');
         H.perspective([2, 2, 3], [0, 0, 0], { controls: false });
         const sc = H.scene()
           .lights({ hemi: { intensity: 0.8 } })
@@ -545,6 +602,26 @@ try {
     diagnostics.hasMathMapAfterDispose,
     false,
     "Expected no Math helper leakage after non-global dispose",
+  );
+  assert.equal(
+    diagnostics.orbitModifierDefaultRequiresAlt,
+    true,
+    "Expected default orbit controls to ignore wheel input without Alt modifier",
+  );
+  assert.equal(
+    diagnostics.orbitModifierDefaultAltWorks,
+    true,
+    "Expected default orbit controls to zoom when Alt+wheel is used",
+  );
+  assert.equal(
+    diagnostics.orbitModifierNoneAllowsWheel,
+    true,
+    "Expected controls.modifier='none' to allow wheel zoom without keyboard modifiers",
+  );
+  assert.equal(
+    diagnostics.orbitModifierNoneSetOnControl,
+    true,
+    "Expected controls.modifier option to be applied to HydraOrbitControls instance",
   );
   assert.equal(
     diagnostics.fadeNeedsSwap,

@@ -133,8 +133,9 @@ GUI note:
 ## Example
 
 ```javascript
-// setup perspective camera, enabling camera controls (alt+click to rotate, alt+scroll to zoom)
-perspective([2, 2, 3], [0, 0, 0], { controls: true });
+// setup perspective camera, enabling camera controls
+// default modifier is "alt"; use modifier:"none" for no-key live coding
+perspective([2, 2, 3], [0, 0, 0], { controls: { enabled: true, modifier: "none" } });
 
 // create geometry and material
 const geom = gm.box();

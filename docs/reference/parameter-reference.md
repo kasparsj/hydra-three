@@ -55,6 +55,21 @@ Identity note for live coding:
 | `normalizedCoords()`                | none                                  | 0..1 style framing helper.              |
 | `cartesianCoords(w, h)`             | width/height                          | Centered cartesian framing helper.      |
 
+### Camera controls options
+
+`perspective(..., options)` and `ortho(..., options)` accept `options.controls` as either:
+
+- `true` to enable defaults (`alt` modifier required for pointer/wheel orbit controls).
+- `false` to disable/dispose controls on the camera.
+- object config for explicit behavior.
+
+| Control option                | Type                                   | Default | Notes                                       |
+| ---------------------------- | -------------------------------------- | ------- | ------------------------------------------- |
+| `controls.enabled`           | `boolean`                              | `true`  | Set `false` to disable controls explicitly. |
+| `controls.modifier`          | `"none" \| "alt" \| "shift" \| "meta"` | `"alt"` | Keyboard modifier for pointer/wheel input.  |
+| `controls.domElement`        | `HTMLElement`                          | `document.body` | DOM target receiving pointer/wheel events.  |
+| top-level control attributes | `unknown`                              | n/a     | Backward-compatible; still forwarded to orbit controls. |
+
 ## Transform chain material helpers
 
 | Method                     | Output                           | Notes                                |

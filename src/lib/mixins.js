@@ -7,6 +7,31 @@ const ORTHOGRAPHIC = 'orthographic';
 const SCREEN = 'screen';
 const CARTESIAN = 'cartesian';
 
+const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const resolveControlsOptions = (cameraOptions, target) => {
+    const controls = cameraOptions.controls;
+    if (!controls) {
+        if (controls === false) return {enabled: false, options: null};
+        return null;
+    }
+
+    const controlsOptions = isObject(controls) ? controls : {};
+    if (controlsOptions.enabled === false) {
+        return {enabled: false, options: null};
+    }
+
+    const merged = Object.assign({
+        domElement: document.body,
+        enableZoom: true,
+        target: target && target.isVector3 ? target : new THREE.Vector3(...target),
+    }, cameraOptions || {}, controlsOptions);
+    delete merged.controls;
+    delete merged.enabled;
+    delete merged.type;
+    return {enabled: true, options: merged};
+};
+
 const cameraMixin = {
     camera(eye, target, options = {}) {
         if (!Array.isArray(eye)) eye = eye ? [eye] : null;
@@ -42,22 +67,26 @@ const cameraMixin = {
         this._camera.position.set(...eye);
         this._camera.lookAt(...target);
         this.setCameraAttrs(options);
-        if (options.controls) {
-            options = Object.assign({
-                domElement: document.body,
-                enableZoom: true,
-                target: target.isVector3 ? target : new THREE.Vector3(...target),
-            }, options || {});
+        const controlsConfig = resolveControlsOptions(options, target);
+        if (controlsConfig && controlsConfig.enabled) {
+            const controlsOptions = controlsConfig.options;
             if (this._camera.userData.controls) {
                 this._camera.userData.controls.dispose();
             }
-            this._camera.userData.controls = new HydraOrbitControls(this._camera, options.domElement);
-            for (let attr in options) {
+            this._camera.userData.controls = new HydraOrbitControls(this._camera, controlsOptions.domElement);
+            for (let attr in controlsOptions) {
                 if (this._camera.userData.controls.hasOwnProperty(attr)) {
-                    this._camera.userData.controls[attr] = options[attr];
+                    this._camera.userData.controls[attr] = controlsOptions[attr];
                     delete options[attr];
                 }
             }
+        } else if (
+            controlsConfig &&
+            controlsConfig.enabled === false &&
+            this._camera.userData.controls
+        ) {
+            this._camera.userData.controls.dispose();
+            delete this._camera.userData.controls;
         }
         this._camera.updateProjectionMatrix();
         return this;

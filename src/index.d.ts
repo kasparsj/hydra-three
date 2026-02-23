@@ -35,6 +35,25 @@ export type HydraLiveMode = "restart" | "continuous";
 
 export type HydraModuleMethod = (...args: unknown[]) => unknown;
 export type HydraNumericTuple = [number, number] | [number, number, number];
+export type HydraControlModifier = "none" | "alt" | "shift" | "meta";
+
+export interface HydraCameraControlsOptions {
+  enabled?: boolean;
+  modifier?: HydraControlModifier;
+  domElement?: HTMLElement;
+  target?: unknown;
+  [key: string]: unknown;
+}
+
+export interface HydraCameraOptions {
+  type?: "perspective" | "ortho" | "orthographic";
+  controls?: boolean | HydraCameraControlsOptions;
+  domElement?: HTMLElement;
+  modifier?: HydraControlModifier;
+  enableZoom?: boolean;
+  target?: unknown;
+  [key: string]: unknown;
+}
 
 export interface HydraModuleApi {
   [key: string]: HydraModuleMethod;
@@ -178,8 +197,8 @@ export interface HydraSynthApi {
   tick: (dt: number, uniforms?: unknown) => void;
   shadowMap: (options?: Record<string, unknown>) => void;
   scene: (attributes?: HydraSceneAttributes) => HydraSceneApi;
-  ortho: (eye?: HydraNumericTuple, target?: HydraNumericTuple, options?: Record<string, unknown>) => unknown;
-  perspective: (eye?: HydraNumericTuple, target?: HydraNumericTuple, options?: Record<string, unknown>) => unknown;
+  ortho: (eye?: HydraNumericTuple, target?: HydraNumericTuple, options?: HydraCameraOptions) => unknown;
+  perspective: (eye?: HydraNumericTuple, target?: HydraNumericTuple, options?: HydraCameraOptions) => unknown;
   screenCoords: (width?: number, height?: number) => unknown;
   normalizedCoords: () => unknown;
   cartesianCoords: (width?: number, height?: number) => unknown;
