@@ -39,7 +39,7 @@ In hydra-three, these layers connect directly:
 ```js
 perspective([2, 2, 3], [0, 0, 0], { controls: true });
 
-const mat = osc(8, 0.1, 0.8).rotate(noise(1).mult(45)).phong();
+const mat = osc(8, 0.1, 0.8).rotateDeg(noise(1).mult(45)).phong();
 
 scene().lights({ all: true }).mesh(gm.box(), mat).out();
 ```
@@ -56,7 +56,7 @@ scene().lights({ all: true }).mesh(gm.box(), mat).out();
 
 ## Semantics to keep in mind
 
-- `rotate()` in transform chains uses **degrees**.
+- `rotateDeg()` uses degrees, `rotateRad()` uses radians, and `rotate()` is a legacy degrees alias.
 - `.tex()` returns a rendered texture from the chain.
 - `.texMat()` returns a Three material with the chain baked as map.
 - `autoClear` controls accumulation/trails and can be applied at multiple levels.

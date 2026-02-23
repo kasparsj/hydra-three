@@ -4,12 +4,14 @@ This page documents behavior that is easy to misread when jumping between Hydra-
 
 ## Rotation units
 
-- `rotate(angle, speed)` in the GLSL coord chain uses **degrees** for `angle`.
-- The transform converts `angle` to radians internally before applying rotation.
-- `speed` is added as a time term in shader space (`ang + speed * time`), so treat it as radians-per-time-unit.
+- `rotate(angle, speed)` in the GLSL coord chain uses **degrees** for `angle` (legacy behavior).
+- `rotateDeg(angle, speed)` is an explicit degrees version (same behavior as `rotate`).
+- `rotateRad(angle, speed)` is an explicit radians version (no degree conversion).
+- `rotate` and `rotateDeg` convert `angle` to radians internally before applying rotation.
+- `speed` is added as a time term in shader space (`ang + speed * time`) and is treated as radians-per-time-unit.
 - Three.js object rotations (for example `mesh.rotation.x += ...`) use **radians**.
 
-Rule of thumb: shader `rotate(...)` angle inputs are degrees; scene object rotations are radians.
+Rule of thumb: use `rotateDeg(...)` for degree-based sketches, `rotateRad(...)` when matching Three.js radians, and reserve `rotate(...)` for legacy compatibility.
 
 ## `.tex()` vs `.texMat()`
 

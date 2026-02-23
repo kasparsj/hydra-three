@@ -42067,6 +42067,52 @@ vec4 _mod289(vec4 x)
    return xy;`
     },
     {
+      name: "rotateDeg",
+      type: "coord",
+      inputs: [
+        {
+          type: "float",
+          name: "angle",
+          default: 10
+        },
+        {
+          type: "float",
+          name: "speed",
+          default: 0
+        }
+      ],
+      glsl: `  vec2 xy = _st - vec2(0.5);
+   // Convert degrees to radians
+   float ang = angle * (3.141592653589793 / 180.0);
+   ang = ang + speed *time;
+   xy = mat2(cos(ang),-sin(ang), sin(ang),cos(ang))*xy;
+   xy += 0.5;
+   return xy;`
+    },
+    {
+      name: "rotateRad",
+      type: "coord",
+      inputs: [
+        {
+          type: "float",
+          name: "angle",
+          default: 0.174533
+          // 10 degrees
+        },
+        {
+          type: "float",
+          name: "speed",
+          default: 0
+        }
+      ],
+      glsl: `  vec2 xy = _st - vec2(0.5);
+   float ang = angle;
+   ang = ang + speed *time;
+   xy = mat2(cos(ang),-sin(ang), sin(ang),cos(ang))*xy;
+   xy += 0.5;
+   return xy;`
+    },
+    {
       name: "scale",
       type: "coord",
       inputs: [

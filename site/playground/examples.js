@@ -49,7 +49,7 @@ export const playgroundExamples = [
 perspective([2, 2, 3], [0, 0, 0], { controls: true });
 
 const mat = osc(params.frequency, params.sync, params.offset)
-  .rotate(noise(params.noiseScale).mult(45))
+  .rotateDeg(noise(params.noiseScale).mult(45))
   .phong();
 
 const sc = scene({ key: "textured-box-scene" })

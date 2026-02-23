@@ -139,7 +139,7 @@ perspective([2, 2, 3], [0, 0, 0], { controls: { enabled: true, modifier: "none" 
 
 // create geometry and material
 const geom = gm.box();
-const mat = osc().rotate(noise(1).mult(45)).phong();
+const mat = osc().rotateDeg(noise(1).mult(45)).phong();
 
 // compose scene
 const sc = scene().lights().mesh(geom, mat).out();

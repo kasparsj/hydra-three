@@ -77,7 +77,7 @@
   - Added `glsl` raw expression transform type.
 - Utility GLSL library expanded (`utility-functions`) with more reusable internal helpers (`_twopi`, `_permute`, `_mod289`, `_taylorInvSqrt`, `_pnoise`, etc.).
 - Behavior-level transform changes include:
-  - `rotate()` now treats angle as degrees (internally converts to radians), unlike upstream’s direct-radian style.
+  - `rotate()` remains degree-based for compatibility, and explicit helpers `rotateDeg()`/`rotateRad()` are available.
   - `src()` includes `glsl300` variant for GLSL3 texture sampling.
 
 ## 6) Source/media/texture pipeline changes

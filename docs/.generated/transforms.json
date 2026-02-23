@@ -161,6 +161,14 @@
       "type": "coord"
     },
     {
+      "name": "rotateDeg",
+      "type": "coord"
+    },
+    {
+      "name": "rotateRad",
+      "type": "coord"
+    },
+    {
       "name": "scale",
       "type": "coord"
     },
@@ -317,6 +325,8 @@
       "repeatX",
       "repeatY",
       "rotate",
+      "rotateDeg",
+      "rotateRad",
       "scale",
       "scroll",
       "scrollX",

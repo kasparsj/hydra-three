@@ -17,7 +17,7 @@ perspective([2, 2, 3], [0, 0, 0], { controls: true });
 
 const sc = scene()
   .lights({ all: true })
-  .mesh(gm.box(), osc(8, 0.1, 0.8).rotate(noise(1).mult(45)).phong())
+  .mesh(gm.box(), osc(8, 0.1, 0.8).rotateDeg(noise(1).mult(45)).phong())
   .out();
 
 update = () => {

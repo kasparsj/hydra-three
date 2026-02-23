@@ -60,6 +60,9 @@ const smokeHtml = `<!doctype html>
         hasGetCodeAfterDispose: null,
         hasGridGeometryAfterDispose: null,
         hasMathMapAfterDispose: null,
+        rotateDegAvailable: null,
+        rotateRadAvailable: null,
+        rotateUnitHelpersCompile: null,
         orbitModifierDefaultRequiresAlt: null,
         orbitModifierDefaultAltWorks: null,
         orbitModifierNoneAllowsWheel: null,
@@ -88,6 +91,16 @@ const smokeHtml = `<!doctype html>
       try {
         const hydra = new Hydra({ detectAudio: false, makeGlobal: false });
         const H = hydra.synth;
+        const rotateProbe = H.osc(4, 0.1, 0.8);
+        window.__smoke.rotateDegAvailable = typeof rotateProbe.rotateDeg === 'function';
+        window.__smoke.rotateRadAvailable = typeof rotateProbe.rotateRad === 'function';
+        if (window.__smoke.rotateDegAvailable && window.__smoke.rotateRadAvailable) {
+          const degTex = H.osc(4, 0.1, 0.8).rotateDeg(45).tex();
+          const radTex = H.osc(4, 0.1, 0.8).rotateRad(Math.PI / 4).tex();
+          window.__smoke.rotateUnitHelpersCompile = !!(degTex && radTex);
+        } else {
+          window.__smoke.rotateUnitHelpersCompile = false;
+        }
         H.perspective([2, 2, 3], [0, 0, 0], { controls: true, domElement: hydra.canvas });
         const defaultCamera = hydra.o[0] && hydra.o[0]._camera ? hydra.o[0]._camera : null;
         const controlsDefault = defaultCamera && defaultCamera.userData ? defaultCamera.userData.controls : null;
@@ -602,6 +615,21 @@ try {
     diagnostics.hasMathMapAfterDispose,
     false,
     "Expected no Math helper leakage after non-global dispose",
+  );
+  assert.equal(
+    diagnostics.rotateDegAvailable,
+    true,
+    "Expected transform chains to expose rotateDeg helper",
+  );
+  assert.equal(
+    diagnostics.rotateRadAvailable,
+    true,
+    "Expected transform chains to expose rotateRad helper",
+  );
+  assert.equal(
+    diagnostics.rotateUnitHelpersCompile,
+    true,
+    "Expected rotateDeg/rotateRad helpers to compile to textures without errors",
   );
   assert.equal(
     diagnostics.orbitModifierDefaultRequiresAlt,
