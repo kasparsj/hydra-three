@@ -73,6 +73,8 @@ const smokeHtml = `<!doctype html>
         continuousKeyedIdentityStable: null,
         continuousDisposeReleasedRemovedResources: null,
         continuousDisposeRetainedSharedMaterial: null,
+        continuousDisposeReleasedReplacedResources: null,
+        continuousDisposeRetainedSharedReplacementMaterial: null,
         canvasInputReboundToActiveRuntime: null,
         keyboardInputReboundToActiveRuntime: null,
         canvasCount: 0
@@ -250,6 +252,60 @@ const smokeHtml = `<!doctype html>
         window.__smoke.continuousDisposeRetainedSharedMaterial =
           sharedMaterialDisposeCount === 0
         delete window.__smokeSharedMaterial
+
+        const replacedGeometry = H.gm.box()
+        const replacedMaterial = H.mt.meshBasic({ color: 0xcc66ff })
+        let replacedGeometryDisposeCount = 0
+        let replacedMaterialDisposeCount = 0
+        const disposeReplacedGeometry = replacedGeometry.dispose.bind(replacedGeometry)
+        const disposeReplacedMaterial = replacedMaterial.dispose.bind(replacedMaterial)
+        replacedGeometry.dispose = () => {
+          replacedGeometryDisposeCount += 1
+          disposeReplacedGeometry()
+        }
+        replacedMaterial.dispose = () => {
+          replacedMaterialDisposeCount += 1
+          disposeReplacedMaterial()
+        }
+        H.scene({ name: "__continuousReplace" })
+          .mesh(replacedGeometry, replacedMaterial, { key: "replace-mesh" })
+          .out()
+        window.__smokeReplacementGeometry = H.gm.sphere()
+        window.__smokeReplacementMaterial = H.mt.meshBasic({ color: 0x66ccff })
+        hydra.eval(
+          'const H = window.__smokeRuntime.synth; const sc = H.scene({ name: "__continuousReplace" }).out(); sc.mesh(window.__smokeReplacementGeometry, window.__smokeReplacementMaterial, { key: "replace-mesh" });',
+        )
+        window.__smoke.continuousDisposeReleasedReplacedResources =
+          replacedGeometryDisposeCount === 1 && replacedMaterialDisposeCount === 1
+        delete window.__smokeReplacementGeometry
+        delete window.__smokeReplacementMaterial
+
+        let sharedReplacementMaterialDisposeCount = 0
+        const sharedReplacementMaterial = H.mt.meshBasic({ color: 0x55aaff })
+        const disposeSharedReplacementMaterial = sharedReplacementMaterial.dispose.bind(
+          sharedReplacementMaterial,
+        )
+        sharedReplacementMaterial.dispose = () => {
+          sharedReplacementMaterialDisposeCount += 1
+          disposeSharedReplacementMaterial()
+        }
+        const sharedReplaceScene = H.scene({ name: "__continuousReplaceShared" }).out()
+        sharedReplaceScene.mesh(H.gm.box(), sharedReplacementMaterial, {
+          key: "replace-left",
+        })
+        sharedReplaceScene.mesh(H.gm.box(), sharedReplacementMaterial, {
+          key: "replace-right",
+        })
+        window.__smokeSharedReplacementMaterial = sharedReplacementMaterial
+        window.__smokeReplacementLeftMaterial = H.mt.meshBasic({ color: 0xff8855 })
+        hydra.eval(
+          'const H = window.__smokeRuntime.synth; const sc = H.scene({ name: "__continuousReplaceShared" }).out(); sc.mesh(H.gm.box(), window.__smokeReplacementLeftMaterial, { key: "replace-left" }); sc.mesh(H.gm.box(), window.__smokeSharedReplacementMaterial, { key: "replace-right" });',
+        )
+        window.__smoke.continuousDisposeRetainedSharedReplacementMaterial =
+          sharedReplacementMaterialDisposeCount === 0
+        delete window.__smokeSharedReplacementMaterial
+        delete window.__smokeReplacementLeftMaterial
+
         delete window.__smokeRuntime
         window.__smoke.hasGlobalOsc = typeof window.osc === 'function'
         window.__smoke.hasLoadScript = typeof window.loadScript === 'function'
@@ -505,6 +561,16 @@ try {
     diagnostics.continuousDisposeRetainedSharedMaterial,
     true,
     "Expected shared material to stay undisposed while still referenced after prune",
+  );
+  assert.equal(
+    diagnostics.continuousDisposeReleasedReplacedResources,
+    true,
+    "Expected replaced mesh geometry and material to be disposed when no longer referenced",
+  );
+  assert.equal(
+    diagnostics.continuousDisposeRetainedSharedReplacementMaterial,
+    true,
+    "Expected shared material to remain undisposed when retained across mesh replacement",
   );
   assert.equal(
     diagnostics.canvasInputReboundToActiveRuntime,

@@ -40100,6 +40100,75 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
       }
     });
   };
+  const hasResourceSnapshot = (resources) => !!resources && (resources.geometries && resources.geometries.size > 0 || resources.materials && resources.materials.size > 0);
+  const collectStoreResources = (store) => {
+    const resources = createResourceSnapshot();
+    if (!store) {
+      return resources;
+    }
+    Object.keys(store.scenes).forEach((key) => {
+      const scene = store.scenes[key];
+      visitObjectTree(scene, (object) => {
+        collectObjectResources(object, resources);
+      });
+    });
+    return resources;
+  };
+  const collectReplacedMeshResources = (mesh2, attributes = {}) => {
+    const replaced = createResourceSnapshot();
+    if (!mesh2) {
+      return replaced;
+    }
+    if (Object.prototype.hasOwnProperty.call(attributes, "geometry")) {
+      const previousGeometry = mesh2.geometry;
+      const nextGeometry = attributes.geometry;
+      if (isDisposable(previousGeometry) && previousGeometry !== nextGeometry) {
+        replaced.geometries.add(previousGeometry);
+      }
+    }
+    if (Object.prototype.hasOwnProperty.call(attributes, "material")) {
+      const nextMaterials = toMaterialArray(attributes.material);
+      toMaterialArray(mesh2.material).forEach((material) => {
+        if (!isDisposable(material)) {
+          return;
+        }
+        if (nextMaterials.indexOf(material) === -1) {
+          replaced.materials.add(material);
+        }
+      });
+    }
+    return replaced;
+  };
+  const disposeReplacedMeshResources = (runtime, replacedResources) => {
+    if (!hasResourceSnapshot(replacedResources)) {
+      return;
+    }
+    const runtimeRef = resolveRuntime(runtime);
+    if (!runtimeRef) {
+      return;
+    }
+    const store = runtimeStores.get(runtimeRef);
+    if (!store) {
+      return;
+    }
+    const retained = collectStoreResources(store);
+    replacedResources.geometries.forEach((geometry) => {
+      if (isDisposable(geometry) && !retained.geometries.has(geometry)) {
+        try {
+          geometry.dispose();
+        } catch (_error) {
+        }
+      }
+    });
+    replacedResources.materials.forEach((material) => {
+      if (isDisposable(material) && !retained.materials.has(material)) {
+        try {
+          material.dispose();
+        } catch (_error) {
+        }
+      }
+    });
+  };
   const disposeRemovedResources = (removedRoots, retained) => {
     if (!Array.isArray(removedRoots) || removedRoots.length === 0) {
       return;
@@ -40309,13 +40378,7 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
         pruneUntouchedChildren(scene, state.touched, removedRoots);
       });
       if (removedRoots.length > 0) {
-        const retained = createResourceSnapshot();
-        Object.keys(store.scenes).forEach((key) => {
-          const scene = store.scenes[key];
-          visitObjectTree(scene, (object) => {
-            collectObjectResources(object, retained);
-          });
-        });
+        const retained = collectStoreResources(store);
         disposeRemovedResources(removedRoots, retained);
         clearRemovedRoots(removedRoots);
       }
@@ -40352,7 +40415,9 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
     }
   };
   const setMeshAttrs = (mesh2, attributes, runtime) => {
+    const replacedResources = collectReplacedMeshResources(mesh2, attributes);
     setObject3DAttrs(mesh2, attributes);
+    disposeReplacedMeshResources(runtime, replacedResources);
     if (attributes.geometry) {
       if (attributes.lineMat || attributes.lineWidth || attributes.lineColor) {
         createMeshEdges(mesh2, attributes, runtime);
